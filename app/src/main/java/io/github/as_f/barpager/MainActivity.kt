@@ -1,26 +1,17 @@
 package io.github.as_f.barpager
 
 import android.app.Activity
-import android.content.ContentResolver
-import android.content.Context
 import android.content.Intent
-import android.database.Cursor
 import android.graphics.Bitmap
 import android.graphics.pdf.PdfRenderer
-import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import android.os.ParcelFileDescriptor
-import android.provider.MediaStore
 import android.util.Log
-import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_main.*
-import java.io.File
 
 class MainActivity : AppCompatActivity() {
 
-  val PICK_PHOTO_REQUEST = 1
-  val PICK_PDF_REQUEST = 2
+  val PICK_PDF_REQUEST = 1
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -38,24 +29,8 @@ class MainActivity : AppCompatActivity() {
     }
   }
 
-  fun pickPhoto() {
-    val pickPhotoIntent = Intent(Intent.ACTION_GET_CONTENT)
-    pickPhotoIntent.type = "image/*"
-    if (pickPhotoIntent.resolveActivity(packageManager) != null) {
-      startActivityForResult(pickPhotoIntent, PICK_PHOTO_REQUEST)
-    }
-  }
-
   override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
     super.onActivityResult(requestCode, resultCode, data)
-
-    if (requestCode == PICK_PHOTO_REQUEST && resultCode == Activity.RESULT_OK) {
-      if (data?.data != null) {
-        Picasso.with(this)
-            .load(data.data)
-            .into(zoomImage)
-      }
-    }
 
     if (requestCode == PICK_PDF_REQUEST && resultCode == Activity.RESULT_OK) {
       if (data?.data != null) {
@@ -88,23 +63,5 @@ class MainActivity : AppCompatActivity() {
 
   private fun pointsToPixels(pixels: Int): Int {
     return resources.displayMetrics.densityDpi * pixels / 72
-  }
-
-  fun getDataColumn(uri: Uri): String? {
-
-    var cursor: Cursor? = null
-    val column = MediaStore.MediaColumns.DATA
-    val projection = arrayOf(column)
-
-    try {
-      cursor = contentResolver.query(uri, projection, null, null, null)
-      if (cursor != null && cursor.moveToFirst()) {
-        val column_index = cursor.getColumnIndexOrThrow(column)
-        return cursor.getString(column_index)
-      }
-    } finally {
-      if (cursor != null) cursor.close()
-    }
-    return null
   }
 }
