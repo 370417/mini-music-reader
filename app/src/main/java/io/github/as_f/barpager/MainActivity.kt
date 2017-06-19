@@ -3,6 +3,7 @@ package io.github.as_f.barpager
 import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.Point
 import android.graphics.pdf.PdfRenderer
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
@@ -34,23 +35,21 @@ class MainActivity : AppCompatActivity() {
 
     if (requestCode == PICK_PDF_REQUEST && resultCode == Activity.RESULT_OK) {
       if (data?.data != null) {
-        Log.v("uri", data.data.toString())
         val pdfDescriptor = contentResolver.openFileDescriptor(data.data, "r")
         val renderer = PdfRenderer(pdfDescriptor)
 
+        val size = Point()
+        windowManager.defaultDisplay.getSize(size)
+        val viewWidth = size.x
+
         val bitmaps = Array(renderer.pageCount) { i ->
           val page = renderer.openPage(i)
-          var width = pointsToPixels(page.width)
-          var height = pointsToPixels(page.height)
-          if (width > 1024) {
-            width = 1024
-            height *= 1024 / width
-          }
-          if (height > 1024) {
-            height = 1024
-            width *= 1024 / height
-          }
-          val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+          val fullWidth = pointsToPixels(page.width)
+          val fullHeight = pointsToPixels(page.height)
+          val fitToWidthScale = viewWidth.toFloat() / fullWidth
+          val scaledWidth = Math.round(fullWidth * fitToWidthScale)
+          val scaledHeight = Math.round(fullHeight * fitToWidthScale)
+          val bitmap = Bitmap.createBitmap(scaledWidth, scaledHeight, Bitmap.Config.ARGB_8888)
           page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
           page.close()
           bitmap

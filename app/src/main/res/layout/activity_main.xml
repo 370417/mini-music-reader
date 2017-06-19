@@ -8,14 +8,15 @@
     tools:context="io.github.as_f.barpager.MainActivity"
     >
 
-    <ImageView
+    <io.github.as_f.barpager.SliceImageView
         android:id="@+id/zoomImage"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:adjustViewBounds="true"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/button_panel"
         />
 
     <LinearLayout
