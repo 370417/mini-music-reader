@@ -8,7 +8,7 @@
     tools:context="io.github.as_f.barpager.MainActivity"
     >
 
-    <io.github.as_f.barpager.SliceImageView
+    <!--<io.github.as_f.barpager.SliceImageView
         android:id="@+id/zoomImage"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -17,7 +17,22 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/button_panel"
-        />
+        />-->
+
+    <android.support.v4.widget.NestedScrollView
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/button_panel"
+        >
+        <io.github.as_f.barpager.SliceImageView
+            android:id="@+id/preview_image"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            />
+    </android.support.v4.widget.NestedScrollView>
 
     <LinearLayout
         android:id="@+id/button_panel"
@@ -29,17 +44,19 @@
         >
 
         <Button
+            android:id="@+id/left_button"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="@string/line_button"
+            android:text="@string/save_staff"
             android:layout_weight="1"
             style="?android:attr/borderlessButtonStyle"
             />
 
         <Button
+            android:id="@+id/right_button"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="@string/page_button"
+            android:text="@string/next_page"
             android:layout_weight="1"
             style="?android:attr/borderlessButtonStyle"
             />

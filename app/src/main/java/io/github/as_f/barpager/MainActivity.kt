@@ -14,9 +14,27 @@ class MainActivity : AppCompatActivity() {
 
   val PICK_PDF_REQUEST = 1
 
+  lateinit var pdfRenderer: PdfRenderer
+
+  var buttonState = ButtonState.STAFF_PAGE
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_main)
+
+    left_button.setOnClickListener {
+      when (buttonState) {
+        ButtonState.STAFF_PAGE, ButtonState.STAFF_DONE -> preview_image.saveStaff()
+        ButtonState.BAR_STAFF -> preview_image.saveBar()
+      }
+    }
+    right_button.setOnClickListener {
+      when (buttonState) {
+        ButtonState.BAR_STAFF -> preview_image.nextStaff()
+        ButtonState.STAFF_DONE -> {}
+        ButtonState.STAFF_PAGE -> {}
+      }
+    }
 
     pickPdf()
   }
@@ -55,7 +73,7 @@ class MainActivity : AppCompatActivity() {
           bitmap
         }
 
-        zoomImage.setImageBitmap(bitmaps[0])
+        preview_image.setImageBitmap(bitmaps[0])
       }
     }
   }
@@ -63,4 +81,8 @@ class MainActivity : AppCompatActivity() {
   private fun pointsToPixels(pixels: Int): Int {
     return resources.displayMetrics.densityDpi * pixels / 72
   }
+}
+
+enum class ButtonState {
+  STAFF_PAGE, BAR_STAFF, STAFF_DONE
 }

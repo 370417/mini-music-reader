@@ -1,9 +1,9 @@
 <resources>
     <string name="app_name">Bar Pager</string>
 
-    <string name="cancel_button">CANCEL</string>
-    <string name="done_button">SAVE</string>
-    <string name="bar_button">ADD BAR</string>
-    <string name="line_button">ADD LINE</string>
-    <string name="page_button">NEXT PAGE</string>
+    <string name="finish">FINISH</string>
+    <string name="next_page">NEXT PAGE</string>
+    <string name="next_staff">NEXT STAFF</string>
+    <string name="save_staff">SAVE STAFF</string>
+    <string name="save_bar">SAVE BAR</string>
 </resources>
