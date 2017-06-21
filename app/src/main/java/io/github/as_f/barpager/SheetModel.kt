@@ -5,15 +5,23 @@ class Sheet {
 }
 
 class Page {
-  val lines = arrayListOf<Line>()
+  val staves = arrayListOf<Staff>()
 }
 
-sealed class Selection
+sealed class Selection {
+  abstract fun clone(): Selection
+}
 
-class Line(var starty: Float, var endy: Float) : Selection() {
+class Staff(var startY: Float, var endY: Float) : Selection() {
   val bars = arrayListOf<Bar>()
+
+  override fun clone(): Staff {
+    return Staff(startY, endY)
+  }
 }
 
-class Bar(var startx: Float, var endx: Float) : Selection() {
-
+class Bar(var startX: Float, var endX: Float) : Selection() {
+  override fun clone(): Bar {
+    return Bar(startX, endX)
+  }
 }
