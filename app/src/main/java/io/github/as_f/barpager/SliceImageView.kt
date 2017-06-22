@@ -113,6 +113,7 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
           is Staff -> when (activeHandle) {
             Handle.START -> {
               selection.startY += dy
+              selection.startY = clamp(selection.startY, 0f, height.toFloat())
               invalidate()
             }
             Handle.END -> {
@@ -145,8 +146,10 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
       MotionEvent.ACTION_POINTER_UP -> {
         val pointerId = event.getPointerId(event.actionIndex)
         if (pointerId == activePointerId) {
-          activePointerId = MotionEvent.INVALID_POINTER_ID
-          activeHandle = Handle.NONE
+          val otherPointerIndex = if (event.actionIndex == 0) 1 else 0
+          lastTouchX = event.getX(otherPointerIndex)
+          lastTouchY = event.getY(otherPointerIndex)
+          activePointerId = event.getPointerId(otherPointerIndex)
         }
         true
       }
@@ -213,6 +216,16 @@ fun createSolidLinePaint(): Paint {
  */
 fun nearLine(coord: Float, target: Float): Boolean {
   return Math.abs(coord - target) <= HANDLE_PADDING
+}
+
+fun clamp(num: Float, min: Float, max: Float): Float {
+  return if (num < min) {
+    min
+  } else if (num > max) {
+    max
+  } else {
+    num
+  }
 }
 
 enum class Handle {
