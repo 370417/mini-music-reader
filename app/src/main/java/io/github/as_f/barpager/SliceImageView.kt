@@ -5,23 +5,44 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.pdf.PdfRenderer
+import android.support.v4.content.res.ResourcesCompat
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
 import android.widget.ImageView
 
 const val HANDLE_PADDING = 50
 
-const val DEFAULT_STAFF_START = 0.1f
-const val DEFAULT_STAFF_END = 0.25f
-
 val backgroundPaint = createBackgroundPaint()
-val solidLinePaint = createSolidLinePaint()
 
 class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(context, attrs) {
 
+  val handlePaint = createHandlePaint()
+
   val sheet: Sheet = Sheet()
   var selection: Selection = Staff(0f, 0f)
+    set(value) {
+      // prevent suggested selection from going off the page
+      field = value
+      val page = sheet.pages[sheet.pages.size - 1]
+      when (value) {
+        is Staff -> {
+          if (value.endY > page.height) {
+            value.endY = page.height.toFloat()
+          }
+          if (value.startY > page.height) {
+            value.startY = page.height.toFloat()
+          }
+        }
+        is Bar -> {
+          if (value.endX > page.width) {
+            value.endX = page.width.toFloat()
+          }
+          if (value.startX > page.width) {
+            value.startX = page.width.toFloat()
+          }
+        }
+      }
+    }
 
   var renderer: PdfRenderer? = null
     set(value) {
@@ -41,26 +62,33 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
   override fun onDraw(canvas: Canvas?) {
     super.onDraw(canvas)
     if (canvas != null) {
+      val floatWidth = width.toFloat()
+      val floatHeight = height.toFloat()
       val selection = selection
       when (selection) {
         is Staff -> {
-          val floatWidth = width.toFloat()
-          val floatHeight = height.toFloat()
           canvas.drawRect(0f, 0f, floatWidth, selection.startY, backgroundPaint)
           canvas.drawRect(0f, selection.endY, floatWidth, floatHeight, backgroundPaint)
-          canvas.drawLine(0f, selection.startY, floatWidth, selection.startY, solidLinePaint)
-          canvas.drawLine(0f, selection.endY, floatWidth, selection.endY, solidLinePaint)
+
+          canvas.drawLine(0f, selection.startY, floatWidth, selection.startY, handlePaint)
+          canvas.drawLine(0f, selection.endY, floatWidth, selection.endY, handlePaint)
         }
         is Bar -> {
           val page = sheet.pages[sheet.pages.size-1]
           val staff = page.staves[page.staves.size-1]
+          canvas.drawRect(0f, 0f, floatWidth, staff.startY, backgroundPaint)
+          canvas.drawRect(0f, staff.endY, floatWidth, floatHeight, backgroundPaint)
+          canvas.drawRect(0f, staff.startY, selection.startX, staff.endY, backgroundPaint)
+          canvas.drawRect(selection.endX, staff.startY, floatWidth, staff.endY, backgroundPaint)
+
+          canvas.drawLine(selection.startX, 0f, selection.startX, floatHeight, handlePaint)
+          canvas.drawLine(selection.endX, 0f, selection.endX, floatHeight, handlePaint)
         }
       }
     }
   }
 
   override fun onTouchEvent(event: MotionEvent?): Boolean {
-    Log.v("Event", "${event?.action}")
     return when (event?.action) {
       MotionEvent.ACTION_DOWN -> {
         val x = event.x
@@ -99,7 +127,6 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
       }
 
       MotionEvent.ACTION_MOVE -> {
-        Log.v("ID", "$activePointerId")
         val pointerIndex = event.findPointerIndex(activePointerId)
         val x = event.getX(pointerIndex)
         val y = event.getY(pointerIndex)
@@ -112,23 +139,34 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
         when (selection) {
           is Staff -> when (activeHandle) {
             Handle.START -> {
-              selection.startY += dy
-              selection.startY = clamp(selection.startY, 0f, height.toFloat())
+              selection.startY = clamp(selection.startY + dy, 0f, height.toFloat())
+              if (selection.flip()) {
+                activeHandle = Handle.END
+              }
               invalidate()
             }
             Handle.END -> {
-              selection.endY += dy
+              selection.endY = clamp(selection.endY + dy, 0f, height.toFloat())
+              if (selection.flip()) {
+                activeHandle = Handle.START
+              }
               invalidate()
             }
             Handle.NONE -> {}
           }
           is Bar -> when (activeHandle) {
             Handle.START -> {
-              selection.startX += dx
+              selection.startX = clamp(selection.startX + dx, 0f, width.toFloat())
+              if (selection.flip()) {
+                activeHandle = Handle.END
+              }
               invalidate()
             }
             Handle.END -> {
-              selection.endX += dx
+              selection.endX = clamp(selection.endX + dx, 0f, width.toFloat())
+              if (selection.flip()) {
+                activeHandle = Handle.START
+              }
               invalidate()
             }
             Handle.NONE -> {}
@@ -160,43 +198,64 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
     }
   }
 
-  fun saveStaff() {}
+  fun saveSelection() {
+    val page = sheet.pages[sheet.pages.size - 1]
+    val thisSelection = selection
+    when (thisSelection) {
+      is Staff -> {
+        page.staves.add(thisSelection)
+        selection = suggestBar(sheet)
+      }
+      is Bar -> {
+        val staff = page.staves[page.staves.size - 1]
+        staff.bars.add(thisSelection)
+        selection = suggestBar(sheet)
+      }
+    }
+    invalidate()
+  }
 
-  fun nextStaff() {}
-
-  fun saveBar() {}
+  fun nextStaff() {
+    selection = suggestStaff(sheet)
+    invalidate()
+  }
 
   /**
    * @return Whether the current page (after this function executes) is the last one
    */
   fun nextPage(): Boolean {
+    renderPage(sheet.pages.size)
     return sheet.pages.size + 1 == renderer?.pageCount
   }
 
   fun renderPage(i: Int) {
     val renderer = renderer
     if (renderer != null) {
-      val page = renderer.openPage(i)
-      val imageWidth = pointsToPixels(page.width)
-      val imageHeight = pointsToPixels(page.height)
+      val pageRenderer = renderer.openPage(i)
+      val imageWidth = pointsToPixels(pageRenderer.width)
+      val imageHeight = pointsToPixels(pageRenderer.height)
       val fitToWidthScale = maxWidth.toFloat() / imageWidth
       val scaledWidth = Math.round(imageWidth * fitToWidthScale)
       val scaledHeight = Math.round(imageHeight * fitToWidthScale)
       val bitmap = Bitmap.createBitmap(scaledWidth, scaledHeight, Bitmap.Config.ARGB_8888)
-      page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-      page.close()
+      pageRenderer.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+      pageRenderer.close()
       setImageBitmap(bitmap)
 
-      if (i == 0) {
-        selection = Staff(scaledHeight * DEFAULT_STAFF_START, scaledHeight * DEFAULT_STAFF_END)
-      } else {
-        selection = sheet.pages[i-1].staves[0].clone()
-      }
+      sheet.pages.add(Page(scaledWidth, scaledHeight))
+      selection = suggestStaff(sheet)
     }
   }
 
   private fun pointsToPixels(pixels: Int): Int {
     return resources.displayMetrics.densityDpi * pixels / 72
+  }
+
+  private fun createHandlePaint(): Paint {
+    val paint = Paint()
+    val accentColor = ResourcesCompat.getColor(resources, R.color.colorAccent, null)
+    paint.color = accentColor
+    return Paint()
   }
 }
 
@@ -205,10 +264,6 @@ fun createBackgroundPaint(): Paint {
   paint.setARGB(128, 0, 0, 0)
   paint.style = Paint.Style.FILL
   return paint
-}
-
-fun createSolidLinePaint(): Paint {
-  return Paint()
 }
 
 /**

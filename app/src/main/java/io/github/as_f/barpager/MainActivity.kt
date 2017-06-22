@@ -24,6 +24,8 @@ class MainActivity : AppCompatActivity() {
       right_button.text = resources.getText(value.id)
     }
 
+  var onLastPage = false
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_main)
@@ -32,16 +34,29 @@ class MainActivity : AppCompatActivity() {
 
     left_button.setOnClickListener {
       when (leftButtonText) {
-        LeftButtonText.SAVE_STAFF -> preview_image.saveStaff()
-        LeftButtonText.SAVE_BAR -> preview_image.saveBar()
+        LeftButtonText.SAVE_STAFF -> {
+          preview_image.saveSelection()
+          leftButtonText = LeftButtonText.SAVE_BAR
+          rightButtonText = RightButtonText.NEXT_STAFF
+          right_button.isEnabled = false
+        }
+        LeftButtonText.SAVE_BAR -> {
+          preview_image.saveSelection()
+          right_button.isEnabled = true
+        }
       }
     }
     right_button.setOnClickListener {
       when (rightButtonText) {
-        RightButtonText.NEXT_STAFF -> preview_image.nextStaff()
+        RightButtonText.NEXT_STAFF -> {
+          preview_image.nextStaff()
+          leftButtonText = LeftButtonText.SAVE_STAFF
+          rightButtonText = if (onLastPage) RightButtonText.FINISH else RightButtonText.NEXT_PAGE
+        }
         RightButtonText.FINISH -> {}
         RightButtonText.NEXT_PAGE -> {
-          if (preview_image.nextPage()) {
+          onLastPage = preview_image.nextPage()
+          if (onLastPage) {
             rightButtonText = RightButtonText.FINISH
           }
         }
@@ -68,7 +83,8 @@ class MainActivity : AppCompatActivity() {
         val pdfDescriptor = contentResolver.openFileDescriptor(data.data, "r")
         val renderer = PdfRenderer(pdfDescriptor)
         preview_image.renderer = renderer
-        if (renderer.pageCount == 1) {
+        onLastPage = renderer.pageCount == 1
+        if (onLastPage) {
           rightButtonText = RightButtonText.FINISH
         }
       }
