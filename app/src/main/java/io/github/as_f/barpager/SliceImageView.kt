@@ -11,6 +11,9 @@ import android.widget.ImageView
 
 const val HANDLE_PADDING = 10
 
+const val DEFAULT_STAFF_START = 0.1f
+const val DEFAULT_STAFF_END = 0.25f
+
 class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(context, attrs) {
 
   val backgroundPaint = createBackgroundPaint()
@@ -36,6 +39,9 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
       when (selection) {
         is Staff -> {
           val floatWidth = width.toFloat()
+          val floatHeight = height.toFloat()
+          canvas.drawRect(0f, 0f, floatWidth, selection.startY, backgroundPaint)
+          canvas.drawRect(0f, selection.endY, floatWidth, floatHeight, backgroundPaint)
           canvas.drawLine(0f, selection.startY, floatWidth, selection.startY, solidLinePaint)
           canvas.drawLine(0f, selection.endY, floatWidth, selection.endY, solidLinePaint)
         }
@@ -88,7 +94,7 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
       setImageBitmap(bitmap)
 
       if (i == 0) {
-        selection = Staff(scaledHeight * 0.1f, scaledHeight * 0.25f)
+        selection = Staff(scaledHeight * DEFAULT_STAFF_START, scaledHeight * DEFAULT_STAFF_END)
       } else {
         selection = sheet.pages[i-1].staves[0].clone()
       }
@@ -102,7 +108,8 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
 
 fun createBackgroundPaint(): Paint {
   val paint = Paint()
-  paint.setARGB(64, 0, 0, 0)
+  paint.setARGB(128, 0, 0, 0)
+  paint.style = Paint.Style.FILL
   return paint
 }
 
