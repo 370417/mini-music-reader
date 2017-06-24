@@ -1,22 +1,20 @@
 package io.github.as_f.barpager
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Paint
+import android.graphics.*
 import android.graphics.pdf.PdfRenderer
-import android.support.v4.content.res.ResourcesCompat
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.widget.ImageView
 
 const val HANDLE_PADDING = 50
+const val DASH_LENGTH = 10
 
-val backgroundPaint = createBackgroundPaint()
+val red = makePaint(255, 255, 0, 0)
+val black = makePaint(128, 0, 0, 0)
+val white = makePaint(255, 255, 255, 255)
 
 class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(context, attrs) {
-
-  val handlePaint = createHandlePaint()
 
   val sheet: Sheet = Sheet()
   var selection: Selection = Staff(0f, 0f)
@@ -64,25 +62,69 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
     if (canvas != null) {
       val floatWidth = width.toFloat()
       val floatHeight = height.toFloat()
+      val page = sheet.pages[sheet.pages.size - 1]
       val selection = selection
       when (selection) {
         is Staff -> {
-          canvas.drawRect(0f, 0f, floatWidth, selection.startY, backgroundPaint)
-          canvas.drawRect(0f, selection.endY, floatWidth, floatHeight, backgroundPaint)
+          canvas.drawRect(0f, 0f, floatWidth, selection.startY, black)
+          canvas.drawRect(0f, selection.endY, floatWidth, floatHeight, black)
 
-          canvas.drawLine(0f, selection.startY, floatWidth, selection.startY, handlePaint)
-          canvas.drawLine(0f, selection.endY, floatWidth, selection.endY, handlePaint)
+          drawSheet(canvas, floatWidth)
+
+          val delta = if (page.staves.size > 0) {
+            val lastStaff = page.staves[page.staves.size - 1]
+            selection.startY - lastStaff.endY
+          } else {
+            0f
+          }
+          val offset = delta + selection.endY - selection.startY
+          if (Math.abs(offset) > DASH_LENGTH) {
+            var futureStartY = selection.startY + offset
+            var futureEndY = selection.endY + offset
+            while (futureStartY > 0 && futureStartY < floatHeight) {
+              drawHorizontalDashed(canvas, futureStartY, 0f, floatWidth, white)
+              futureStartY += offset
+            }
+            while (futureEndY > 0 && futureEndY < floatHeight) {
+              drawHorizontalDashed(canvas, futureEndY, 0f, floatWidth, white)
+              futureEndY += offset
+            }
+          }
+
+          drawHorizontal(canvas, selection.startY, 0f, floatWidth, red)
+          drawHorizontal(canvas, selection.endY, 0f, floatWidth, red)
         }
         is Bar -> {
-          val page = sheet.pages[sheet.pages.size-1]
-          val staff = page.staves[page.staves.size-1]
-          canvas.drawRect(0f, 0f, floatWidth, staff.startY, backgroundPaint)
-          canvas.drawRect(0f, staff.endY, floatWidth, floatHeight, backgroundPaint)
-          canvas.drawRect(0f, staff.startY, selection.startX, staff.endY, backgroundPaint)
-          canvas.drawRect(selection.endX, staff.startY, floatWidth, staff.endY, backgroundPaint)
+          val staff = page.staves[page.staves.size - 1]
+          canvas.drawRect(0f, 0f, floatWidth, staff.startY, black)
+          canvas.drawRect(0f, staff.endY, floatWidth, floatHeight, black)
+          canvas.drawRect(0f, staff.startY, selection.startX, staff.endY, black)
+          canvas.drawRect(selection.endX, staff.startY, floatWidth, staff.endY, black)
 
-          canvas.drawLine(selection.startX, 0f, selection.startX, floatHeight, handlePaint)
-          canvas.drawLine(selection.endX, 0f, selection.endX, floatHeight, handlePaint)
+          drawSheet(canvas, floatWidth)
+
+          val delta = if (staff.bars.size > 0) {
+            val lastBar = staff.bars[staff.bars.size - 1]
+            selection.startX - lastBar.endX
+          } else {
+            0f
+          }
+          val offset = delta + selection.endX - selection.startX
+          if (Math.abs(offset) > DASH_LENGTH) {
+            var futureStartX = selection.startX + offset
+            var futureEndX = selection.startX + offset
+            while (futureStartX > 0 && futureStartX < floatWidth) {
+              drawVerticalDashed(canvas, futureStartX, staff.startY, staff.endY, white)
+              futureStartX += offset
+            }
+            while (futureEndX > 0 && futureEndX < floatWidth) {
+              drawVerticalDashed(canvas, futureEndX, staff.startY, staff.endY, white)
+              futureEndX += offset
+            }
+          }
+
+          drawVertical(canvas, selection.startX, 0f, floatHeight, red)
+          drawVertical(canvas, selection.endX, 0f, floatHeight, red)
         }
       }
     }
@@ -198,6 +240,20 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
     }
   }
 
+  fun drawSheet(canvas: Canvas, width: Float) {
+    val page = sheet.pages[sheet.pages.size - 1]
+    for (staff in page.staves) {
+      val startY = staff.startY
+      val endY = staff.endY
+      drawHorizontal(canvas, startY, 0f, width, white)
+      drawHorizontal(canvas, endY, 0f, width, white)
+      for (bar in staff.bars) {
+        drawVertical(canvas, bar.startX, startY, endY, white)
+        drawVertical(canvas, bar.endX, startY, endY, white)
+      }
+    }
+  }
+
   fun saveSelection() {
     val page = sheet.pages[sheet.pages.size - 1]
     val thisSelection = selection
@@ -251,19 +307,6 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
     return resources.displayMetrics.densityDpi * pixels / 72
   }
 
-  private fun createHandlePaint(): Paint {
-    val paint = Paint()
-    val accentColor = ResourcesCompat.getColor(resources, R.color.colorAccent, null)
-    paint.color = accentColor
-    return Paint()
-  }
-}
-
-fun createBackgroundPaint(): Paint {
-  val paint = Paint()
-  paint.setARGB(128, 0, 0, 0)
-  paint.style = Paint.Style.FILL
-  return paint
 }
 
 /**
@@ -281,6 +324,37 @@ fun clamp(num: Float, min: Float, max: Float): Float {
   } else {
     num
   }
+}
+
+fun drawHorizontal(canvas: Canvas, y: Float, startX: Float, endX: Float, paint: Paint) {
+  canvas.drawRect(startX, y - 0.5f, endX, y + 0.5f, paint)
+}
+
+fun drawVertical(canvas: Canvas, x: Float, startY: Float, endY: Float, paint: Paint) {
+  canvas.drawRect(x - 0.5f, startY, x + 0.5f, endY, paint)
+}
+
+fun drawHorizontalDashed(canvas: Canvas, y: Float, startX: Float, endX: Float, paint: Paint) {
+  var x = startX
+  while (x < endX) {
+    canvas.drawRect(x, y - 0.5f, x + DASH_LENGTH, y + 0.5f, paint)
+    x += 2 * DASH_LENGTH
+  }
+}
+
+fun drawVerticalDashed(canvas: Canvas, x: Float, startY: Float, endY: Float, paint: Paint) {
+  var y = startY
+  while (y < endY) {
+    canvas.drawRect(x - 0.5f, y, x + 0.5f, y + DASH_LENGTH, paint)
+    y += 2 * DASH_LENGTH
+  }
+}
+
+fun makePaint(a: Int, r: Int, g: Int, b: Int): Paint {
+  val paint = Paint()
+  paint.setARGB(a, r, g, b)
+  paint.style = Paint.Style.FILL
+  return paint
 }
 
 enum class Handle {
