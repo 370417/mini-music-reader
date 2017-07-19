@@ -1,7 +1,9 @@
 package io.github.as_f.barpager
 
 import android.content.Context
-import android.graphics.*
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
 import android.graphics.pdf.PdfRenderer
 import android.util.AttributeSet
 import android.view.MotionEvent
@@ -52,10 +54,6 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
   var activeHandle = Handle.NONE
   var lastTouchX = 0f
   var lastTouchY = 0f
-
-  override fun setImageBitmap(bm: Bitmap?) {
-    super.setImageBitmap(bm)
-  }
 
   override fun onDraw(canvas: Canvas?) {
     super.onDraw(canvas)
