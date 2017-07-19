@@ -132,112 +132,114 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
 
   override fun onTouchEvent(event: MotionEvent?): Boolean {
     return when (event?.action) {
-      MotionEvent.ACTION_DOWN -> {
-        val x = event.x
-        val y = event.y
-
-        val selection = selection
-        activeHandle = when (selection) {
-          is Staff -> {
-            if (nearLine(y, selection.startY)) {
-              Handle.START
-            } else if (nearLine(y, selection.endY)) {
-              Handle.END
-            } else {
-              Handle.NONE
-            }
-          }
-          is Bar -> {
-            if (nearLine(x, selection.startX)) {
-              Handle.START
-            } else if (nearLine(x, selection.endX)) {
-              Handle.END
-            } else {
-              Handle.NONE
-            }
-          }
-        }
-
-        if (activeHandle != Handle.NONE) {
-          lastTouchX = event.x
-          lastTouchY = event.y
-          activePointerId = event.getPointerId(event.actionIndex)
-          true
-        } else {
-          false
-        }
-      }
-
-      MotionEvent.ACTION_MOVE -> {
-        val pointerIndex = event.findPointerIndex(activePointerId)
-        val x = event.getX(pointerIndex)
-        val y = event.getY(pointerIndex)
-        val dx = x - lastTouchX
-        val dy = y - lastTouchY
-        lastTouchX = x
-        lastTouchY = y
-
-        val selection = selection
-        when (selection) {
-          is Staff -> when (activeHandle) {
-            Handle.START -> {
-              selection.startY = clamp(selection.startY + dy, 0f, height.toFloat())
-              if (selection.flip()) {
-                activeHandle = Handle.END
-              }
-              invalidate()
-            }
-            Handle.END -> {
-              selection.endY = clamp(selection.endY + dy, 0f, height.toFloat())
-              if (selection.flip()) {
-                activeHandle = Handle.START
-              }
-              invalidate()
-            }
-            Handle.NONE -> {}
-          }
-          is Bar -> when (activeHandle) {
-            Handle.START -> {
-              selection.startX = clamp(selection.startX + dx, 0f, width.toFloat())
-              if (selection.flip()) {
-                activeHandle = Handle.END
-              }
-              invalidate()
-            }
-            Handle.END -> {
-              selection.endX = clamp(selection.endX + dx, 0f, width.toFloat())
-              if (selection.flip()) {
-                activeHandle = Handle.START
-              }
-              invalidate()
-            }
-            Handle.NONE -> {}
-          }
-        }
-        activeHandle != Handle.NONE
-      }
-
-      MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-        activePointerId = MotionEvent.INVALID_POINTER_ID
-        activeHandle = Handle.NONE
-        true
-      }
-
-      MotionEvent.ACTION_POINTER_UP -> {
-        val pointerId = event.getPointerId(event.actionIndex)
-        if (pointerId == activePointerId) {
-          val otherPointerIndex = if (event.actionIndex == 0) 1 else 0
-          lastTouchX = event.getX(otherPointerIndex)
-          lastTouchY = event.getY(otherPointerIndex)
-          activePointerId = event.getPointerId(otherPointerIndex)
-        }
-        true
-      }
-
-      MotionEvent.ACTION_POINTER_DOWN -> true
-
+      MotionEvent.ACTION_DOWN -> onActionDown(event)
+      MotionEvent.ACTION_MOVE -> onActionMove(event)
+      MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> onActionCancel()
+      MotionEvent.ACTION_POINTER_UP -> onActionPointerUp(event)
       else -> super.onTouchEvent(event)
     }
+  }
+
+  fun onActionDown(event: MotionEvent): Boolean {
+    val x = event.x
+    val y = event.y
+
+    val selection = selection
+    activeHandle = when (selection) {
+      is Staff -> {
+        if (nearLine(y, selection.startY)) {
+          Handle.START
+        } else if (nearLine(y, selection.endY)) {
+          Handle.END
+        } else {
+          Handle.NONE
+        }
+      }
+      is Bar -> {
+        if (nearLine(x, selection.startX)) {
+          Handle.START
+        } else if (nearLine(x, selection.endX)) {
+          Handle.END
+        } else {
+          Handle.NONE
+        }
+      }
+    }
+
+    if (activeHandle != Handle.NONE) {
+      lastTouchX = event.x
+      lastTouchY = event.y
+      activePointerId = event.getPointerId(event.actionIndex)
+      return true
+    } else {
+      return false
+    }
+  }
+
+  fun onActionMove(event: MotionEvent): Boolean {
+    val pointerIndex = event.findPointerIndex(activePointerId)
+    val x = event.getX(pointerIndex)
+    val y = event.getY(pointerIndex)
+    val dx = x - lastTouchX
+    val dy = y - lastTouchY
+    lastTouchX = x
+    lastTouchY = y
+
+    val selection = selection
+    when (selection) {
+      is Staff -> when (activeHandle) {
+        Handle.START -> {
+          selection.startY = clamp(selection.startY + dy, 0f, height.toFloat())
+          if (selection.flip()) {
+            activeHandle = Handle.END
+          }
+          invalidate()
+        }
+        Handle.END -> {
+          selection.endY = clamp(selection.endY + dy, 0f, height.toFloat())
+          if (selection.flip()) {
+            activeHandle = Handle.START
+          }
+          invalidate()
+        }
+        Handle.NONE -> {}
+      }
+      is Bar -> when (activeHandle) {
+        Handle.START -> {
+          selection.startX = clamp(selection.startX + dx, 0f, width.toFloat())
+          if (selection.flip()) {
+            activeHandle = Handle.END
+          }
+          invalidate()
+        }
+        Handle.END -> {
+          selection.endX = clamp(selection.endX + dx, 0f, width.toFloat())
+          if (selection.flip()) {
+            activeHandle = Handle.START
+          }
+          invalidate()
+        }
+        Handle.NONE -> {}
+      }
+    }
+    return activeHandle != Handle.NONE
+  }
+
+  fun onActionCancel(): Boolean {
+    activePointerId = MotionEvent.INVALID_POINTER_ID
+    activeHandle = Handle.NONE
+    return true
+  }
+
+  fun onActionPointerUp(event: MotionEvent): Boolean {
+    val pointerId = event.getPointerId(event.actionIndex)
+    if (pointerId == activePointerId) {
+      val otherPointerIndex = if (event.actionIndex == 0) 1 else 0
+      lastTouchX = event.getX(otherPointerIndex)
+      lastTouchY = event.getY(otherPointerIndex)
+      activePointerId = event.getPointerId(otherPointerIndex)
+    }
+    return true
   }
 
   fun drawSheet(canvas: Canvas, width: Float) {
