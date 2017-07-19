@@ -19,30 +19,7 @@ val white = makePaint(255, 255, 255, 255)
 class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(context, attrs) {
 
   val sheet: Sheet = Sheet()
-  var selection: Selection = Staff(0f, 0f)
-    set(value) {
-      // prevent suggested selection from going off the page
-      field = value
-      val page = sheet.pages[sheet.pages.size - 1]
-      when (value) {
-        is Staff -> {
-          if (value.endY > page.height) {
-            value.endY = page.height.toFloat()
-          }
-          if (value.startY > page.height) {
-            value.startY = page.height.toFloat()
-          }
-        }
-        is Bar -> {
-          if (value.endX > page.width) {
-            value.endX = page.width.toFloat()
-          }
-          if (value.startX > page.width) {
-            value.startX = page.width.toFloat()
-          }
-        }
-      }
-    }
+  var selection: Selection = StaffSelection(0f, 0f)
 
   var renderer: PdfRenderer? = null
     set(value) {
@@ -51,81 +28,78 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
     }
 
   var activePointerId = MotionEvent.INVALID_POINTER_ID
-  var activeHandle = Handle.NONE
   var lastTouchX = 0f
   var lastTouchY = 0f
 
   override fun onDraw(canvas: Canvas?) {
     super.onDraw(canvas)
     if (canvas != null) {
-      val floatWidth = width.toFloat()
-      val floatHeight = height.toFloat()
-      val page = sheet.pages[sheet.pages.size - 1]
       val selection = selection
       when (selection) {
-        is Staff -> {
-          canvas.drawRect(0f, 0f, floatWidth, selection.startY, black)
-          canvas.drawRect(0f, selection.endY, floatWidth, floatHeight, black)
-
-          drawSheet(canvas, floatWidth)
-
-          val delta = if (page.staves.size > 0) {
-            val lastStaff = page.staves[page.staves.size - 1]
-            selection.startY - lastStaff.endY
-          } else {
-            0f
+        is StaffSelection -> {
+          maskStaffSelection(canvas, selection)
+          drawSheet(canvas)
+          val (size, delta) = suggestProjectedStaff(sheet, selection)
+          val period = size + delta
+          if (Math.abs(period) > 2 * DASH_LENGTH) {
+            val paint = fadePaint(Math.abs(period))
+            projectHorizontal(canvas, selection.startY, period, paint)
+            projectHorizontal(canvas, selection.endY, period, paint)
           }
-          val offset = delta + selection.endY - selection.startY
-          if (Math.abs(offset) > DASH_LENGTH) {
-            var futureStartY = selection.startY + offset
-            var futureEndY = selection.endY + offset
-            while (futureStartY > 0 && futureStartY < floatHeight) {
-              drawHorizontalDashed(canvas, futureStartY, 0f, floatWidth, white)
-              futureStartY += offset
-            }
-            while (futureEndY > 0 && futureEndY < floatHeight) {
-              drawHorizontalDashed(canvas, futureEndY, 0f, floatWidth, white)
-              futureEndY += offset
-            }
-          }
-
-          drawHorizontal(canvas, selection.startY, 0f, floatWidth, red)
-          drawHorizontal(canvas, selection.endY, 0f, floatWidth, red)
+          drawHorizontal(canvas, selection.startY, 0f, width.toFloat(), red)
+          drawHorizontal(canvas, selection.endY, 0f, width.toFloat(), red)
         }
-        is Bar -> {
-          val staff = page.staves[page.staves.size - 1]
-          canvas.drawRect(0f, 0f, floatWidth, staff.startY, black)
-          canvas.drawRect(0f, staff.endY, floatWidth, floatHeight, black)
-          canvas.drawRect(0f, staff.startY, selection.startX, staff.endY, black)
-          canvas.drawRect(selection.endX, staff.startY, floatWidth, staff.endY, black)
-
-          drawSheet(canvas, floatWidth)
-
-          val delta = if (staff.bars.size > 0) {
-            val lastBar = staff.bars[staff.bars.size - 1]
-            selection.startX - lastBar.endX
-          } else {
-            0f
+        is BarSelection -> {
+          maskLastStaff(canvas)
+          maskBarSelection(canvas, selection)
+          drawSheet(canvas)
+          val period = selection.endX - selection.startX
+          if (Math.abs(period) > 2 * DASH_LENGTH) {
+            val staff = sheet.pages.last().staves.last()
+            val paint = fadePaint(Math.abs(period))
+            projectVertical(canvas, selection.endX, period, staff.startY, staff.endY, paint)
           }
-          val offset = delta + selection.endX - selection.startX
-          if (Math.abs(offset) > DASH_LENGTH) {
-            var futureStartX = selection.startX + offset
-            var futureEndX = selection.startX + offset
-            while (futureStartX > 0 && futureStartX < floatWidth) {
-              drawVerticalDashed(canvas, futureStartX, staff.startY, staff.endY, white)
-              futureStartX += offset
-            }
-            while (futureEndX > 0 && futureEndX < floatWidth) {
-              drawVerticalDashed(canvas, futureEndX, staff.startY, staff.endY, white)
-              futureEndX += offset
-            }
+          drawVertical(canvas, selection.startX, 0f, height.toFloat(), red)
+          drawVertical(canvas, selection.endX, 0f, height.toFloat(), red)
+        }
+        is BarLineSelection -> {
+          maskLastStaff(canvas)
+          maskBarLineSelection(canvas, selection)
+          drawSheet(canvas)
+          val staff = sheet.pages.last().staves.last()
+          val period = selection.x - staff.barLines.last()
+          if (Math.abs(period) > 2 * DASH_LENGTH) {
+            val paint = fadePaint(Math.abs(period))
+            projectVertical(canvas, selection.x, period, staff.startY, staff.endY, paint)
           }
-
-          drawVertical(canvas, selection.startX, 0f, floatHeight, red)
-          drawVertical(canvas, selection.endX, 0f, floatHeight, red)
+          drawVertical(canvas, selection.x, 0f, height.toFloat(), red)
         }
       }
     }
+  }
+
+  fun maskStaffSelection(canvas: Canvas, selection: StaffSelection) {
+    canvas.drawRect(0f, 0f, width.toFloat(), selection.startY, black)
+    canvas.drawRect(0f, selection.endY, width.toFloat(), height.toFloat(), black)
+  }
+
+  fun maskLastStaff(canvas: Canvas) {
+    val lastStaff = sheet.pages.last().staves.last()
+    canvas.drawRect(0f, 0f, width.toFloat(), lastStaff.startY, black)
+    canvas.drawRect(0f, lastStaff.endY, width.toFloat(), height.toFloat(), black)
+  }
+
+  fun maskBarSelection(canvas: Canvas, selection: BarSelection) {
+    val lastStaff = sheet.pages.last().staves.last()
+    canvas.drawRect(0f, lastStaff.startY, selection.startX, lastStaff.endY, black)
+    canvas.drawRect(selection.endX, lastStaff.startY, width.toFloat(), lastStaff.endY, black)
+  }
+
+  fun maskBarLineSelection(canvas: Canvas, selection: BarLineSelection) {
+    val lastStaff = sheet.pages.last().staves.last()
+    val startX = lastStaff.barLines.last()
+    canvas.drawRect(0f, lastStaff.startY, startX, lastStaff.endY, black)
+    canvas.drawRect(selection.x, lastStaff.startY, width.toFloat(), lastStaff.endY, black)
   }
 
   override fun onTouchEvent(event: MotionEvent?): Boolean {
@@ -139,42 +113,66 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
   }
 
   fun onActionDown(event: MotionEvent): Boolean {
-    val x = event.x
-    val y = event.y
-
     val selection = selection
-    activeHandle = when (selection) {
-      is Staff -> {
-        if (nearLine(y, selection.startY)) {
-          Handle.START
-        } else if (nearLine(y, selection.endY)) {
-          Handle.END
-        } else {
-          Handle.NONE
+    when (selection) {
+      is StaffSelection -> {
+        val activeHandle = pickStaffHandle(selection, event.y)
+        if (activeHandle != null) {
+          selection.activeHandle = activeHandle
+          updatePointer(event)
+          return true
         }
       }
-      is Bar -> {
-        if (nearLine(x, selection.startX)) {
-          Handle.START
-        } else if (nearLine(x, selection.endX)) {
-          Handle.END
-        } else {
-          Handle.NONE
+      is BarSelection -> {
+        val activeHandle = pickBarHandle(selection, event.x)
+        if (activeHandle != null) {
+          selection.activeHandle = activeHandle
+          updatePointer(event)
+          return true
+        }
+      }
+      is BarLineSelection -> {
+        if (nearLine(event.x, selection.x)) {
+          updatePointer(event)
+          return true
         }
       }
     }
+    activePointerId = MotionEvent.INVALID_POINTER_ID
+    return false
+  }
 
-    if (activeHandle != Handle.NONE) {
-      lastTouchX = event.x
-      lastTouchY = event.y
-      activePointerId = event.getPointerId(event.actionIndex)
-      return true
+  fun updatePointer(event: MotionEvent) {
+    lastTouchX = event.x
+    lastTouchY = event.y
+    activePointerId = event.getPointerId(event.actionIndex)
+  }
+
+  fun pickStaffHandle(selection: StaffSelection, y: Float): Handle? {
+    return if (nearLine(y, selection.startY)) {
+      Handle.START
+    } else if (nearLine(y, selection.endY)) {
+      Handle.END
     } else {
-      return false
+      null
+    }
+  }
+
+  fun pickBarHandle(selection: BarSelection, x: Float): Handle? {
+    return if (nearLine(x, selection.startX)) {
+      Handle.START
+    } else if (nearLine(x, selection.endX)) {
+      Handle.END
+    } else {
+      null
     }
   }
 
   fun onActionMove(event: MotionEvent): Boolean {
+    if (activePointerId == MotionEvent.INVALID_POINTER_ID) {
+      return false
+    }
+
     val pointerIndex = event.findPointerIndex(activePointerId)
     val x = event.getX(pointerIndex)
     val y = event.getY(pointerIndex)
@@ -183,49 +181,40 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
     lastTouchX = x
     lastTouchY = y
 
+    val floatWidth = width.toFloat()
+    val floatHeight = height.toFloat()
+
     val selection = selection
     when (selection) {
-      is Staff -> when (activeHandle) {
-        Handle.START -> {
-          selection.startY = clamp(selection.startY + dy, 0f, height.toFloat())
-          if (selection.flip()) {
-            activeHandle = Handle.END
-          }
-          invalidate()
+      is StaffSelection -> {
+        when (selection.activeHandle) {
+          Handle.START -> selection.startY = clamp(selection.startY + dy, 0f, floatHeight)
+          Handle.END -> selection.endY = clamp(selection.endY + dy, 0f, floatHeight)
         }
-        Handle.END -> {
-          selection.endY = clamp(selection.endY + dy, 0f, height.toFloat())
-          if (selection.flip()) {
-            activeHandle = Handle.START
-          }
-          invalidate()
+        if (selection.startY > selection.endY) {
+          selection.flip()
         }
-        Handle.NONE -> {}
       }
-      is Bar -> when (activeHandle) {
-        Handle.START -> {
-          selection.startX = clamp(selection.startX + dx, 0f, width.toFloat())
-          if (selection.flip()) {
-            activeHandle = Handle.END
-          }
-          invalidate()
+      is BarSelection -> {
+        when (selection.activeHandle) {
+          Handle.START -> selection.startX = clamp(selection.startX + dx, 0f, floatWidth)
+          Handle.END -> selection.endX = clamp(selection.endX + dx, 0f, floatWidth)
         }
-        Handle.END -> {
-          selection.endX = clamp(selection.endX + dx, 0f, width.toFloat())
-          if (selection.flip()) {
-            activeHandle = Handle.START
-          }
-          invalidate()
+        if (selection.startX > selection.endX) {
+          selection.flip()
         }
-        Handle.NONE -> {}
+      }
+      is BarLineSelection -> {
+        val lastStaff = sheet.pages.last().staves.last()
+        selection.x = clamp(selection.x + dx, lastStaff.barLines.last(), floatWidth)
       }
     }
-    return activeHandle != Handle.NONE
+    invalidate()
+    return true
   }
 
   fun onActionCancel(): Boolean {
     activePointerId = MotionEvent.INVALID_POINTER_ID
-    activeHandle = Handle.NONE
     return true
   }
 
@@ -240,16 +229,15 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
     return true
   }
 
-  fun drawSheet(canvas: Canvas, width: Float) {
+  fun drawSheet(canvas: Canvas) {
     val page = sheet.pages[sheet.pages.size - 1]
     for (staff in page.staves) {
       val startY = staff.startY
       val endY = staff.endY
-      drawHorizontal(canvas, startY, 0f, width, white)
-      drawHorizontal(canvas, endY, 0f, width, white)
-      for (bar in staff.bars) {
-        drawVertical(canvas, bar.startX, startY, endY, white)
-        drawVertical(canvas, bar.endX, startY, endY, white)
+      drawHorizontal(canvas, startY, 0f, width.toFloat(), white)
+      drawHorizontal(canvas, endY, 0f, width.toFloat(), white)
+      for (x in staff.barLines) {
+        drawVertical(canvas, x, startY, endY, white)
       }
     }
   }
@@ -258,14 +246,20 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
     val page = sheet.pages[sheet.pages.size - 1]
     val thisSelection = selection
     when (thisSelection) {
-      is Staff -> {
-        page.staves.add(thisSelection)
-        selection = suggestBar(sheet)
+      is StaffSelection -> {
+        selection = suggestFirstBar(sheet)
+        page.staves.add(Staff(thisSelection.startY, thisSelection.endY))
       }
-      is Bar -> {
+      is BarSelection -> {
         val staff = page.staves[page.staves.size - 1]
-        staff.bars.add(thisSelection)
-        selection = suggestBar(sheet)
+        staff.barLines.add(0, thisSelection.startX)
+        staff.barLines.add(1, thisSelection.endX)
+        selection = suggestBarLine(page, staff)
+      }
+      is BarLineSelection -> {
+        val staff = page.staves[page.staves.size - 1]
+        staff.barLines.add(thisSelection.x)
+        selection = suggestBarLine(page, staff)
       }
     }
     invalidate()
@@ -342,6 +336,22 @@ fun drawHorizontalDashed(canvas: Canvas, y: Float, startX: Float, endX: Float, p
   }
 }
 
+fun projectHorizontal(canvas: Canvas, initY: Float, period: Float, paint: Paint) {
+  var y = initY + period
+  while (y > 0 && y < canvas.height) {
+    drawHorizontalDashed(canvas, y, 0f, canvas.width.toFloat(), paint)
+    y += period
+  }
+}
+
+fun projectVertical(canvas: Canvas, initX: Float, period: Float, startY: Float, endY: Float, paint: Paint) {
+  var x = initX + period
+  while (x > 0 && x < canvas.width) {
+    drawVerticalDashed(canvas, x, startY, endY, paint)
+    x += period
+  }
+}
+
 fun drawVerticalDashed(canvas: Canvas, x: Float, startY: Float, endY: Float, paint: Paint) {
   var y = startY
   while (y < endY) {
@@ -357,6 +367,11 @@ fun makePaint(a: Int, r: Int, g: Int, b: Int): Paint {
   return paint
 }
 
-enum class Handle {
-  NONE, START, END
+fun fadePaint(period: Float): Paint {
+  return if (period > 4 * DASH_LENGTH) {
+    white
+  } else {
+    val alpha = 255 * (period - 2 * DASH_LENGTH) / (2 * DASH_LENGTH)
+    makePaint(alpha.toInt(), 255, 255, 255)
+  }
 }

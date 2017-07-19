@@ -14,90 +14,152 @@ class Page(val width: Int, val height: Int) {
   val staves = arrayListOf<Staff>()
 }
 
-sealed class Selection {
-  abstract fun flip(): Boolean
+sealed class Selection
+
+enum class Handle {
+  START, END
 }
 
-class Staff(var startY: Float, var endY: Float) : Selection() {
-  val bars = arrayListOf<Bar>()
+class StaffSelection(var startY: Float, var endY: Float) : Selection() {
+  var activeHandle = Handle.START
 
-  override fun flip(): Boolean {
-    if (startY > endY) {
-      val oldStartY = startY
-      startY = endY
-      endY = oldStartY
-      return true
-    }
-    return false
-  }
-}
-
-fun suggestStaff(sheet: Sheet): Staff {
-  var index = sheet.pages.size - 1
-  val lastPage = sheet.pages[index]
-  if (lastPage.staves.size > 1) {
-    val lastStaff = lastPage.staves[lastPage.staves.size - 1]
-    val penultimateStaff = lastPage.staves[lastPage.staves.size - 2]
-    val startY = lastStaff.endY + lastStaff.startY - penultimateStaff.endY
-    val size = lastStaff.endY - lastStaff.startY
-    return Staff(startY, startY + size)
-  } else if (lastPage.staves.size == 1) {
-    val staff = lastPage.staves[0]
-    return Staff(staff.endY, 2 * staff.endY - staff.startY)
-  }
-  while (sheet.pages[index].staves.size == 0) {
-    index -= 1
-    if (index == -1) {
-      return Staff(lastPage.height * DEFAULT_STAFF_START, lastPage.height * DEFAULT_STAFF_END)
+  fun flip() {
+    val temp = startY
+    startY = endY
+    endY = temp
+    activeHandle = when (activeHandle) {
+      Handle.START -> Handle.END
+      Handle.END -> Handle.START
     }
   }
-  val staff = sheet.pages[index].staves[0]
-  return Staff(staff.startY, staff.endY)
-}
 
-class Bar(var startX: Float, var endX: Float) : Selection() {
-  override fun flip(): Boolean {
-    if (startX > endX) {
-      val oldStartX = startX
-      startX = endX
-      endX = oldStartX
-      return true
+  fun preventOverflow(page: Page): StaffSelection {
+    if (endY > page.height) {
+      endY = page.height.toFloat()
     }
-    return false
+    if (startY > page.height) {
+      val lastStaff = page.staves[page.staves.size - 1]
+      startY = lastStaff.endY
+    }
+    return this
   }
 }
 
-fun suggestBar(sheet: Sheet): Bar {
-  var index = sheet.pages.size - 1
-  val lastPage = sheet.pages[index]
-  val lastStaff = lastPage.staves[lastPage.staves.size - 1]
-  if (lastStaff.bars.size > 1) {
-    val lastBar = lastStaff.bars[lastStaff.bars.size - 1]
-    val penultimateBar = lastStaff.bars[lastStaff.bars.size - 2]
-    val startX = lastBar.endX + lastBar.startX - penultimateBar.endX
-    val size = lastBar.endX - lastBar.startX
-    return Bar(startX, startX + size)
-  } else if (lastStaff.bars.size == 1) {
-    val lastBar = lastStaff.bars[lastStaff.bars.size - 1]
-    return Bar(lastBar.endX, 2 * lastBar.endX - lastBar.startX)
+fun suggestStaff(sheet: Sheet): StaffSelection {
+  val page = sheet.pages.last()
+  return when (page.staves.size) {
+    0 -> suggestFirstStaff(sheet)
+    1 -> suggestSecondStaff(sheet)
+    else -> suggestOtherStaff(page)
+  }
+}
+
+fun suggestFirstStaff(sheet: Sheet): StaffSelection {
+  val lastPage = sheet.pages[sheet.pages.size - 1]
+  return try {
+    val refPage = sheet.pages.last { it.staves.isNotEmpty() }
+    val firstStaff = refPage.staves[0]
+    StaffSelection(firstStaff.startY, firstStaff.endY).preventOverflow(lastPage)
+  } catch (e: NoSuchElementException) {
+    StaffSelection(lastPage.height * DEFAULT_STAFF_START, lastPage.height * DEFAULT_STAFF_END)
+  }
+}
+
+fun suggestSecondStaff(sheet: Sheet): StaffSelection {
+  val lastPage = sheet.pages[sheet.pages.size - 1]
+  val lastStaff = lastPage.staves.last()
+  val size = lastStaff.endY - lastStaff.startY
+  val delta = try {
+    val refPage = sheet.pages.last { it.staves.size > 1 }
+    refPage.staves[1].startY - refPage.staves[0].endY
+  } catch (e: NoSuchElementException) {
+    0f
+  }
+  return StaffSelection(lastStaff.endY + delta, lastStaff.endY + delta + size).preventOverflow(lastPage)
+}
+
+fun suggestOtherStaff(page: Page): StaffSelection {
+  val staffCount = page.staves.size
+  val lastStaff = page.staves[staffCount - 1]
+  val secondLastStaff = page.staves[staffCount - 2]
+  val size = lastStaff.endY - lastStaff.startY
+  val delta = lastStaff.startY - secondLastStaff.endY
+  return StaffSelection(lastStaff.endY + delta, lastStaff.endY + delta + size).preventOverflow(page)
+}
+
+fun suggestProjectedStaff(sheet: Sheet, selection: StaffSelection): Pair<Float, Float> {
+  val page = sheet.pages.last()
+  val size = selection.endY - selection.startY
+  val delta = if (page.staves.isEmpty()) {
+    try {
+      val refPage = sheet.pages.last { it.staves.size > 1 }
+      refPage.staves[1].startY - refPage.staves[0].endY
+    } catch (e: NoSuchElementException) {
+      0f
+    }
   } else {
-    val penultimateStaff = if (lastPage.staves.size > 1) {
-      lastPage.staves[lastPage.staves.size - 2]
-    } else {
-      if (index == 0) {
-        return Bar(lastPage.width * DEFAULT_BAR_START, lastPage.width * DEFAULT_BAR_END)
-      } else {
-        index -= 1
-      }
-      while (sheet.pages[index].staves.size == 0) {
-        index -= 1
-        if (index == -1) {
-          return Bar(lastPage.width * DEFAULT_BAR_START, lastPage.width * DEFAULT_BAR_END)
-        }
-      }
-      sheet.pages[index].staves[0]
-    }
-    val bar = penultimateStaff.bars[0]
-    return Bar(bar.startX, bar.endX)
+    val lastStaff = page.staves.last()
+    selection.startY - lastStaff.endY
   }
+  return Pair(size, delta)
+}
+
+class BarSelection(var startX: Float, var endX: Float) : Selection() {
+  var activeHandle = Handle.START
+
+  fun flip() {
+    val temp = startX
+    startX = endX
+    endX = temp
+    activeHandle = when (activeHandle) {
+      Handle.START -> Handle.END
+      Handle.END -> Handle.START
+    }
+  }
+
+  fun preventOverflow(page: Page): BarSelection {
+    if (endX > page.width) {
+      endX = page.width.toFloat()
+    }
+    return this
+  }
+}
+
+class BarLineSelection(var x: Float) : Selection() {
+  fun preventOverflow(page: Page): BarLineSelection {
+    if (x > page.width) {
+      x = page.width.toFloat()
+    }
+    return this
+  }
+}
+
+class Staff(var startY: Float, var endY: Float) {
+  val barLines = arrayListOf<Float>()
+}
+
+fun suggestFirstBar(sheet: Sheet): BarSelection {
+  val lastPage = sheet.pages.last()
+  return if (lastPage.staves.isNotEmpty()) {
+    suggestBarFromPage(lastPage).preventOverflow(lastPage)
+  } else {
+    try {
+      val refPage = sheet.pages.last { it.staves.isNotEmpty() }
+      suggestBarFromPage(refPage).preventOverflow(lastPage)
+    } catch (e: NoSuchElementException) {
+      BarSelection(lastPage.width * DEFAULT_BAR_START, lastPage.width * DEFAULT_BAR_END)
+    }
+  }
+}
+
+fun suggestBarFromPage(page: Page): BarSelection {
+  val barLines = page.staves.last().barLines
+  return BarSelection(barLines[0], barLines[1])
+}
+
+fun suggestBarLine(page: Page, staff: Staff): BarLineSelection {
+  val lineCount = staff.barLines.size
+  val lastBarLine = staff.barLines[lineCount - 1]
+  val secondLastBarLine = staff.barLines[lineCount - 2]
+  return BarLineSelection(2 * lastBarLine - secondLastBarLine).preventOverflow(page)
 }
