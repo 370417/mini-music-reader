@@ -1,18 +1,27 @@
 package io.github.as_f.barpager
 
+import io.realm.RealmList
+import io.realm.RealmObject
+
 const val DEFAULT_STAFF_START = 0.1f
-const val DEFAULT_STAFF_END = 0.25f
+const val DEFAULT_STAFF_END = 0.15f
 
 const val DEFAULT_BAR_START = 0.1f
 const val DEFAULT_BAR_END = 0.3f
 
-class Sheet {
-  val pages = arrayListOf<Page>()
+open class Sheet(var name: String, var uri: String, var bpm: Float) : RealmObject() {
+  var pages = RealmList<Page>()
 }
 
-class Page(val width: Int, val height: Int) {
-  val staves = arrayListOf<Staff>()
+open class Page(var width: Int, var height: Int) : RealmObject() {
+  var staves = RealmList<Staff>()
 }
+
+open class Staff(var startY: Float, var endY: Float) : RealmObject() {
+  var barLines = RealmList<BarLine>()
+}
+
+open class BarLine(var x: Float) : RealmObject()
 
 sealed class Selection
 
@@ -134,10 +143,6 @@ class BarLineSelection(var x: Float) : Selection() {
   }
 }
 
-class Staff(var startY: Float, var endY: Float) {
-  val barLines = arrayListOf<Float>()
-}
-
 fun suggestFirstBar(sheet: Sheet): BarSelection {
   val lastPage = sheet.pages.last()
   return if (lastPage.staves.isNotEmpty()) {
@@ -154,12 +159,12 @@ fun suggestFirstBar(sheet: Sheet): BarSelection {
 
 fun suggestBarFromPage(page: Page): BarSelection {
   val barLines = page.staves.last().barLines
-  return BarSelection(barLines[0], barLines[1])
+  return BarSelection(barLines[0].x, barLines[1].x)
 }
 
 fun suggestBarLine(page: Page, staff: Staff): BarLineSelection {
   val lineCount = staff.barLines.size
-  val lastBarLine = staff.barLines[lineCount - 1]
-  val secondLastBarLine = staff.barLines[lineCount - 2]
+  val lastBarLine = staff.barLines[lineCount - 1].x
+  val secondLastBarLine = staff.barLines[lineCount - 2].x
   return BarLineSelection(2 * lastBarLine - secondLastBarLine).preventOverflow(page)
 }

@@ -6,6 +6,7 @@ import android.graphics.Point
 import android.graphics.pdf.PdfRenderer
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import io.realm.Realm
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
@@ -53,7 +54,13 @@ class MainActivity : AppCompatActivity() {
           leftButtonText = LeftButtonText.SAVE_STAFF
           rightButtonText = if (onLastPage) RightButtonText.FINISH else RightButtonText.NEXT_PAGE
         }
-        RightButtonText.FINISH -> {}
+        RightButtonText.FINISH -> {
+          val realm = Realm.getDefaultInstance()
+          realm.beginTransaction()
+          realm.copyToRealm(preview_image.sheet)
+          realm.commitTransaction()
+          realm.close()
+        }
         RightButtonText.NEXT_PAGE -> {
           onLastPage = preview_image.nextPage()
           if (onLastPage) {
@@ -80,6 +87,7 @@ class MainActivity : AppCompatActivity() {
 
     if (requestCode == PICK_PDF_REQUEST && resultCode == Activity.RESULT_OK) {
       if (data?.data != null) {
+        preview_image.sheet.uri = data.data.toString()
         val pdfDescriptor = contentResolver.openFileDescriptor(data.data, "r")
         val renderer = PdfRenderer(pdfDescriptor)
         preview_image.renderer = renderer

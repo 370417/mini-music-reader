@@ -18,7 +18,7 @@ val white = makePaint(255, 255, 255, 255)
 
 class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(context, attrs) {
 
-  val sheet: Sheet = Sheet()
+  val sheet: Sheet = Sheet("", "", 0f)
   var selection: Selection = StaffSelection(0f, 0f)
 
   var renderer: PdfRenderer? = null
@@ -67,7 +67,7 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
           maskBarLineSelection(canvas, selection)
           drawSheet(canvas)
           val staff = sheet.pages.last().staves.last()
-          val period = selection.x - staff.barLines.last()
+          val period = selection.x - staff.barLines.last().x
           if (Math.abs(period) > 2 * DASH_LENGTH) {
             val paint = fadePaint(Math.abs(period))
             projectVertical(canvas, selection.x, period, staff.startY, staff.endY, paint)
@@ -97,7 +97,7 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
 
   fun maskBarLineSelection(canvas: Canvas, selection: BarLineSelection) {
     val lastStaff = sheet.pages.last().staves.last()
-    val startX = lastStaff.barLines.last()
+    val startX = lastStaff.barLines.last().x
     canvas.drawRect(0f, lastStaff.startY, startX, lastStaff.endY, black)
     canvas.drawRect(selection.x, lastStaff.startY, width.toFloat(), lastStaff.endY, black)
   }
@@ -206,7 +206,7 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
       }
       is BarLineSelection -> {
         val lastStaff = sheet.pages.last().staves.last()
-        selection.x = clamp(selection.x + dx, lastStaff.barLines.last(), floatWidth)
+        selection.x = clamp(selection.x + dx, lastStaff.barLines.last().x, floatWidth)
       }
     }
     invalidate()
@@ -236,8 +236,8 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
       val endY = staff.endY
       drawHorizontal(canvas, startY, 0f, width.toFloat(), white)
       drawHorizontal(canvas, endY, 0f, width.toFloat(), white)
-      for (x in staff.barLines) {
-        drawVertical(canvas, x, startY, endY, white)
+      for (barLine in staff.barLines) {
+        drawVertical(canvas, barLine.x, startY, endY, white)
       }
     }
   }
@@ -252,13 +252,13 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
       }
       is BarSelection -> {
         val staff = page.staves[page.staves.size - 1]
-        staff.barLines.add(0, thisSelection.startX)
-        staff.barLines.add(1, thisSelection.endX)
+        staff.barLines.add(0, BarLine(thisSelection.startX))
+        staff.barLines.add(1, BarLine(thisSelection.endX))
         selection = suggestBarLine(page, staff)
       }
       is BarLineSelection -> {
         val staff = page.staves[page.staves.size - 1]
-        staff.barLines.add(thisSelection.x)
+        staff.barLines.add(BarLine(thisSelection.x))
         selection = suggestBarLine(page, staff)
       }
     }
