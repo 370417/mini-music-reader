@@ -6,4 +6,11 @@
     <string name="next_staff">NEXT STAFF</string>
     <string name="save_staff">SAVE STAFF</string>
     <string name="save_bar">SAVE BAR</string>
+
+    <string name="sheet_name">Name</string>
+    <string name="sheet_bpm">Beats per minute</string>
+    <string name="sheet_bpb">Beats per bar</string>
+    <string name="action_continue">Continue</string>
+
+    <string name="new_sheet_label">New Sheet</string>
 </resources>

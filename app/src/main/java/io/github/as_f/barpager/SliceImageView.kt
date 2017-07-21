@@ -18,7 +18,7 @@ val white = makePaint(255, 255, 255, 255)
 
 class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(context, attrs) {
 
-  val sheet: Sheet = Sheet("", "", 0f)
+  val sheet: Sheet = Sheet()
   var selection: Selection = StaffSelection(0f, 0f)
 
   var renderer: PdfRenderer? = null

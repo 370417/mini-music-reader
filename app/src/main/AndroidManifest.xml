@@ -14,15 +14,21 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".MainActivity"
-            android:theme="@style/AppThemeDark">
+            android:name=".MeasureSheetActivity"
+            android:theme="@style/AppThemeDark"
+            android:parentActivityName=".MainActivity">
+        </activity>
+        <activity android:name=".NewSheetActivity"
+            android:label="@string/new_sheet_label"
+            android:parentActivityName=".MainActivity">
+        </activity>
+        <activity
+            android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-        </activity>
-        <activity android:name=".NewSheetActivity">
         </activity>
     </application>
 

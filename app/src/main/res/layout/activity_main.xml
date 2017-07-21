@@ -6,64 +6,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="io.github.as_f.barpager.MainActivity"
-    android:background="#000"
     >
-
-    <io.github.as_f.barpager.LockableScrollView
-        android:id="@+id/scroll_view"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        >
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            >
-            <io.github.as_f.barpager.SliceImageView
-                android:id="@+id/preview_image"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="#FFF"
-            />
-            <Button
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                style="?android:attr/borderlessButtonStyle"
-                />
-        </LinearLayout>
-    </io.github.as_f.barpager.LockableScrollView>
-
-    <LinearLayout
-        android:id="@+id/button_panel"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        >
-
-        <Button
-            android:id="@+id/left_button"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="@string/save_staff"
-            android:layout_weight="1"
-            style="?android:attr/borderlessButtonStyle"
-            />
-
-        <Button
-            android:id="@+id/right_button"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="@string/next_page"
-            android:layout_weight="1"
-            style="?android:attr/borderlessButtonStyle"
-            />
-
-    </LinearLayout>
 
 </android.support.constraint.ConstraintLayout>

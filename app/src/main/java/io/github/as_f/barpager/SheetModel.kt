@@ -10,18 +10,26 @@ const val DEFAULT_BAR_START = 0.1f
 const val DEFAULT_BAR_END = 0.3f
 
 open class Sheet(var name: String, var uri: String, var bpm: Float) : RealmObject() {
+  constructor() : this("", "", 0f)
+
   var pages = RealmList<Page>()
 }
 
 open class Page(var width: Int, var height: Int) : RealmObject() {
+  constructor() : this(0, 0)
+
   var staves = RealmList<Staff>()
 }
 
 open class Staff(var startY: Float, var endY: Float) : RealmObject() {
+  constructor() : this(0f, 0f)
+
   var barLines = RealmList<BarLine>()
 }
 
-open class BarLine(var x: Float) : RealmObject()
+open class BarLine(var x: Float) : RealmObject() {
+  constructor() : this(0f)
+}
 
 sealed class Selection
 
