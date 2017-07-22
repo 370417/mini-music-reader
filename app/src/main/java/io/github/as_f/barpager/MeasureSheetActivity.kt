@@ -1,17 +1,15 @@
 package io.github.as_f.barpager
 
-import android.app.Activity
-import android.content.Intent
 import android.graphics.Point
 import android.graphics.pdf.PdfRenderer
+import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
 import io.realm.Realm
 import kotlinx.android.synthetic.main.activity_measure_sheet.*
 
 class MeasureSheetActivity : AppCompatActivity() {
-
-  val PICK_PDF_REQUEST = 1
 
   var leftButtonText = LeftButtonText.SAVE_STAFF
     set(value) {
@@ -31,7 +29,20 @@ class MeasureSheetActivity : AppCompatActivity() {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_measure_sheet)
 
+    val navBarHeight = getNavBarHeight()
+    val statusBarHeight = getStatusBarHeight()
+
+    button_panel.setPadding(0, 0, 0, navBarHeight)
+    image_container.setPadding(0, statusBarHeight, 0, navBarHeight)
+
     preview_image.maxWidth = calcWidth()
+
+    val name = intent.getStringExtra(NAME_KEY)
+    val uri = intent.getStringExtra(URI_KEY)
+    val bpm = intent.getFloatExtra(BPM_KEY, 0f)
+    val bpb = intent.getIntExtra(BPB_KEY, 0)
+    preview_image.sheet = Sheet(name, uri, bpm, bpb)
+    loadPdf(uri)
 
     left_button.setOnClickListener {
       when (leftButtonText) {
@@ -69,33 +80,33 @@ class MeasureSheetActivity : AppCompatActivity() {
         }
       }
     }
-
-    pickPdf()
   }
 
-  fun pickPdf() {
-    val pickPdfIntent = Intent(Intent.ACTION_GET_CONTENT)
-    pickPdfIntent.type = "application/pdf"
-    pickPdfIntent.putExtra(Intent.EXTRA_LOCAL_ONLY, true)
-    if (pickPdfIntent.resolveActivity(packageManager) != null) {
-      startActivityForResult(pickPdfIntent, PICK_PDF_REQUEST)
+  private fun getNavBarHeight(): Int {
+    val resourceId = resources.getIdentifier("navigation_bar_height", "dimen", "android")
+    return if (resourceId > 0) {
+      resources.getDimensionPixelSize(resourceId)
+    } else {
+      0
     }
   }
 
-  override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-    super.onActivityResult(requestCode, resultCode, data)
+  private fun getStatusBarHeight(): Int {
+    val resourceId = resources.getIdentifier("status_bar_height", "dimen", "android")
+    return if (resourceId > 0) {
+      resources.getDimensionPixelSize(resourceId)
+    } else {
+      0
+    }
+  }
 
-    if (requestCode == PICK_PDF_REQUEST && resultCode == Activity.RESULT_OK) {
-      if (data?.data != null) {
-        preview_image.sheet.uri = data.data.toString()
-        val pdfDescriptor = contentResolver.openFileDescriptor(data.data, "r")
-        val renderer = PdfRenderer(pdfDescriptor)
-        preview_image.renderer = renderer
-        onLastPage = renderer.pageCount == 1
-        if (onLastPage) {
-          rightButtonText = RightButtonText.FINISH
-        }
-      }
+  private fun loadPdf(uri: String) {
+    val pdfDescriptor = contentResolver.openFileDescriptor(Uri.parse(uri), "r")
+    val renderer = PdfRenderer(pdfDescriptor)
+    preview_image.renderer = renderer
+    onLastPage = renderer.pageCount == 1
+    if (onLastPage) {
+      rightButtonText = RightButtonText.FINISH
     }
   }
 

@@ -9,8 +9,8 @@ const val DEFAULT_STAFF_END = 0.15f
 const val DEFAULT_BAR_START = 0.1f
 const val DEFAULT_BAR_END = 0.3f
 
-open class Sheet(var name: String, var uri: String, var bpm: Float) : RealmObject() {
-  constructor() : this("", "", 0f)
+open class Sheet(var name: String, var uri: String, var bpm: Float, var bpb: Int) : RealmObject() {
+  constructor() : this("", "", 0f, 0)
 
   var pages = RealmList<Page>()
 }

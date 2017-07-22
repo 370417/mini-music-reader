@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="io.github.as_f.barpager.MainActivity"
-    android:background="#000"
+    android:background="@android:color/black"
     >
 
     <io.github.as_f.barpager.LockableScrollView
@@ -19,6 +19,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         >
         <LinearLayout
+            android:id="@+id/image_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
@@ -27,7 +28,7 @@
                 android:id="@+id/preview_image"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="#FFF"
+                android:background="@android:color/white"
             />
             <Button
                 android:layout_width="match_parent"
