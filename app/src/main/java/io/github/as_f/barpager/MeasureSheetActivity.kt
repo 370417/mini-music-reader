@@ -5,12 +5,13 @@ import android.graphics.pdf.PdfRenderer
 import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
+import io.github.as_f.barpager.models.Sheet
 import io.realm.Realm
 import kotlinx.android.synthetic.main.activity_measure_sheet.*
 
 const val STATE_LAST_PAGE = "STATE_LAST_PAGE"
 const val STATE_SELECTION = "STATE_SELECTION"
+const val STATE_SHEET = "STATE_SHEET"
 
 class MeasureSheetActivity : AppCompatActivity() {
 
@@ -51,13 +52,11 @@ class MeasureSheetActivity : AppCompatActivity() {
       preview_image.sheet = Sheet(name, uri, bpm, bpb)
       loadPdf(uri)
     } else {
-      val uri = savedInstanceState.getString(STATE_URI)
-      val storedSheet = readFromRealm(uri)
-      if (storedSheet != null) {
-        preview_image.sheet = storedSheet
-      }
+      val sheet = savedInstanceState.getParcelable<Sheet>(STATE_SHEET)
+      preview_image.sheet = sheet
       onLastPage = savedInstanceState.getBoolean(STATE_LAST_PAGE)
       preview_image.selection = savedInstanceState.getParcelable(STATE_SELECTION)
+      loadPdf(sheet.uri)
     }
 
     left_button.setOnClickListener {
@@ -100,10 +99,9 @@ class MeasureSheetActivity : AppCompatActivity() {
   }
 
   override fun onSaveInstanceState(outState: Bundle?) {
-    writeToRealm(preview_image.sheet)
     outState?.putBoolean(STATE_LAST_PAGE, onLastPage)
     outState?.putParcelable(STATE_SELECTION, preview_image.selection)
-    outState?.putString(STATE_URI, preview_image.sheet.uri)
+    outState?.putParcelable(STATE_SHEET, preview_image.sheet)
 
     super.onSaveInstanceState(outState)
   }
@@ -155,7 +153,8 @@ class MeasureSheetActivity : AppCompatActivity() {
     if (onLastPage) {
       rightButtonText = RightButtonText.FINISH
     }
-    preview_image.renderPage(0)
+    val pageCount = preview_image.sheet.pages.size
+    preview_image.renderPage(if (pageCount == 0) 0 else pageCount - 1)
   }
 
   private fun calcWidth(): Int {

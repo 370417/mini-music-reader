@@ -2,9 +2,9 @@ package io.github.as_f.barpager
 
 import android.os.Parcel
 import android.os.Parcelable
-import io.realm.RealmList
-import io.realm.RealmObject
-import io.realm.annotations.PrimaryKey
+import io.github.as_f.barpager.models.Page
+import io.github.as_f.barpager.models.Sheet
+import io.github.as_f.barpager.models.Staff
 
 const val DEFAULT_STAFF_START = 0.1f
 const val DEFAULT_STAFF_END = 0.2f
@@ -18,21 +18,21 @@ const val DEFAULT_BAR_END = 0.3f
 //  var pages = RealmList<Page>()
 //}
 
-open class Page(var width: Int, var height: Int) : RealmObject() {
-  constructor() : this(0, 0)
+//open class Page(var width: Int, var height: Int) : RealmObject() {
+//  constructor() : this(0, 0)
+//
+//  var staves = RealmList<Staff>()
+//}
 
-  var staves = RealmList<Staff>()
-}
+//open class Staff(var startY: Float, var endY: Float) : RealmObject() {
+//  constructor() : this(0f, 0f)
+//
+//  var barLines = RealmList<BarLine>()
+//}
 
-open class Staff(var startY: Float, var endY: Float) : RealmObject() {
-  constructor() : this(0f, 0f)
-
-  var barLines = RealmList<BarLine>()
-}
-
-open class BarLine(var x: Float) : RealmObject() {
-  constructor() : this(0f)
-}
+//open class BarLine(var x: Float) : RealmObject() {
+//  constructor() : this(0f)
+//}
 
 sealed class Selection : Parcelable {
   override fun describeContents(): Int {

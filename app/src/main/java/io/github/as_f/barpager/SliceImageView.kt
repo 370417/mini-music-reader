@@ -9,6 +9,10 @@ import android.support.v4.content.ContextCompat
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.widget.ImageView
+import io.github.as_f.barpager.models.BarLine
+import io.github.as_f.barpager.models.Page
+import io.github.as_f.barpager.models.Sheet
+import io.github.as_f.barpager.models.Staff
 
 const val HANDLE_PADDING = 50
 const val DASH_LENGTH = 10
@@ -290,8 +294,10 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
       pageRenderer.close()
       setImageBitmap(bitmap)
 
-      sheet.pages.add(Page(scaledWidth, scaledHeight))
-      selection = suggestStaff(sheet)
+      if (sheet.pages.size == i) {
+        sheet.pages.add(Page(scaledWidth, scaledHeight))
+        selection = suggestStaff(sheet)
+      }
     }
   }
 
