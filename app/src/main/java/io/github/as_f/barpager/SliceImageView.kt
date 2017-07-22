@@ -9,13 +9,11 @@ import android.support.v4.content.ContextCompat
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.widget.ImageView
-import io.github.as_f.barpager.models.BarLine
-import io.github.as_f.barpager.models.Page
-import io.github.as_f.barpager.models.Sheet
-import io.github.as_f.barpager.models.Staff
+import io.github.as_f.barpager.models.*
 
 const val HANDLE_PADDING = 50
 const val DASH_LENGTH = 10
+const val MINIMUM_PROJECTION = 10f
 
 val black = makePaint(128, 0, 0, 0)
 val white = makePaint(255, 255, 255, 255)
@@ -36,72 +34,11 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
   override fun onDraw(canvas: Canvas?) {
     super.onDraw(canvas)
     if (canvas != null) {
-      val selection = selection
-      when (selection) {
-        is StaffSelection -> {
-          maskStaffSelection(canvas, selection)
-          drawSheet(canvas)
-          val (size, delta) = suggestProjectedStaff(sheet, selection)
-          val period = size + delta
-          if (Math.abs(period) > 2 * DASH_LENGTH) {
-            val paint = fadePaint(Math.abs(period))
-            projectHorizontal(canvas, selection.startY, period, paint)
-            projectHorizontal(canvas, selection.endY, period, paint)
-          }
-          drawHorizontal(canvas, selection.startY, 0f, width.toFloat(), accent)
-          drawHorizontal(canvas, selection.endY, 0f, width.toFloat(), accent)
-        }
-        is BarSelection -> {
-          maskLastStaff(canvas)
-          maskBarSelection(canvas, selection)
-          drawSheet(canvas)
-          val period = selection.endX - selection.startX
-          if (Math.abs(period) > 2 * DASH_LENGTH) {
-            val staff = sheet.pages.last().staves.last()
-            val paint = fadePaint(Math.abs(period))
-            projectVertical(canvas, selection.endX, period, staff.startY, staff.endY, paint)
-          }
-          drawVertical(canvas, selection.startX, 0f, height.toFloat(), accent)
-          drawVertical(canvas, selection.endX, 0f, height.toFloat(), accent)
-        }
-        is BarLineSelection -> {
-          maskLastStaff(canvas)
-          maskBarLineSelection(canvas, selection)
-          drawSheet(canvas)
-          val staff = sheet.pages.last().staves.last()
-          val period = selection.x - staff.barLines.last().x
-          if (Math.abs(period) > 2 * DASH_LENGTH) {
-            val paint = fadePaint(Math.abs(period))
-            projectVertical(canvas, selection.x, period, staff.startY, staff.endY, paint)
-          }
-          drawVertical(canvas, selection.x, 0f, height.toFloat(), accent)
-        }
-      }
+      selection.mask(canvas, sheet.pages.last())
+      drawSheet(canvas)
+      selection.project(canvas, sheet)
+      selection.drawHandles(canvas, sheet.pages.last(), accent)
     }
-  }
-
-  fun maskStaffSelection(canvas: Canvas, selection: StaffSelection) {
-    canvas.drawRect(0f, 0f, width.toFloat(), selection.startY, black)
-    canvas.drawRect(0f, selection.endY, width.toFloat(), height.toFloat(), black)
-  }
-
-  fun maskLastStaff(canvas: Canvas) {
-    val lastStaff = sheet.pages.last().staves.last()
-    canvas.drawRect(0f, 0f, width.toFloat(), lastStaff.startY, black)
-    canvas.drawRect(0f, lastStaff.endY, width.toFloat(), height.toFloat(), black)
-  }
-
-  fun maskBarSelection(canvas: Canvas, selection: BarSelection) {
-    val lastStaff = sheet.pages.last().staves.last()
-    canvas.drawRect(0f, lastStaff.startY, selection.startX, lastStaff.endY, black)
-    canvas.drawRect(selection.endX, lastStaff.startY, width.toFloat(), lastStaff.endY, black)
-  }
-
-  fun maskBarLineSelection(canvas: Canvas, selection: BarLineSelection) {
-    val lastStaff = sheet.pages.last().staves.last()
-    val startX = lastStaff.barLines.last().x
-    canvas.drawRect(0f, lastStaff.startY, startX, lastStaff.endY, black)
-    canvas.drawRect(selection.x, lastStaff.startY, width.toFloat(), lastStaff.endY, black)
   }
 
   override fun onTouchEvent(event: MotionEvent?): Boolean {
@@ -183,34 +120,7 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
     lastTouchX = x
     lastTouchY = y
 
-    val floatWidth = width.toFloat()
-    val floatHeight = height.toFloat()
-
-    val selection = selection
-    when (selection) {
-      is StaffSelection -> {
-        when (selection.activeHandle) {
-          Handle.START -> selection.startY = clamp(selection.startY + dy, 0f, floatHeight)
-          Handle.END -> selection.endY = clamp(selection.endY + dy, 0f, floatHeight)
-        }
-        if (selection.startY > selection.endY) {
-          selection.flip()
-        }
-      }
-      is BarSelection -> {
-        when (selection.activeHandle) {
-          Handle.START -> selection.startX = clamp(selection.startX + dx, 0f, floatWidth)
-          Handle.END -> selection.endX = clamp(selection.endX + dx, 0f, floatWidth)
-        }
-        if (selection.startX > selection.endX) {
-          selection.flip()
-        }
-      }
-      is BarLineSelection -> {
-        val lastStaff = sheet.pages.last().staves.last()
-        selection.x = clamp(selection.x + dx, lastStaff.barLines.last().x, floatWidth)
-      }
-    }
+    selection.move(sheet.pages.last(), dx, dy, width.toFloat(), height.toFloat())
     invalidate()
     return true
   }
@@ -378,10 +288,10 @@ fun makePaint(a: Int, r: Int, g: Int, b: Int): Paint {
 }
 
 fun fadePaint(period: Float): Paint {
-  return if (period > 4 * DASH_LENGTH) {
+  return if (period > 2 * MINIMUM_PROJECTION) {
     white
   } else {
-    val alpha = 255 * (period - 2 * DASH_LENGTH) / (2 * DASH_LENGTH)
+    val alpha = 255 * (period - MINIMUM_PROJECTION) / (MINIMUM_PROJECTION)
     makePaint(alpha.toInt(), 255, 255, 255)
   }
 }
