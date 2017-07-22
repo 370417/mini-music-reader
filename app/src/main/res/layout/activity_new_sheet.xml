@@ -30,6 +30,7 @@
             android:id="@+id/name_input_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            app:errorEnabled="true"
             >
             <EditText
                 android:id="@+id/name_input_field"
@@ -44,6 +45,7 @@
             android:id="@+id/bpm_input_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            app:errorEnabled="true"
             >
             <EditText
                 android:id="@+id/bpm_input_field"
@@ -59,6 +61,7 @@
             android:id="@+id/bpb_input_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            app:errorEnabled="true"
             >
             <EditText
                 android:id="@+id/bpb_input_field"

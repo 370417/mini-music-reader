@@ -7,10 +7,13 @@
     <string name="save_staff">SAVE STAFF</string>
     <string name="save_bar">SAVE BAR</string>
 
+    <string name="new_sheet_label">New Sheet</string>
     <string name="sheet_name">Name</string>
     <string name="sheet_bpm">Beats per minute</string>
     <string name="sheet_bpb">Beats per bar</string>
     <string name="action_continue">Continue</string>
-
-    <string name="new_sheet_label">New Sheet</string>
+    <string name="error_required_field">Error: This field is required</string>
+    <string name="error_non_zero">Error: Must be non-zero</string>
+    <string name="error_not_int">Error: Must be a whole number</string>
+    <string name="error_not_float">Error: Must be a number</string>
 </resources>

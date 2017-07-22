@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.pdf.PdfRenderer
+import android.support.v4.content.ContextCompat
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.widget.ImageView
@@ -12,20 +13,17 @@ import android.widget.ImageView
 const val HANDLE_PADDING = 50
 const val DASH_LENGTH = 10
 
-val red = makePaint(255, 255, 0, 0)
 val black = makePaint(128, 0, 0, 0)
 val white = makePaint(255, 255, 255, 255)
 
 class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(context, attrs) {
 
+  val accent = getAccentPaint()
+
   var sheet: Sheet = Sheet()
   var selection: Selection = StaffSelection(0f, 0f)
 
   var renderer: PdfRenderer? = null
-    set(value) {
-      field = value
-      renderPage(0)
-    }
 
   var activePointerId = MotionEvent.INVALID_POINTER_ID
   var lastTouchX = 0f
@@ -46,8 +44,8 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
             projectHorizontal(canvas, selection.startY, period, paint)
             projectHorizontal(canvas, selection.endY, period, paint)
           }
-          drawHorizontal(canvas, selection.startY, 0f, width.toFloat(), red)
-          drawHorizontal(canvas, selection.endY, 0f, width.toFloat(), red)
+          drawHorizontal(canvas, selection.startY, 0f, width.toFloat(), accent)
+          drawHorizontal(canvas, selection.endY, 0f, width.toFloat(), accent)
         }
         is BarSelection -> {
           maskLastStaff(canvas)
@@ -59,8 +57,8 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
             val paint = fadePaint(Math.abs(period))
             projectVertical(canvas, selection.endX, period, staff.startY, staff.endY, paint)
           }
-          drawVertical(canvas, selection.startX, 0f, height.toFloat(), red)
-          drawVertical(canvas, selection.endX, 0f, height.toFloat(), red)
+          drawVertical(canvas, selection.startX, 0f, height.toFloat(), accent)
+          drawVertical(canvas, selection.endX, 0f, height.toFloat(), accent)
         }
         is BarLineSelection -> {
           maskLastStaff(canvas)
@@ -72,7 +70,7 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
             val paint = fadePaint(Math.abs(period))
             projectVertical(canvas, selection.x, period, staff.startY, staff.endY, paint)
           }
-          drawVertical(canvas, selection.x, 0f, height.toFloat(), red)
+          drawVertical(canvas, selection.x, 0f, height.toFloat(), accent)
         }
       }
     }
@@ -299,6 +297,12 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
 
   private fun pointsToPixels(pixels: Int): Int {
     return resources.displayMetrics.densityDpi * pixels / 72
+  }
+
+  private fun getAccentPaint(): Paint {
+    val paint = Paint()
+    paint.color = ContextCompat.getColor(context, R.color.colorAccent)
+    return paint
   }
 
 }

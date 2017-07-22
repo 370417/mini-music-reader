@@ -1,19 +1,22 @@
 package io.github.as_f.barpager
 
+import android.os.Parcel
+import android.os.Parcelable
 import io.realm.RealmList
 import io.realm.RealmObject
+import io.realm.annotations.PrimaryKey
 
 const val DEFAULT_STAFF_START = 0.1f
-const val DEFAULT_STAFF_END = 0.15f
+const val DEFAULT_STAFF_END = 0.2f
 
 const val DEFAULT_BAR_START = 0.1f
 const val DEFAULT_BAR_END = 0.3f
 
-open class Sheet(var name: String, var uri: String, var bpm: Float, var bpb: Int) : RealmObject() {
-  constructor() : this("", "", 0f, 0)
-
-  var pages = RealmList<Page>()
-}
+//open class Sheet(var name: String, @PrimaryKey var uri: String, var bpm: Float, var bpb: Int) : RealmObject() {
+//  constructor() : this("", "", 0f, 0)
+//
+//  var pages = RealmList<Page>()
+//}
 
 open class Page(var width: Int, var height: Int) : RealmObject() {
   constructor() : this(0, 0)
@@ -31,7 +34,11 @@ open class BarLine(var x: Float) : RealmObject() {
   constructor() : this(0f)
 }
 
-sealed class Selection
+sealed class Selection : Parcelable {
+  override fun describeContents(): Int {
+    return 0
+  }
+}
 
 enum class Handle {
   START, END
@@ -59,6 +66,21 @@ class StaffSelection(var startY: Float, var endY: Float) : Selection() {
       startY = lastStaff.endY
     }
     return this
+  }
+
+  override fun writeToParcel(output: Parcel?, flags: Int) {
+    output?.writeFloat(startY)
+    output?.writeFloat(endY)
+  }
+
+  companion object CREATOR : Parcelable.Creator<StaffSelection> {
+    override fun createFromParcel(parcel: Parcel): StaffSelection {
+      return StaffSelection(parcel.readFloat(), parcel.readFloat())
+    }
+
+    override fun newArray(size: Int): Array<StaffSelection?> {
+      return arrayOfNulls(size)
+    }
   }
 }
 
@@ -140,6 +162,21 @@ class BarSelection(var startX: Float, var endX: Float) : Selection() {
     }
     return this
   }
+
+  override fun writeToParcel(output: Parcel?, flags: Int) {
+    output?.writeFloat(startX)
+    output?.writeFloat(endX)
+  }
+
+  companion object CREATOR : Parcelable.Creator<BarSelection> {
+    override fun createFromParcel(parcel: Parcel): BarSelection {
+      return BarSelection(parcel.readFloat(), parcel.readFloat())
+    }
+
+    override fun newArray(size: Int): Array<BarSelection?> {
+      return arrayOfNulls(size)
+    }
+  }
 }
 
 class BarLineSelection(var x: Float) : Selection() {
@@ -148,6 +185,20 @@ class BarLineSelection(var x: Float) : Selection() {
       x = page.width.toFloat()
     }
     return this
+  }
+
+  override fun writeToParcel(output: Parcel?, flags: Int) {
+    output?.writeFloat(x)
+  }
+
+  companion object CREATOR : Parcelable.Creator<BarLineSelection> {
+    override fun createFromParcel(parcel: Parcel): BarLineSelection {
+      return BarLineSelection(parcel.readFloat())
+    }
+
+    override fun newArray(size: Int): Array<BarLineSelection?> {
+      return arrayOfNulls(size)
+    }
   }
 }
 

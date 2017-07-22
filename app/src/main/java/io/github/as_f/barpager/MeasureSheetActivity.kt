@@ -5,11 +5,16 @@ import android.graphics.pdf.PdfRenderer
 import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import android.view.View
+import android.util.Log
 import io.realm.Realm
 import kotlinx.android.synthetic.main.activity_measure_sheet.*
 
+const val STATE_LAST_PAGE = "STATE_LAST_PAGE"
+const val STATE_SELECTION = "STATE_SELECTION"
+
 class MeasureSheetActivity : AppCompatActivity() {
+
+  private lateinit var realm: Realm
 
   var leftButtonText = LeftButtonText.SAVE_STAFF
     set(value) {
@@ -27,6 +32,7 @@ class MeasureSheetActivity : AppCompatActivity() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+    realm = Realm.getDefaultInstance()
     setContentView(R.layout.activity_measure_sheet)
 
     val navBarHeight = getNavBarHeight()
@@ -37,12 +43,22 @@ class MeasureSheetActivity : AppCompatActivity() {
 
     preview_image.maxWidth = calcWidth()
 
-    val name = intent.getStringExtra(NAME_KEY)
-    val uri = intent.getStringExtra(URI_KEY)
-    val bpm = intent.getFloatExtra(BPM_KEY, 0f)
-    val bpb = intent.getIntExtra(BPB_KEY, 0)
-    preview_image.sheet = Sheet(name, uri, bpm, bpb)
-    loadPdf(uri)
+    if (savedInstanceState == null) {
+      val name = intent.getStringExtra(NAME_KEY)
+      val uri = intent.getStringExtra(URI_KEY)
+      val bpm = intent.getFloatExtra(BPM_KEY, 0f)
+      val bpb = intent.getIntExtra(BPB_KEY, 0)
+      preview_image.sheet = Sheet(name, uri, bpm, bpb)
+      loadPdf(uri)
+    } else {
+      val uri = savedInstanceState.getString(STATE_URI)
+      val storedSheet = readFromRealm(uri)
+      if (storedSheet != null) {
+        preview_image.sheet = storedSheet
+      }
+      onLastPage = savedInstanceState.getBoolean(STATE_LAST_PAGE)
+      preview_image.selection = savedInstanceState.getParcelable(STATE_SELECTION)
+    }
 
     left_button.setOnClickListener {
       when (leftButtonText) {
@@ -66,11 +82,7 @@ class MeasureSheetActivity : AppCompatActivity() {
           rightButtonText = if (onLastPage) RightButtonText.FINISH else RightButtonText.NEXT_PAGE
         }
         RightButtonText.FINISH -> {
-          val realm = Realm.getDefaultInstance()
-          realm.beginTransaction()
-          realm.copyToRealm(preview_image.sheet)
-          realm.commitTransaction()
-          realm.close()
+          writeToRealm(preview_image.sheet)
         }
         RightButtonText.NEXT_PAGE -> {
           onLastPage = preview_image.nextPage()
@@ -80,6 +92,41 @@ class MeasureSheetActivity : AppCompatActivity() {
         }
       }
     }
+  }
+
+  override fun onDestroy() {
+    super.onDestroy()
+    realm.close()
+  }
+
+  override fun onSaveInstanceState(outState: Bundle?) {
+    writeToRealm(preview_image.sheet)
+    outState?.putBoolean(STATE_LAST_PAGE, onLastPage)
+    outState?.putParcelable(STATE_SELECTION, preview_image.selection)
+    outState?.putString(STATE_URI, preview_image.sheet.uri)
+
+    super.onSaveInstanceState(outState)
+  }
+
+  private fun writeToRealm(sheet: Sheet) {
+    realm.executeTransaction {
+      realm.copyToRealmOrUpdate(sheet)
+    }
+  }
+
+  private fun readFromRealm(uri: String): Sheet? {
+    var unmanagedSheet: Sheet? = null
+    realm.executeTransaction {
+      val sheet = realm.where(Sheet::class.java)
+          .equalTo("uri", uri)
+          .findFirst()
+      unmanagedSheet = if (sheet.isManaged) {
+        realm.copyFromRealm(sheet)
+      } else {
+        sheet
+      }
+    }
+    return unmanagedSheet
   }
 
   private fun getNavBarHeight(): Int {
@@ -108,6 +155,7 @@ class MeasureSheetActivity : AppCompatActivity() {
     if (onLastPage) {
       rightButtonText = RightButtonText.FINISH
     }
+    preview_image.renderPage(0)
   }
 
   private fun calcWidth(): Int {
