@@ -36,11 +36,7 @@ class MeasureSheetActivity : AppCompatActivity() {
     realm = Realm.getDefaultInstance()
     setContentView(R.layout.activity_measure_sheet)
 
-    val navBarHeight = getNavBarHeight()
-    val statusBarHeight = getStatusBarHeight()
-
-    button_panel.setPadding(0, 0, 0, navBarHeight)
-    image_container.setPadding(0, statusBarHeight, 0, navBarHeight)
+    setPadding()
 
     preview_image.maxWidth = calcWidth()
 
@@ -95,6 +91,15 @@ class MeasureSheetActivity : AppCompatActivity() {
     outState?.putParcelable(STATE_SHEET, preview_image.sheet)
 
     super.onSaveInstanceState(outState)
+  }
+
+  private fun setPadding() {
+    val isLandscape = resources.getBoolean(R.bool.is_landscape)
+    val navBarHeight = if (isLandscape) 0 else getNavBarHeight()
+    val statusBarHeight = getStatusBarHeight()
+
+    button_panel.setPadding(0, 0, 0, navBarHeight)
+    image_container.setPadding(0, statusBarHeight, 0, navBarHeight)
   }
 
   private fun createState() {
@@ -184,10 +189,6 @@ class MeasureSheetActivity : AppCompatActivity() {
     val size = Point()
     windowManager.defaultDisplay.getSize(size)
     return size.x
-  }
-
-  private fun getOrientation() {
-
   }
 }
 
