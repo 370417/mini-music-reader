@@ -4,6 +4,8 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.os.Parcel
 import android.os.Parcelable
+import android.view.MotionEvent
+import io.github.as_f.barpager.models.BarLine
 import io.github.as_f.barpager.models.Page
 import io.github.as_f.barpager.models.Sheet
 import io.github.as_f.barpager.models.Staff
@@ -21,11 +23,15 @@ sealed class Selection : Parcelable {
 
   abstract fun move(page: Page, dx: Float, dy: Float, width: Float, height: Float)
 
+  abstract fun handleTouched(event: MotionEvent): Boolean
+
   abstract fun mask(canvas: Canvas, page: Page)
 
   abstract fun project(canvas: Canvas, sheet: Sheet)
 
   abstract fun drawHandles(canvas: Canvas, page: Page, paint: Paint)
+
+  abstract fun save(sheet: Sheet): Selection
 }
 
 enum class Handle {
@@ -42,6 +48,18 @@ class StaffSelection(var startY: Float, var endY: Float) : Selection() {
     }
     if (startY > endY) {
       flip()
+    }
+  }
+
+  override fun handleTouched(event: MotionEvent): Boolean {
+    return if (nearLine(event.y, startY)) {
+      activeHandle = Handle.START
+      true
+    } else if (nearLine(event.y, endY)) {
+      activeHandle = Handle.END
+      true
+    } else {
+      false
     }
   }
 
@@ -62,6 +80,12 @@ class StaffSelection(var startY: Float, var endY: Float) : Selection() {
   override fun drawHandles(canvas: Canvas, page: Page, paint: Paint) {
     drawHorizontal(canvas, startY, 0f, page.width.toFloat(), paint)
     drawHorizontal(canvas, endY, 0f, page.width.toFloat(), paint)
+  }
+
+  override fun save(sheet: Sheet): Selection {
+    val newSelection = suggestFirstBar(sheet)
+    sheet.pages.last().staves.add(Staff(startY, endY))
+    return newSelection
   }
 
   fun flip() {
@@ -114,6 +138,18 @@ class BarSelection(var startX: Float, var endX: Float) : Selection() {
     }
   }
 
+  override fun handleTouched(event: MotionEvent): Boolean {
+    return if (nearLine(event.x, startX)) {
+      activeHandle = Handle.START
+      true
+    } else if (nearLine(event.x, endX)) {
+      activeHandle = Handle.END
+      true
+    } else {
+      false
+    }
+  }
+
   override fun mask(canvas: Canvas, page: Page) {
     val lastStaff = page.staves.last()
     maskStaff(canvas, lastStaff.startY, lastStaff.endY, page)
@@ -133,6 +169,14 @@ class BarSelection(var startX: Float, var endX: Float) : Selection() {
   override fun drawHandles(canvas: Canvas, page: Page, paint: Paint) {
     drawVertical(canvas, startX, 0f, page.height.toFloat(), paint)
     drawVertical(canvas, endX, 0f, page.height.toFloat(), paint)
+  }
+
+  override fun save(sheet: Sheet): Selection {
+    val lastPage = sheet.pages.last()
+    val lastStaff = lastPage.staves.last()
+    lastStaff.barLines.add(BarLine(startX))
+    lastStaff.barLines.add(BarLine(endX))
+    return suggestBarLine(lastPage, lastStaff)
   }
 
   fun flip() {
@@ -174,6 +218,10 @@ class BarLineSelection(var x: Float) : Selection() {
     x = clamp(x + dx, lastStaff.barLines.last().x, width)
   }
 
+  override fun handleTouched(event: MotionEvent): Boolean {
+    return nearLine(event.x, x)
+  }
+
   override fun mask(canvas: Canvas, page: Page) {
     val lastStaff = page.staves.last()
     maskStaff(canvas, lastStaff.startY, lastStaff.endY, page)
@@ -193,6 +241,13 @@ class BarLineSelection(var x: Float) : Selection() {
 
   override fun drawHandles(canvas: Canvas, page: Page, paint: Paint) {
     drawVertical(canvas, x, 0f, page.height.toFloat(), paint)
+  }
+
+  override fun save(sheet: Sheet): Selection {
+    val lastPage = sheet.pages.last()
+    val lastStaff = lastPage.staves.last()
+    lastStaff.barLines.add(BarLine(x))
+    return suggestBarLine(lastPage, lastStaff)
   }
 
   fun clipOverflow(page: Page): BarLineSelection {

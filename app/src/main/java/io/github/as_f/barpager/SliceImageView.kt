@@ -52,58 +52,14 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
   }
 
   fun onActionDown(event: MotionEvent): Boolean {
-    val selection = selection
-    when (selection) {
-      is StaffSelection -> {
-        val activeHandle = pickStaffHandle(selection, event.y)
-        if (activeHandle != null) {
-          selection.activeHandle = activeHandle
-          updatePointer(event)
-          return true
-        }
-      }
-      is BarSelection -> {
-        val activeHandle = pickBarHandle(selection, event.x)
-        if (activeHandle != null) {
-          selection.activeHandle = activeHandle
-          updatePointer(event)
-          return true
-        }
-      }
-      is BarLineSelection -> {
-        if (nearLine(event.x, selection.x)) {
-          updatePointer(event)
-          return true
-        }
-      }
-    }
-    activePointerId = MotionEvent.INVALID_POINTER_ID
-    return false
-  }
-
-  fun updatePointer(event: MotionEvent) {
-    lastTouchX = event.x
-    lastTouchY = event.y
-    activePointerId = event.getPointerId(event.actionIndex)
-  }
-
-  fun pickStaffHandle(selection: StaffSelection, y: Float): Handle? {
-    return if (nearLine(y, selection.startY)) {
-      Handle.START
-    } else if (nearLine(y, selection.endY)) {
-      Handle.END
+    return if (selection.handleTouched(event)) {
+      lastTouchX = event.x
+      lastTouchY = event.y
+      activePointerId = event.getPointerId(event.actionIndex)
+      true
     } else {
-      null
-    }
-  }
-
-  fun pickBarHandle(selection: BarSelection, x: Float): Handle? {
-    return if (nearLine(x, selection.startX)) {
-      Handle.START
-    } else if (nearLine(x, selection.endX)) {
-      Handle.END
-    } else {
-      null
+      activePointerId = MotionEvent.INVALID_POINTER_ID
+      false
     }
   }
 
@@ -155,25 +111,7 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
   }
 
   fun saveSelection() {
-    val page = sheet.pages[sheet.pages.size - 1]
-    val thisSelection = selection
-    when (thisSelection) {
-      is StaffSelection -> {
-        selection = suggestFirstBar(sheet)
-        page.staves.add(Staff(thisSelection.startY, thisSelection.endY))
-      }
-      is BarSelection -> {
-        val staff = page.staves[page.staves.size - 1]
-        staff.barLines.add(0, BarLine(thisSelection.startX))
-        staff.barLines.add(1, BarLine(thisSelection.endX))
-        selection = suggestBarLine(page, staff)
-      }
-      is BarLineSelection -> {
-        val staff = page.staves[page.staves.size - 1]
-        staff.barLines.add(BarLine(thisSelection.x))
-        selection = suggestBarLine(page, staff)
-      }
-    }
+    selection = selection.save(sheet)
     invalidate()
   }
 
