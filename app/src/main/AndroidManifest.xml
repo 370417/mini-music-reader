@@ -6,7 +6,7 @@
     <uses-permission android:name="com.google.android.apps.photos.permission.GOOGLE_PHOTOS"/>
 
     <application
-        android:name="com.albertford.autoflip.AutoFlip"
+        android:name=".AutoFlip"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
