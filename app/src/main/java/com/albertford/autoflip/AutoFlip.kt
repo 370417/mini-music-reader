@@ -1,9 +1,9 @@
-package io.github.as_f.barpager
+package com.albertford.autoflip
 
 import android.app.Application
 import io.realm.Realm
 
-class BarPager : Application() {
+class AutoFlip : Application() {
   override fun onCreate() {
     super.onCreate()
     Realm.init(this)

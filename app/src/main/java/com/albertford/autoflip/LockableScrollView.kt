@@ -1,4 +1,4 @@
-package io.github.as_f.barpager
+package com.albertford.autoflip
 
 import android.content.Context
 import android.support.v4.widget.NestedScrollView

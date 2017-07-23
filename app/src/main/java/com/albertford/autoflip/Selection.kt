@@ -1,13 +1,13 @@
-package io.github.as_f.barpager
+package com.albertford.autoflip
 
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.os.Parcel
 import android.os.Parcelable
-import io.github.as_f.barpager.models.BarLine
-import io.github.as_f.barpager.models.Page
-import io.github.as_f.barpager.models.Sheet
-import io.github.as_f.barpager.models.Staff
+import com.albertford.autoflip.models.BarLine
+import com.albertford.autoflip.models.Page
+import com.albertford.autoflip.models.Sheet
+import com.albertford.autoflip.models.Staff
 
 const val DEFAULT_STAFF_START = 0.1f
 const val DEFAULT_STAFF_END = 0.2f

@@ -9,7 +9,7 @@
     android:background="@android:color/black"
     >
 
-    <io.github.as_f.barpager.LockableScrollView
+    <com.albertford.autoflip.LockableScrollView
         android:id="@+id/scroll_view"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -24,7 +24,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             >
-            <io.github.as_f.barpager.SliceImageView
+            <com.albertford.autoflip.SliceImageView
                 android:id="@+id/preview_image"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -36,7 +36,7 @@
                 style="?android:attr/borderlessButtonStyle"
                 />
         </LinearLayout>
-    </io.github.as_f.barpager.LockableScrollView>
+    </com.albertford.autoflip.LockableScrollView>
 
     <LinearLayout
         android:id="@+id/button_panel"

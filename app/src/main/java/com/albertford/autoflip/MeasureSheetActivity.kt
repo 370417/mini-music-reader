@@ -1,11 +1,11 @@
-package io.github.as_f.barpager
+package com.albertford.autoflip
 
 import android.graphics.Point
 import android.graphics.pdf.PdfRenderer
 import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import io.github.as_f.barpager.models.Sheet
+import com.albertford.autoflip.models.Sheet
 import io.realm.Realm
 import kotlinx.android.synthetic.main.activity_measure_sheet.*
 

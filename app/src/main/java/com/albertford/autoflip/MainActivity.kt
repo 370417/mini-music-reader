@@ -1,4 +1,4 @@
-package io.github.as_f.barpager
+package com.albertford.autoflip
 
 import android.content.Intent
 import android.support.v7.app.AppCompatActivity

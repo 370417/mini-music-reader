@@ -1,4 +1,4 @@
-package io.github.as_f.barpager
+package com.albertford.autoflip
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -9,7 +9,7 @@ import android.support.v4.content.ContextCompat
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.widget.ImageView
-import io.github.as_f.barpager.models.*
+import com.albertford.autoflip.models.*
 
 const val HANDLE_PADDING = 50
 const val DASH_LENGTH = 10

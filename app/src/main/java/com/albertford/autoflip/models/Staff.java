@@ -1,4 +1,4 @@
-package io.github.as_f.barpager.models;
+package com.albertford.autoflip.models;
 
 import android.os.Parcel;
 import android.os.Parcelable;
