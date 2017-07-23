@@ -44,19 +44,10 @@ class MeasureSheetActivity : AppCompatActivity() {
 
     preview_image.maxWidth = calcWidth()
 
-    if (savedInstanceState == null) {
-      val name = intent.getStringExtra(NAME_KEY)
-      val uri = intent.getStringExtra(URI_KEY)
-      val bpm = intent.getFloatExtra(BPM_KEY, 0f)
-      val bpb = intent.getIntExtra(BPB_KEY, 0)
-      preview_image.sheet = Sheet(name, uri, bpm, bpb)
-      loadPdf(uri)
+    if (savedInstanceState != null) {
+      restoreState(savedInstanceState)
     } else {
-      val sheet = savedInstanceState.getParcelable<Sheet>(STATE_SHEET)
-      preview_image.sheet = sheet
-      onLastPage = savedInstanceState.getBoolean(STATE_LAST_PAGE)
-      preview_image.selection = savedInstanceState.getParcelable(STATE_SELECTION)
-      loadPdf(sheet.uri)
+      createState()
     }
 
     left_button.setOnClickListener {
@@ -104,6 +95,38 @@ class MeasureSheetActivity : AppCompatActivity() {
     outState?.putParcelable(STATE_SHEET, preview_image.sheet)
 
     super.onSaveInstanceState(outState)
+  }
+
+  private fun createState() {
+    val name = intent.getStringExtra(NAME_KEY)
+    val uri = intent.getStringExtra(URI_KEY)
+    val bpm = intent.getFloatExtra(BPM_KEY, 0f)
+    val bpb = intent.getIntExtra(BPB_KEY, 0)
+    preview_image.sheet = Sheet(name, uri, bpm, bpb)
+    loadPdf(uri)
+  }
+
+  private fun restoreState(savedInstanceState: Bundle) {
+    val sheet = savedInstanceState.getParcelable<Sheet>(STATE_SHEET)
+    preview_image.sheet = sheet
+    onLastPage = savedInstanceState.getBoolean(STATE_LAST_PAGE)
+    preview_image.selection = savedInstanceState.getParcelable(STATE_SELECTION)
+    loadPdf(sheet.uri)
+    when (preview_image.selection) {
+      is StaffSelection -> {
+        leftButtonText = LeftButtonText.SAVE_STAFF
+        rightButtonText = if (onLastPage) RightButtonText.FINISH else RightButtonText.NEXT_PAGE
+      }
+      is BarSelection -> {
+        leftButtonText = LeftButtonText.SAVE_BAR
+        rightButtonText = RightButtonText.NEXT_STAFF
+        right_button.isEnabled = false
+      }
+      is BarLineSelection -> {
+        leftButtonText = LeftButtonText.SAVE_BAR
+        rightButtonText = RightButtonText.NEXT_STAFF
+      }
+    }
   }
 
   private fun writeToRealm(sheet: Sheet) {
@@ -161,6 +184,10 @@ class MeasureSheetActivity : AppCompatActivity() {
     val size = Point()
     windowManager.defaultDisplay.getSize(size)
     return size.x
+  }
+
+  private fun getOrientation() {
+
   }
 }
 
