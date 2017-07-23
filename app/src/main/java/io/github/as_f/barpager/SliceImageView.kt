@@ -13,7 +13,7 @@ import io.github.as_f.barpager.models.*
 
 const val HANDLE_PADDING = 50
 const val DASH_LENGTH = 10
-const val MINIMUM_PROJECTION = 10f
+const val MINIMUM_PROJECTION = 30f
 
 val black = makePaint(128, 0, 0, 0)
 val white = makePaint(255, 255, 255, 255)
@@ -37,7 +37,7 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
       selection.mask(canvas, sheet.pages.last())
       drawSheet(canvas)
       selection.project(canvas, sheet)
-      selection.drawHandles(canvas, sheet.pages.last(), accent)
+      selection.drawHandles(canvas, accent)
     }
   }
 
@@ -52,7 +52,7 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
   }
 
   fun onActionDown(event: MotionEvent): Boolean {
-    return if (selection.handleTouched(event)) {
+    return if (selection.handleTouched(event.x, event.y, width, height)) {
       lastTouchX = event.x
       lastTouchY = event.y
       activePointerId = event.getPointerId(event.actionIndex)
@@ -67,16 +67,14 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
     if (activePointerId == MotionEvent.INVALID_POINTER_ID) {
       return false
     }
-
     val pointerIndex = event.findPointerIndex(activePointerId)
     val x = event.getX(pointerIndex)
     val y = event.getY(pointerIndex)
-    val dx = x - lastTouchX
-    val dy = y - lastTouchY
+    val dx = (x - lastTouchX) / width
+    val dy = (y - lastTouchY) / height
     lastTouchX = x
     lastTouchY = y
-
-    selection.move(sheet.pages.last(), dx, dy, width.toFloat(), height.toFloat())
+    selection.move(sheet.pages.last(), dx, dy)
     invalidate()
     return true
   }
@@ -143,7 +141,7 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
       setImageBitmap(bitmap)
 
       if (sheet.pages.size == i) {
-        sheet.pages.add(Page(scaledWidth, scaledHeight))
+        sheet.pages.add(Page())
         selection = suggestStaff(sheet)
       }
     }
@@ -175,46 +173,6 @@ fun clamp(num: Float, min: Float, max: Float): Float {
     max
   } else {
     num
-  }
-}
-
-fun drawHorizontal(canvas: Canvas, y: Float, startX: Float, endX: Float, paint: Paint) {
-  canvas.drawRect(startX, y - 0.5f, endX, y + 0.5f, paint)
-}
-
-fun drawVertical(canvas: Canvas, x: Float, startY: Float, endY: Float, paint: Paint) {
-  canvas.drawRect(x - 0.5f, startY, x + 0.5f, endY, paint)
-}
-
-fun drawHorizontalDashed(canvas: Canvas, y: Float, startX: Float, endX: Float, paint: Paint) {
-  var x = startX
-  while (x < endX) {
-    canvas.drawRect(x, y - 0.5f, x + DASH_LENGTH, y + 0.5f, paint)
-    x += 2 * DASH_LENGTH
-  }
-}
-
-fun projectHorizontal(canvas: Canvas, initY: Float, period: Float, paint: Paint) {
-  var y = initY + period
-  while (y > 0 && y < canvas.height) {
-    drawHorizontalDashed(canvas, y, 0f, canvas.width.toFloat(), paint)
-    y += period
-  }
-}
-
-fun projectVertical(canvas: Canvas, initX: Float, period: Float, startY: Float, endY: Float, paint: Paint) {
-  var x = initX + period
-  while (x > 0 && x < canvas.width) {
-    drawVerticalDashed(canvas, x, startY, endY, paint)
-    x += period
-  }
-}
-
-fun drawVerticalDashed(canvas: Canvas, x: Float, startY: Float, endY: Float, paint: Paint) {
-  var y = startY
-  while (y < endY) {
-    canvas.drawRect(x - 0.5f, y, x + 0.5f, y + DASH_LENGTH, paint)
-    y += 2 * DASH_LENGTH
   }
 }
 

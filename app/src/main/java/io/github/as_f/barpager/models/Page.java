@@ -8,20 +8,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Page extends RealmObject implements Parcelable {
-    private int width = 0;
-    private int height = 0;
     private RealmList<Staff> staves = new RealmList<>();
 
     public Page() {}
 
-    public Page(int width, int height) {
-        this.width = width;
-        this.height = height;
-    }
-
     private Page(Parcel in) {
-        width = in.readInt();
-        height = in.readInt();
         List<Staff> javaStaves = new ArrayList<>();
         in.readTypedList(javaStaves, Staff.CREATOR);
         staves.addAll(javaStaves);
@@ -37,22 +28,6 @@ public class Page extends RealmObject implements Parcelable {
         }
     };
 
-    public int getWidth() {
-        return width;
-    }
-
-    public void setWidth(int width) {
-        this.width = width;
-    }
-
-    public int getHeight() {
-        return height;
-    }
-
-    public void setHeight(int height) {
-        this.height = height;
-    }
-
     public RealmList<Staff> getStaves() {
         return staves;
     }
@@ -66,8 +41,6 @@ public class Page extends RealmObject implements Parcelable {
     }
 
     @Override public void writeToParcel(Parcel parcel, int i) {
-        parcel.writeInt(width);
-        parcel.writeInt(height);
         parcel.writeTypedList(staves);
     }
 }

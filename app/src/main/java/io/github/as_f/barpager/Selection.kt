@@ -4,7 +4,6 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.os.Parcel
 import android.os.Parcelable
-import android.view.MotionEvent
 import io.github.as_f.barpager.models.BarLine
 import io.github.as_f.barpager.models.Page
 import io.github.as_f.barpager.models.Sheet
@@ -21,15 +20,15 @@ sealed class Selection : Parcelable {
     return 0
   }
 
-  abstract fun move(page: Page, dx: Float, dy: Float, width: Float, height: Float)
+  abstract fun move(page: Page, dx: Float, dy: Float)
 
-  abstract fun handleTouched(event: MotionEvent): Boolean
+  abstract fun handleTouched(x: Float, y: Float, width: Int, height: Int): Boolean
 
   abstract fun mask(canvas: Canvas, page: Page)
 
   abstract fun project(canvas: Canvas, sheet: Sheet)
 
-  abstract fun drawHandles(canvas: Canvas, page: Page, paint: Paint)
+  abstract fun drawHandles(canvas: Canvas, paint: Paint)
 
   abstract fun save(sheet: Sheet): Selection
 }
@@ -41,21 +40,21 @@ enum class Handle {
 class StaffSelection(var startY: Float, var endY: Float) : Selection() {
   var activeHandle = Handle.START
 
-  override fun move(page: Page, dx: Float, dy: Float, width: Float, height: Float) {
+  override fun move(page: Page, dx: Float, dy: Float) {
     when (activeHandle) {
-      Handle.START -> startY = clamp(startY + dy, 0f, height)
-      Handle.END -> endY = clamp(endY + dy, 0f, height)
+      Handle.START -> startY = clamp(startY + dy, 0f, 1f)
+      Handle.END -> endY = clamp(endY + dy, 0f, 1f)
     }
     if (startY > endY) {
       flip()
     }
   }
 
-  override fun handleTouched(event: MotionEvent): Boolean {
-    return if (nearLine(event.y, startY)) {
+  override fun handleTouched(x: Float, y: Float, width: Int, height: Int): Boolean {
+    return if (nearLine(y, startY * height)) {
       activeHandle = Handle.START
       true
-    } else if (nearLine(event.y, endY)) {
+    } else if (nearLine(y, endY * height)) {
       activeHandle = Handle.END
       true
     } else {
@@ -64,22 +63,19 @@ class StaffSelection(var startY: Float, var endY: Float) : Selection() {
   }
 
   override fun mask(canvas: Canvas, page: Page) {
-    maskStaff(canvas, startY, endY, page)
+    maskStaff(canvas, startY, endY)
   }
 
   override fun project(canvas: Canvas, sheet: Sheet) {
     val (size, delta) = suggestProjectedStaff(sheet, this)
     val period = size + delta
-    if (Math.abs(period) > MINIMUM_PROJECTION) {
-      val paint = fadePaint(Math.abs(period))
-      projectHorizontal(canvas, startY, period, paint)
-      projectHorizontal(canvas, endY, period, paint)
-    }
+    projectHorizontal(canvas, startY, period)
+    projectHorizontal(canvas, endY, period)
   }
 
-  override fun drawHandles(canvas: Canvas, page: Page, paint: Paint) {
-    drawHorizontal(canvas, startY, 0f, page.width.toFloat(), paint)
-    drawHorizontal(canvas, endY, 0f, page.width.toFloat(), paint)
+  override fun drawHandles(canvas: Canvas, paint: Paint) {
+    drawHorizontal(canvas, startY, 0f, 1f, paint)
+    drawHorizontal(canvas, endY, 0f, 1f, paint)
   }
 
   override fun save(sheet: Sheet): Selection {
@@ -99,12 +95,11 @@ class StaffSelection(var startY: Float, var endY: Float) : Selection() {
   }
 
   fun clipOverflow(page: Page): StaffSelection {
-    if (endY > page.height) {
-      endY = page.height.toFloat()
+    if (endY > 1f) {
+      endY = 1f
     }
-    if (startY > page.height) {
-      val lastStaff = page.staves[page.staves.size - 1]
-      startY = lastStaff.endY
+    if (startY > 1f) {
+      startY = page.staves.last().endY
     }
     return this
   }
@@ -128,21 +123,21 @@ class StaffSelection(var startY: Float, var endY: Float) : Selection() {
 class BarSelection(var startX: Float, var endX: Float) : Selection() {
   var activeHandle = Handle.START
 
-  override fun move(page: Page, dx: Float, dy: Float, width: Float, height: Float) {
+  override fun move(page: Page, dx: Float, dy: Float) {
     when (activeHandle) {
-      Handle.START -> startX = clamp(startX + dx, 0f, width)
-      Handle.END -> endX = clamp(endX + dx, 0f, width)
+      Handle.START -> startX = clamp(startX + dx, 0f, 1f)
+      Handle.END -> endX = clamp(endX + dx, 0f, 1f)
     }
     if (startX > endX) {
       flip()
     }
   }
 
-  override fun handleTouched(event: MotionEvent): Boolean {
-    return if (nearLine(event.x, startX)) {
+  override fun handleTouched(x: Float, y: Float, width: Int, height: Int): Boolean {
+    return if (nearLine(x, startX * width)) {
       activeHandle = Handle.START
       true
-    } else if (nearLine(event.x, endX)) {
+    } else if (nearLine(x, endX * width)) {
       activeHandle = Handle.END
       true
     } else {
@@ -152,31 +147,27 @@ class BarSelection(var startX: Float, var endX: Float) : Selection() {
 
   override fun mask(canvas: Canvas, page: Page) {
     val lastStaff = page.staves.last()
-    maskStaff(canvas, lastStaff.startY, lastStaff.endY, page)
-    canvas.drawRect(0f, lastStaff.startY, startX, lastStaff.endY, black)
-    canvas.drawRect(endX, lastStaff.startY, page.width.toFloat(), lastStaff.endY, black)
+    maskStaff(canvas, lastStaff.startY, lastStaff.endY)
+    drawRect(canvas, 0f, lastStaff.startY, startX, lastStaff.endY, black)
+    drawRect(canvas, endX, lastStaff.startY, 1f, lastStaff.endY, black)
   }
 
   override fun project(canvas: Canvas, sheet: Sheet) {
     val period = endX - startX
-    if (Math.abs(period) > MINIMUM_PROJECTION) {
-      val staff = sheet.pages.last().staves.last()
-      val paint = fadePaint(Math.abs(period))
-      projectVertical(canvas, endX, period, staff.startY, staff.endY, paint)
-    }
+    val staff = sheet.pages.last().staves.last()
+    projectVertical(canvas, endX, period, staff.startY, staff.endY)
   }
 
-  override fun drawHandles(canvas: Canvas, page: Page, paint: Paint) {
-    drawVertical(canvas, startX, 0f, page.height.toFloat(), paint)
-    drawVertical(canvas, endX, 0f, page.height.toFloat(), paint)
+  override fun drawHandles(canvas: Canvas, paint: Paint) {
+    drawVertical(canvas, startX, 0f, 1f, paint)
+    drawVertical(canvas, endX, 0f, 1f, paint)
   }
 
   override fun save(sheet: Sheet): Selection {
-    val lastPage = sheet.pages.last()
-    val lastStaff = lastPage.staves.last()
+    val lastStaff = sheet.pages.last().staves.last()
     lastStaff.barLines.add(BarLine(startX))
     lastStaff.barLines.add(BarLine(endX))
-    return suggestBarLine(lastPage, lastStaff)
+    return suggestBarLine(lastStaff)
   }
 
   fun flip() {
@@ -189,9 +180,9 @@ class BarSelection(var startX: Float, var endX: Float) : Selection() {
     }
   }
 
-  fun clipOverflow(page: Page): BarSelection {
-    if (endX > page.width) {
-      endX = page.width.toFloat()
+  fun clipOverflow(): BarSelection {
+    if (endX > 1f) {
+      endX = 1f
     }
     return this
   }
@@ -213,46 +204,42 @@ class BarSelection(var startX: Float, var endX: Float) : Selection() {
 }
 
 class BarLineSelection(var x: Float) : Selection() {
-  override fun move(page: Page, dx: Float, dy: Float, width: Float, height: Float) {
+  override fun move(page: Page, dx: Float, dy: Float) {
     val lastStaff = page.staves.last()
-    x = clamp(x + dx, lastStaff.barLines.last().x, width)
+    x = clamp(x + dx, lastStaff.barLines.last().x, 1f)
   }
 
-  override fun handleTouched(event: MotionEvent): Boolean {
-    return nearLine(event.x, x)
+  override fun handleTouched(x: Float, y: Float, width: Int, height: Int): Boolean {
+    return nearLine(x, this.x * width)
   }
 
   override fun mask(canvas: Canvas, page: Page) {
     val lastStaff = page.staves.last()
-    maskStaff(canvas, lastStaff.startY, lastStaff.endY, page)
+    maskStaff(canvas, lastStaff.startY, lastStaff.endY)
     val startX = lastStaff.barLines.last().x
-    canvas.drawRect(0f, lastStaff.startY, startX, lastStaff.endY, black)
-    canvas.drawRect(x, lastStaff.startY, page.width.toFloat(), lastStaff.endY, black)
+    drawRect(canvas, 0f, lastStaff.startY, startX, lastStaff.endY, black)
+    drawRect(canvas, x, lastStaff.startY, 1f, lastStaff.endY, black)
   }
 
   override fun project(canvas: Canvas, sheet: Sheet) {
     val staff = sheet.pages.last().staves.last()
     val period = x - staff.barLines.last().x
-    if (Math.abs(period) > MINIMUM_PROJECTION) {
-      val paint = fadePaint(Math.abs(period))
-      projectVertical(canvas, x, period, staff.startY, staff.endY, paint)
-    }
+    projectVertical(canvas, x, period, staff.startY, staff.endY)
   }
 
-  override fun drawHandles(canvas: Canvas, page: Page, paint: Paint) {
-    drawVertical(canvas, x, 0f, page.height.toFloat(), paint)
+  override fun drawHandles(canvas: Canvas, paint: Paint) {
+    drawVertical(canvas, x, 0f, 1f, paint)
   }
 
   override fun save(sheet: Sheet): Selection {
-    val lastPage = sheet.pages.last()
-    val lastStaff = lastPage.staves.last()
+    val lastStaff = sheet.pages.last().staves.last()
     lastStaff.barLines.add(BarLine(x))
-    return suggestBarLine(lastPage, lastStaff)
+    return suggestBarLine(lastStaff)
   }
 
-  fun clipOverflow(page: Page): BarLineSelection {
-    if (x > page.width) {
-      x = page.width.toFloat()
+  fun clipOverflow(): BarLineSelection {
+    if (x > 1f) {
+      x = 1f
     }
     return this
   }
@@ -288,9 +275,7 @@ private fun suggestFirstStaff(sheet: Sheet): StaffSelection {
     val firstStaff = refPage.staves[0]
     StaffSelection(firstStaff.startY, firstStaff.endY).clipOverflow(lastPage)
   } catch (e: NoSuchElementException) {
-    StaffSelection(
-        lastPage.height * DEFAULT_STAFF_START,
-        lastPage.height * DEFAULT_STAFF_END)
+    StaffSelection(DEFAULT_STAFF_START, DEFAULT_STAFF_END)
   }
 }
 
@@ -338,15 +323,13 @@ fun suggestProjectedStaff(sheet: Sheet, selection: StaffSelection): Pair<Float, 
 fun suggestFirstBar(sheet: Sheet): BarSelection {
   val lastPage = sheet.pages.last()
   return if (lastPage.staves.isNotEmpty()) {
-    suggestBarFromPage(lastPage).clipOverflow(lastPage)
+    suggestBarFromPage(lastPage).clipOverflow()
   } else {
     try {
       val refPage = sheet.pages.last { it.staves.isNotEmpty() }
-      suggestBarFromPage(refPage).clipOverflow(lastPage)
+      suggestBarFromPage(refPage).clipOverflow()
     } catch (e: NoSuchElementException) {
-      BarSelection(
-          lastPage.width * DEFAULT_BAR_START,
-          lastPage.width * DEFAULT_BAR_END)
+      BarSelection(DEFAULT_BAR_START, DEFAULT_BAR_END)
     }
   }
 }
@@ -356,14 +339,14 @@ private fun suggestBarFromPage(page: Page): BarSelection {
   return BarSelection(barLines[0].x, barLines[1].x)
 }
 
-fun suggestBarLine(page: Page, staff: Staff): BarLineSelection {
+fun suggestBarLine(staff: Staff): BarLineSelection {
   val lineCount = staff.barLines.size
   val lastBarLine = staff.barLines[lineCount - 1].x
   val secondLastBarLine = staff.barLines[lineCount - 2].x
-  return BarLineSelection(2 * lastBarLine - secondLastBarLine).clipOverflow(page)
+  return BarLineSelection(2 * lastBarLine - secondLastBarLine).clipOverflow()
 }
 
-private fun maskStaff(canvas: Canvas, startY: Float, endY: Float, page: Page) {
-  canvas.drawRect(0f, 0f, page.width.toFloat(), startY, black)
-  canvas.drawRect(0f, endY, page.width.toFloat(), page.height.toFloat(), black)
+fun maskStaff(canvas: Canvas, startY: Float, endY: Float) {
+  drawRect(canvas, 0f, 0f, 1f, startY, black)
+  drawRect(canvas, 0f, endY, 1f, 1f, black)
 }
