@@ -140,21 +140,6 @@ class MeasureSheetActivity : AppCompatActivity() {
     }
   }
 
-  private fun readFromRealm(uri: String): Sheet? {
-    var unmanagedSheet: Sheet? = null
-    realm.executeTransaction {
-      val sheet = realm.where(Sheet::class.java)
-          .equalTo("uri", uri)
-          .findFirst()
-      unmanagedSheet = if (sheet.isManaged) {
-        realm.copyFromRealm(sheet)
-      } else {
-        sheet
-      }
-    }
-    return unmanagedSheet
-  }
-
   private fun getNavBarHeight(): Int {
     val resourceId = resources.getIdentifier("navigation_bar_height", "dimen", "android")
     return if (resourceId > 0) {
