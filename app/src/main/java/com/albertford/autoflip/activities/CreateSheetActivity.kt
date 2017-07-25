@@ -1,11 +1,8 @@
-package com.albertford.autoflip
+package com.albertford.autoflip.activities
 
-import android.content.Context
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import android.util.AttributeSet
 import android.view.Menu
-import android.view.View
 import com.albertford.autoflip.R
 import io.realm.Realm
 import kotlinx.android.synthetic.main.activity_create_sheet.*

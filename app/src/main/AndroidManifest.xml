@@ -15,18 +15,19 @@
         android:theme="@style/AppTheme">
         <activity
             android:name=".MeasureSheetActivity"
-            android:parentActivityName=".MainActivity">
+            android:parentActivityName=".activities.MainActivity">
         </activity>
         <activity
             android:name=".NewSheetActivity"
             android:label="@string/new_sheet_label"
-            android:parentActivityName=".MainActivity">
+            android:parentActivityName=".activities.MainActivity">
         </activity>
-        <activity android:name=".MainActivity">
+        <activity android:name=".activities.MainActivity">
         </activity>
         <activity
-            android:name=".CreateSheetActivity"
-            android:label="@string/new_sheet_label">
+            android:name=".activities.CreateSheetActivity"
+            android:label="@string/new_sheet_label"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 

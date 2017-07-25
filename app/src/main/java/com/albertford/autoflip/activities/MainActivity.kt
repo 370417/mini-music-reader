@@ -1,8 +1,9 @@
-package com.albertford.autoflip
+package com.albertford.autoflip.activities
 
-import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import com.albertford.autoflip.R
+import com.albertford.autoflip.SheetAdapter
 import com.albertford.autoflip.models.Sheet
 import io.realm.Realm
 import io.realm.RealmResults
