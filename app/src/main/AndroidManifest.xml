@@ -15,8 +15,7 @@
         android:theme="@style/AppTheme">
         <activity
             android:name=".MeasureSheetActivity"
-            android:parentActivityName=".MainActivity"
-            android:theme="@style/AppThemeDark.Oriented">
+            android:parentActivityName=".MainActivity">
         </activity>
         <activity
             android:name=".NewSheetActivity"
@@ -27,8 +26,7 @@
         </activity>
         <activity
             android:name=".CreateSheetActivity"
-            android:label="@string/new_sheet_label"
-            android:theme="@style/AppThemeDark.Oriented">
+            android:label="@string/new_sheet_label">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
