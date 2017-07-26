@@ -1,10 +1,14 @@
-package com.albertford.autoflip
+package com.albertford.autoflip.activities
 
 import android.graphics.Point
 import android.graphics.pdf.PdfRenderer
 import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import com.albertford.autoflip.BarLineSelection
+import com.albertford.autoflip.BarSelection
+import com.albertford.autoflip.R
+import com.albertford.autoflip.StaffSelection
 import com.albertford.autoflip.models.Sheet
 import io.realm.Realm
 import kotlinx.android.synthetic.main.activity_measure_sheet.*
@@ -112,10 +116,12 @@ class MeasureSheetActivity : AppCompatActivity() {
   }
 
   private fun restoreState(savedInstanceState: Bundle) {
-    val sheet = savedInstanceState.getParcelable<Sheet>(STATE_SHEET)
+    val sheet = savedInstanceState.getParcelable<Sheet>(
+            STATE_SHEET)
     preview_image.sheet = sheet
     onLastPage = savedInstanceState.getBoolean(STATE_LAST_PAGE)
-    preview_image.selection = savedInstanceState.getParcelable(STATE_SELECTION)
+    preview_image.selection = savedInstanceState.getParcelable(
+            STATE_SELECTION)
     loadPdf(sheet.uri)
     when (preview_image.selection) {
       is StaffSelection -> {

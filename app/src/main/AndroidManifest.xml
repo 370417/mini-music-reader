@@ -14,18 +14,15 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".MeasureSheetActivity"
-            android:parentActivityName=".activities.MainActivity">
-        </activity>
-        <activity
-            android:name=".NewSheetActivity"
-            android:label="@string/new_sheet_label"
-            android:parentActivityName=".activities.MainActivity">
+            android:name=".activities.MeasureSheetActivity"
+            android:parentActivityName=".activities.MainActivity"
+            android:theme="@style/AppTheme.Dark.Oriented">
         </activity>
         <activity android:name=".activities.MainActivity">
         </activity>
         <activity
             android:name=".activities.CreateSheetActivity"
+            android:parentActivityName=".activities.MainActivity"
             android:label="@string/new_sheet_label"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>

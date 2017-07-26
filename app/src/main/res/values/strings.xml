@@ -13,8 +13,10 @@
     <string name="sheet_bpm">Tempo</string>
     <string name="sheet_bpb">Beats per measure</string>
     <string name="action_continue">Continue</string>
-    <string name="error_required_field">Error: This field is required</string>
-    <string name="error_non_zero">Error: Must be non-zero</string>
-    <string name="error_not_int">Error: Must be a whole number</string>
-    <string name="error_not_float">Error: Must be a number</string>
+    <string name="error_required_field">This field is required</string>
+    <string name="error_non_zero">Must be non-zero</string>
+    <string name="error_not_int">Must be a whole number</string>
+    <string name="error_not_float">Must be a number</string>
+    <string name="error_no_uri">Please choose a file.</string>
+    <string name="error_non_unique_uri">This file has already been added.</string>
 </resources>
