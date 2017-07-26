@@ -31,7 +31,6 @@ class CreateSheetActivity : AppCompatActivity() {
     lateinit var realm: Realm
 
     var uri: String? = null
-    var uriValid: Boolean? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -77,7 +76,11 @@ class CreateSheetActivity : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == PICK_PDF_REQUEST && resultCode == Activity.RESULT_OK && data?.data != null) {
             uri = data.data.toString()
-            renderPreview(data.data)
+            if (validateUri()) {
+                renderPreview(data.data)
+            } else {
+                uri = null
+            }
         }
     }
 
@@ -154,7 +157,7 @@ class CreateSheetActivity : AppCompatActivity() {
                     .create()
                     .show()
             false
-        } else if (isUriUnique(uri)) {
+        } else if (!isUriUnique(uri)) {
             AlertDialog.Builder(this)
                     .setMessage(R.string.error_non_unique_uri)
                     .create()
@@ -208,7 +211,7 @@ class CreateSheetActivity : AppCompatActivity() {
     fun isUriUnique(uri: String): Boolean {
         realm.beginTransaction()
         val sameUri = realm.where(Sheet::class.java)
-                .equalTo(URI_KEY, uri)
+                .equalTo("uri", uri)
                 .findFirst()
         realm.commitTransaction()
         return sameUri == null
