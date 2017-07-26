@@ -4,16 +4,21 @@ import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import com.albertford.autoflip.models.Sheet
 import io.realm.RealmResults
 
 class SheetAdapter(val realmResults: RealmResults<Sheet>) : RecyclerView.Adapter<SheetAdapter.ViewHolder>() {
 
-  class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {}
+  class ViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
+      fun setPrimaryText(text: String) {
+          val textView = view.findViewById(R.id.primary_list_text) as TextView
+          textView.text = text
+      }
+  }
 
   override fun onBindViewHolder(holder: ViewHolder?, position: Int) {
-    TODO(
-        "not implemented") //To change body of created functions use File | Settings | File Templates.
+    holder?.setPrimaryText(realmResults[position].name)
   }
 
   override fun getItemCount(): Int {

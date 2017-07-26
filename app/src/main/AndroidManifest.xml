@@ -18,18 +18,19 @@
             android:parentActivityName=".activities.MainActivity"
             android:theme="@style/AppTheme.Dark.Oriented">
         </activity>
-        <activity android:name=".activities.MainActivity">
+        <activity
+            android:name=".activities.MainActivity"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
         </activity>
         <activity
             android:name=".activities.CreateSheetActivity"
             android:parentActivityName=".activities.MainActivity"
             android:label="@string/new_sheet_label"
             android:windowSoftInputMode="adjustResize">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
         </activity>
     </application>
 

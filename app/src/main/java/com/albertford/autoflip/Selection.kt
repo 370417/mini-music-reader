@@ -24,7 +24,7 @@ sealed class Selection : Parcelable {
 
   abstract fun handleTouched(x: Float, y: Float, width: Int, height: Int): Boolean
 
-  abstract fun mask(canvas: Canvas, page: Page)
+  abstract fun mask(canvas: Canvas, page: Page, paint: Paint)
 
   abstract fun project(canvas: Canvas, sheet: Sheet)
 
@@ -62,8 +62,8 @@ class StaffSelection(var startY: Float, var endY: Float) : Selection() {
     }
   }
 
-  override fun mask(canvas: Canvas, page: Page) {
-    maskStaff(canvas, startY, endY)
+  override fun mask(canvas: Canvas, page: Page, paint: Paint) {
+    maskStaff(canvas, startY, endY, paint)
   }
 
   override fun project(canvas: Canvas, sheet: Sheet) {
@@ -145,11 +145,11 @@ class BarSelection(var startX: Float, var endX: Float) : Selection() {
     }
   }
 
-  override fun mask(canvas: Canvas, page: Page) {
+  override fun mask(canvas: Canvas, page: Page, paint: Paint) {
     val lastStaff = page.staves.last()
-    maskStaff(canvas, lastStaff.startY, lastStaff.endY)
-    drawRect(canvas, 0f, lastStaff.startY, startX, lastStaff.endY, black)
-    drawRect(canvas, endX, lastStaff.startY, 1f, lastStaff.endY, black)
+    maskStaff(canvas, lastStaff.startY, lastStaff.endY, paint)
+    drawRect(canvas, 0f, lastStaff.startY, startX, lastStaff.endY, paint)
+    drawRect(canvas, endX, lastStaff.startY, 1f, lastStaff.endY, paint)
   }
 
   override fun project(canvas: Canvas, sheet: Sheet) {
@@ -213,12 +213,12 @@ class BarLineSelection(var x: Float) : Selection() {
     return nearLine(x, this.x * width)
   }
 
-  override fun mask(canvas: Canvas, page: Page) {
+  override fun mask(canvas: Canvas, page: Page, paint: Paint) {
     val lastStaff = page.staves.last()
-    maskStaff(canvas, lastStaff.startY, lastStaff.endY)
+    maskStaff(canvas, lastStaff.startY, lastStaff.endY, paint)
     val startX = lastStaff.barLines.last().x
-    drawRect(canvas, 0f, lastStaff.startY, startX, lastStaff.endY, black)
-    drawRect(canvas, x, lastStaff.startY, 1f, lastStaff.endY, black)
+    drawRect(canvas, 0f, lastStaff.startY, startX, lastStaff.endY, paint)
+    drawRect(canvas, x, lastStaff.startY, 1f, lastStaff.endY, paint)
   }
 
   override fun project(canvas: Canvas, sheet: Sheet) {
@@ -346,7 +346,7 @@ fun suggestBarLine(staff: Staff): BarLineSelection {
   return BarLineSelection(2 * lastBarLine - secondLastBarLine).clipOverflow()
 }
 
-fun maskStaff(canvas: Canvas, startY: Float, endY: Float) {
-  drawRect(canvas, 0f, 0f, 1f, startY, black)
-  drawRect(canvas, 0f, endY, 1f, 1f, black)
+fun maskStaff(canvas: Canvas, startY: Float, endY: Float, paint: Paint) {
+  drawRect(canvas, 0f, 0f, 1f, startY, paint)
+  drawRect(canvas, 0f, endY, 1f, 1f, paint)
 }
