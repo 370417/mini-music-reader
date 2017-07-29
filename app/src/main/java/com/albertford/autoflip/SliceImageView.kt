@@ -11,25 +11,21 @@ import android.view.MotionEvent
 import android.widget.ImageView
 import com.albertford.autoflip.models.*
 
-const val HANDLE_PADDING = 50
-const val DASH_LENGTH = 10
-const val MINIMUM_PROJECTION = 30f
-
-val white = makePaint(255, 255, 255, 255)
+private const val HANDLE_PADDING = 50
 
 class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(context, attrs) {
 
-    val accent = getAccentPaint()
-    val mask = getMaskPaint()
+    private val accent = getAccentPaint()
+    private val mask = getMaskPaint()
+
+    private var activePointerId = MotionEvent.INVALID_POINTER_ID
+    private var lastTouchX = 0f
+    private var lastTouchY = 0f
 
     var sheet: Sheet = Sheet()
     var selection: Selection = StaffSelection(0f, 0f)
 
     var renderer: PdfRenderer? = null
-
-    var activePointerId = MotionEvent.INVALID_POINTER_ID
-    var lastTouchX = 0f
-    var lastTouchY = 0f
 
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
@@ -48,63 +44,6 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> onActionCancel()
             MotionEvent.ACTION_POINTER_UP -> onActionPointerUp(event)
             else -> super.onTouchEvent(event)
-        }
-    }
-
-    fun onActionDown(event: MotionEvent): Boolean {
-        return if (selection.handleTouched(event.x, event.y, width, height)) {
-            lastTouchX = event.x
-            lastTouchY = event.y
-            activePointerId = event.getPointerId(event.actionIndex)
-            true
-        } else {
-            activePointerId = MotionEvent.INVALID_POINTER_ID
-            false
-        }
-    }
-
-    fun onActionMove(event: MotionEvent): Boolean {
-        if (activePointerId == MotionEvent.INVALID_POINTER_ID) {
-            return false
-        }
-        val pointerIndex = event.findPointerIndex(activePointerId)
-        val x = event.getX(pointerIndex)
-        val y = event.getY(pointerIndex)
-        val dx = (x - lastTouchX) / width
-        val dy = (y - lastTouchY) / height
-        lastTouchX = x
-        lastTouchY = y
-        selection.move(sheet.pages.last(), dx, dy)
-        invalidate()
-        return true
-    }
-
-    fun onActionCancel(): Boolean {
-        activePointerId = MotionEvent.INVALID_POINTER_ID
-        return true
-    }
-
-    fun onActionPointerUp(event: MotionEvent): Boolean {
-        val pointerId = event.getPointerId(event.actionIndex)
-        if (pointerId == activePointerId) {
-            val otherPointerIndex = if (event.actionIndex == 0) 1 else 0
-            lastTouchX = event.getX(otherPointerIndex)
-            lastTouchY = event.getY(otherPointerIndex)
-            activePointerId = event.getPointerId(otherPointerIndex)
-        }
-        return true
-    }
-
-    fun drawSheet(canvas: Canvas) {
-        val page = sheet.pages[sheet.pages.size - 1]
-        for (staff in page.staves) {
-            val startY = staff.startY
-            val endY = staff.endY
-            drawHorizontal(canvas, startY, 0f, width.toFloat(), white)
-            drawHorizontal(canvas, endY, 0f, width.toFloat(), white)
-            for (barLine in staff.barLines) {
-                drawVertical(canvas, barLine.x, startY, endY, white)
-            }
         }
     }
 
@@ -147,6 +86,63 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
         }
     }
 
+    private fun onActionDown(event: MotionEvent): Boolean {
+        return if (selection.handleTouched(event.x, event.y, width, height)) {
+            lastTouchX = event.x
+            lastTouchY = event.y
+            activePointerId = event.getPointerId(event.actionIndex)
+            true
+        } else {
+            activePointerId = MotionEvent.INVALID_POINTER_ID
+            false
+        }
+    }
+
+    private fun onActionMove(event: MotionEvent): Boolean {
+        if (activePointerId == MotionEvent.INVALID_POINTER_ID) {
+            return false
+        }
+        val pointerIndex = event.findPointerIndex(activePointerId)
+        val x = event.getX(pointerIndex)
+        val y = event.getY(pointerIndex)
+        val dx = (x - lastTouchX) / width
+        val dy = (y - lastTouchY) / height
+        lastTouchX = x
+        lastTouchY = y
+        selection.move(sheet.pages.last(), dx, dy)
+        invalidate()
+        return true
+    }
+
+    private fun onActionCancel(): Boolean {
+        activePointerId = MotionEvent.INVALID_POINTER_ID
+        return true
+    }
+
+    private fun onActionPointerUp(event: MotionEvent): Boolean {
+        val pointerId = event.getPointerId(event.actionIndex)
+        if (pointerId == activePointerId) {
+            val otherPointerIndex = if (event.actionIndex == 0) 1 else 0
+            lastTouchX = event.getX(otherPointerIndex)
+            lastTouchY = event.getY(otherPointerIndex)
+            activePointerId = event.getPointerId(otherPointerIndex)
+        }
+        return true
+    }
+
+    private fun drawSheet(canvas: Canvas) {
+        val page = sheet.pages[sheet.pages.size - 1]
+        for (staff in page.staves) {
+            val startY = staff.startY
+            val endY = staff.endY
+            drawHorizontal(canvas, startY, 0f, width.toFloat(), white)
+            drawHorizontal(canvas, endY, 0f, width.toFloat(), white)
+            for (barLine in staff.barLines) {
+                drawVertical(canvas, barLine.x, startY, endY, white)
+            }
+        }
+    }
+
     private fun pointsToPixels(pixels: Int): Int {
         return resources.displayMetrics.densityDpi * pixels / 72
     }
@@ -179,21 +175,5 @@ fun clamp(num: Float, min: Float, max: Float): Float {
         max
     } else {
         num
-    }
-}
-
-fun makePaint(a: Int, r: Int, g: Int, b: Int): Paint {
-    val paint = Paint()
-    paint.setARGB(a, r, g, b)
-    paint.style = Paint.Style.FILL
-    return paint
-}
-
-fun fadePaint(period: Float): Paint {
-    return if (period > 2 * MINIMUM_PROJECTION) {
-        white
-    } else {
-        val alpha = 255 * (period - MINIMUM_PROJECTION) / (MINIMUM_PROJECTION)
-        makePaint(alpha.toInt(), 255, 255, 255)
     }
 }

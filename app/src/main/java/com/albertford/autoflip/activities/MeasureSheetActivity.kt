@@ -14,27 +14,27 @@ import com.albertford.autoflip.models.Sheet
 import io.realm.Realm
 import kotlinx.android.synthetic.main.activity_measure_sheet.*
 
-const val STATE_LAST_PAGE = "STATE_LAST_PAGE"
-const val STATE_SELECTION = "STATE_SELECTION"
-const val STATE_SHEET = "STATE_SHEET"
+private const val STATE_LAST_PAGE = "STATE_LAST_PAGE"
+private const val STATE_SELECTION = "STATE_SELECTION"
+private const val STATE_SHEET = "STATE_SHEET"
 
 class MeasureSheetActivity : AppCompatActivity() {
 
     private lateinit var realm: Realm
 
-    var leftButtonText = LeftButtonText.SAVE_STAFF
+    private var leftButtonText = LeftButtonText.SAVE_STAFF
         set(value) {
             field = value
             left_button.text = resources.getText(value.id)
         }
 
-    var rightButtonText = RightButtonText.NEXT_PAGE
+    private var rightButtonText = RightButtonText.NEXT_PAGE
         set(value) {
             field = value
             right_button.text = resources.getText(value.id)
         }
 
-    var onLastPage = false
+    private var onLastPage = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -186,12 +186,12 @@ class MeasureSheetActivity : AppCompatActivity() {
     }
 }
 
-enum class LeftButtonText(val id: Int) {
+private enum class LeftButtonText(val id: Int) {
     SAVE_BAR(R.string.save_bar),
     SAVE_STAFF(R.string.save_staff)
 }
 
-enum class RightButtonText(val id: Int) {
+private enum class RightButtonText(val id: Int) {
     NEXT_STAFF(R.string.next_staff),
     NEXT_PAGE(R.string.next_page),
     FINISH(R.string.finish)

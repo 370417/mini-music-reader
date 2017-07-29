@@ -3,6 +3,11 @@ package com.albertford.autoflip
 import android.graphics.Canvas
 import android.graphics.Paint
 
+private const val DASH_LENGTH = 10
+private const val MINIMUM_PROJECTION = 30
+
+val white = makePaint(255, 255, 255, 255)
+
 fun drawRect(canvas: Canvas, left: Float, top: Float, right: Float, bottom: Float, paint: Paint) {
     canvas.drawRect(left * canvas.width, top * canvas.height, right * canvas.width,
             bottom * canvas.height, paint)
@@ -59,5 +64,21 @@ fun projectVertical(canvas: Canvas, initX: Float, period: Float, startY: Float, 
     while (x > 0 && x < 1) {
         drawVerticalDashed(canvas, x, startY, endY, paint)
         x += period
+    }
+}
+
+fun makePaint(a: Int, r: Int, g: Int, b: Int): Paint {
+    val paint = Paint()
+    paint.setARGB(a, r, g, b)
+    paint.style = Paint.Style.FILL
+    return paint
+}
+
+private fun fadePaint(period: Float): Paint {
+    return if (period > 2 * MINIMUM_PROJECTION) {
+        white
+    } else {
+        val alpha = 255 * (period - MINIMUM_PROJECTION) / MINIMUM_PROJECTION
+        makePaint(alpha.toInt(), 255, 255, 255)
     }
 }

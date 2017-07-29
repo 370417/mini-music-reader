@@ -9,11 +9,11 @@ import com.albertford.autoflip.models.Page
 import com.albertford.autoflip.models.Sheet
 import com.albertford.autoflip.models.Staff
 
-const val DEFAULT_STAFF_START = 0.1f
-const val DEFAULT_STAFF_END = 0.2f
+private const val DEFAULT_STAFF_START = 0.1f
+private const val DEFAULT_STAFF_END = 0.2f
 
-const val DEFAULT_BAR_START = 0.1f
-const val DEFAULT_BAR_END = 0.3f
+private const val DEFAULT_BAR_START = 0.1f
+private const val DEFAULT_BAR_END = 0.3f
 
 interface Selection : Parcelable {
     override fun describeContents(): Int {
@@ -33,12 +33,12 @@ interface Selection : Parcelable {
     fun save(sheet: Sheet): Selection
 }
 
-enum class Handle {
+private enum class Handle {
     START, END
 }
 
 class StaffSelection(var startY: Float, var endY: Float) : Selection {
-    var activeHandle = Handle.START
+    private var activeHandle = Handle.START
 
     override fun move(page: Page, dx: Float, dy: Float) {
         when (activeHandle) {
@@ -121,7 +121,7 @@ class StaffSelection(var startY: Float, var endY: Float) : Selection {
 }
 
 class BarSelection(var startX: Float, var endX: Float) : Selection {
-    var activeHandle = Handle.START
+    private var activeHandle = Handle.START
 
     override fun move(page: Page, dx: Float, dy: Float) {
         when (activeHandle) {

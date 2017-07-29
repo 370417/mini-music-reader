@@ -24,13 +24,13 @@ const val URI_KEY = "URI_KEY"
 const val BPM_KEY = "BPM_KEY"
 const val BPB_KEY = "BPB_KEY"
 
-const val STATE_URI = "STATE_URI"
+private const val STATE_URI = "STATE_URI"
 
 class CreateSheetActivity : AppCompatActivity() {
 
-    lateinit var realm: Realm
+    private lateinit var realm: Realm
 
-    var uri: String? = null
+    private var uri: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -84,7 +84,7 @@ class CreateSheetActivity : AppCompatActivity() {
         }
     }
 
-    fun chooseFile() {
+    private fun chooseFile() {
         val intent = Intent(Intent.ACTION_GET_CONTENT)
         intent.type = "application/pdf"
         intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true)
@@ -93,7 +93,7 @@ class CreateSheetActivity : AppCompatActivity() {
         }
     }
 
-    fun renderPreview(uri: Uri) {
+    private fun renderPreview(uri: Uri) {
         val width = sheet_image.width
         val height = sheet_image.height
         val pdfDescriptor = contentResolver.openFileDescriptor(uri, "r")
@@ -109,7 +109,7 @@ class CreateSheetActivity : AppCompatActivity() {
         sheet_image.setImageBitmap(bitmap)
     }
 
-    fun setFocusListeners() {
+    private fun setFocusListeners() {
         name_input_field.setOnFocusChangeListener { _, hasFocus ->
             if (hasFocus) {
                 name_input_layout.error = null
@@ -133,7 +133,7 @@ class CreateSheetActivity : AppCompatActivity() {
         }
     }
 
-    fun startMeasureSheetActivity() {
+    private fun startMeasureSheetActivity() {
         // make sure all error messages are shown if there are multiple
         val nameIsValid = validateName()
         val bpmIsValid = validateBpm()
@@ -149,7 +149,7 @@ class CreateSheetActivity : AppCompatActivity() {
         }
     }
 
-    fun validateUri(): Boolean {
+    private fun validateUri(): Boolean {
         val uri = uri
         return if (uri == null) {
             AlertDialog.Builder(this)
@@ -168,7 +168,7 @@ class CreateSheetActivity : AppCompatActivity() {
         }
     }
 
-    fun validateName(): Boolean {
+    private fun validateName(): Boolean {
         val message = if (name_input_field.text.isBlank()) {
             resources.getString(R.string.error_required_field)
         } else {
@@ -178,7 +178,7 @@ class CreateSheetActivity : AppCompatActivity() {
         return message == null
     }
 
-    fun validateBpm(): Boolean {
+    private fun validateBpm(): Boolean {
         val floatVal = bpm_input_field.text.toString().toFloatOrNull()
         val message = if (bpm_input_field.text.isBlank()) {
             resources.getString(R.string.error_required_field)
@@ -193,7 +193,7 @@ class CreateSheetActivity : AppCompatActivity() {
         return message == null
     }
 
-    fun validateBpb(): Boolean {
+    private fun validateBpb(): Boolean {
         val intVal = bpb_input_field.text.toString().toIntOrNull()
         val message = if (bpb_input_field.text.isBlank()) {
             resources.getString(R.string.error_required_field)
@@ -208,7 +208,7 @@ class CreateSheetActivity : AppCompatActivity() {
         return message == null
     }
 
-    fun isUriUnique(uri: String): Boolean {
+    private fun isUriUnique(uri: String): Boolean {
         realm.beginTransaction()
         val sameUri = realm.where(Sheet::class.java)
                 .equalTo("uri", uri)
