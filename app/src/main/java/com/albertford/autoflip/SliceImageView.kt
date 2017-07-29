@@ -15,8 +15,8 @@ private const val HANDLE_PADDING = 50
 
 class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(context, attrs) {
 
-    private val accent = getAccentPaint()
-    private val mask = getMaskPaint()
+    private val accent = getColorPaint(R.color.colorAccent)
+    private val maskDark = getColorPaint(R.color.colorMaskDark)
 
     private var activePointerId = MotionEvent.INVALID_POINTER_ID
     private var lastTouchX = 0f
@@ -30,7 +30,7 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
         if (canvas != null) {
-            selection.mask(canvas, sheet.pages.last(), mask)
+            selection.mask(canvas, sheet.pages.last(), maskDark)
             drawSheet(canvas)
             selection.project(canvas, sheet)
             selection.drawHandles(canvas, accent)
@@ -147,18 +147,11 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
         return resources.displayMetrics.densityDpi * pixels / 72
     }
 
-    private fun getAccentPaint(): Paint {
+    private fun getColorPaint(colorId: Int): Paint {
         val paint = Paint()
-        paint.color = ContextCompat.getColor(context, R.color.colorAccent)
+        paint.color = ContextCompat.getColor(context, colorId)
         return paint
     }
-
-    private fun getMaskPaint(): Paint {
-        val paint = Paint()
-        paint.color = ContextCompat.getColor(context, R.color.colorMask)
-        return paint
-    }
-
 }
 
 /**
