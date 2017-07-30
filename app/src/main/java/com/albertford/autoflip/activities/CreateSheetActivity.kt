@@ -12,6 +12,7 @@ import android.support.v7.app.AlertDialog
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.inputmethod.EditorInfo
 import com.albertford.autoflip.R
 import com.albertford.autoflip.models.Sheet
 import io.realm.Realm
@@ -48,6 +49,13 @@ class CreateSheetActivity : AppCompatActivity() {
         }
 
         choose_sheet_button.setOnClickListener { chooseFile() }
+
+        bpb_input_field.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                startMeasureSheetActivity()
+            }
+            false
+        }
     }
 
     override fun onSaveInstanceState(outState: Bundle?) {
@@ -102,7 +110,6 @@ class CreateSheetActivity : AppCompatActivity() {
         val scale = width.toFloat() / pageRenderer.width
         val matrix = Matrix()
         matrix.postScale(scale, scale)
-        Log.v("sdf", "$width, $height")
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         pageRenderer.render(bitmap, null, matrix, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
         pageRenderer.close()
