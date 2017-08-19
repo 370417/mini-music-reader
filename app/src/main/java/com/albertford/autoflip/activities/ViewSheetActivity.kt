@@ -25,12 +25,12 @@ class ViewSheetActivity : AppCompatActivity() {
     private var renderHandler = Handler()
     private var renderRunnable = object : Runnable {
         override fun run() {
-            Log.v("RUNNABLE", "")
-            val bitmap = sheetRenderer.renderBar(sheet, pageIndex, staffIndex, barIndex,
-                    sheet_image.width, sheet_image.height)
-            sheet_image.setImageBitmap(bitmap)
+            if (pageIndex == sheet.pages.size) {
+                return
+            }
+            renderBar()
             incrementIndeces()
-            val delay = Math.round(60000.0 / (sheet.bpm * sheet.bpb))
+            val delay = Math.round(60000.0 * sheet.bpb / sheet.bpm)
             renderHandler.postDelayed(this, delay)
         }
     }
@@ -44,13 +44,23 @@ class ViewSheetActivity : AppCompatActivity() {
         sheetRenderer = PdfSheetRenderer(this, uri)
         sheet = loadSheet(uri)
 
-        sheet_image.post(renderRunnable)
+        jumpToNonEmptyPage()
+
+        sheet_image.post { renderBar() }
+
+        sheet_image.setOnClickListener { renderHandler.post(renderRunnable) }
     }
 
     override fun onDestroy() {
         sheetRenderer.close()
         super.onDestroy()
         realm.close()
+    }
+
+    private fun renderBar() {
+        val bitmap = sheetRenderer.renderBar(sheet, pageIndex, staffIndex, barIndex,
+                sheet_image.width, sheet_image.height)
+        sheet_image.setImageBitmap(bitmap)
     }
 
     private fun incrementIndeces() {
@@ -61,10 +71,20 @@ class ViewSheetActivity : AppCompatActivity() {
         } else if (staffIndex < page.staves.size - 1) {
             staffIndex++
             barIndex = 0
-        } else if (pageIndex < sheet.pages.size - 1) {
+        } else {
             pageIndex++
             staffIndex = 0
             barIndex = 0
+            jumpToNonEmptyPage()
+        }
+    }
+
+    /**
+     * Increment the page index until the page is not empty.
+     */
+    private fun jumpToNonEmptyPage() {
+        while (pageIndex < sheet.pages.size && sheet.pages[pageIndex].staves.isEmpty()) {
+            pageIndex++
         }
     }
 
@@ -74,6 +94,7 @@ class ViewSheetActivity : AppCompatActivity() {
                 .equalTo("uri", uri)
                 .findFirst()
         realm.commitTransaction()
+        Log.v("PAGES", "${sheet.pages}")
         return sheet
     }
 }

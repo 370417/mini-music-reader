@@ -32,9 +32,9 @@ public class Page extends RealmObject implements Parcelable {
         return staves;
     }
 
-    public void setStaves(RealmList<Staff> staves) {
-        this.staves = staves;
-    }
+    //public void setStaves(RealmList<Staff> staves) {
+    //    this.staves = staves;
+    //}
 
     @Override public int describeContents() {
         return 0;

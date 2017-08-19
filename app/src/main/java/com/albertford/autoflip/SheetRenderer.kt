@@ -23,10 +23,44 @@ interface SheetRenderer {
     /**
      * Render a single bar as large as possible, preserving aspect ratio.
      */
-    fun renderBar(sheet: Sheet, pageIndex: Int, staffIndex: Int, barIndex: Int, imageWidth: Int,
-            imageHeight: Int): Bitmap
+    fun renderBar(sheet: Sheet, pageIndex: Int, staffIndex: Int, barIndex: Int, maxImageWidth: Int,
+            maxImageHeight: Int): Bitmap
 
     fun close()
+
+    fun getPageDimensions(i: Int): Pair<Int, Int>
+
+    /**
+     * Find the largest scale that fits every bar onto the screen.
+     * This scale converts coordinates from the page scale to the image scale.
+     * Note that this means, in code, we are looking for the smallest of the individual largest scales.
+     */
+     fun findMaxBarScale(sheet: Sheet, imageWidth: Int, imageHeight: Int): Float {
+        var maxScale = Float.POSITIVE_INFINITY
+        for (pageIndex in sheet.pages.indices) {
+            val (pageWidth, pageHeight) = getPageDimensions(pageIndex)
+            for (staff in sheet.pages[pageIndex].staves) {
+                val scaledBarHeight = (staff.endY - staff.startY) * pageHeight
+                for (barIndex in 0 until staff.barLines.size - 1) {
+                    val barStart = staff.barLines[barIndex].x
+                    val barEnd = staff.barLines[barIndex + 1].x
+                    val scaledBarWidth = (barEnd - barStart) * pageWidth
+                    if (scaledBarWidth * imageHeight > scaledBarHeight * imageWidth) {
+                        val scale = imageWidth / scaledBarWidth
+                        if (scale < maxScale) {
+                            maxScale = scale
+                        }
+                    } else {
+                        val scale = imageHeight / scaledBarHeight
+                        if (scale < maxScale) {
+                            maxScale = scale
+                        }
+                    }
+                }
+            }
+        }
+        return maxScale
+    }
 }
 
 class PdfSheetRenderer(context: Context, uri: Uri) : SheetRenderer {
@@ -34,6 +68,10 @@ class PdfSheetRenderer(context: Context, uri: Uri) : SheetRenderer {
     private val renderer: PdfRenderer
 
     private var cachedPageRenderer: PdfRenderer.Page? = null
+
+    private var cachedImageWidth = 0
+    private var cachedImageHeight = 0
+    private var cachedBarScale = 1f
 
     constructor(context: Context, uriString: String) : this(context, Uri.parse(uriString))
 
@@ -63,19 +101,18 @@ class PdfSheetRenderer(context: Context, uri: Uri) : SheetRenderer {
     }
 
     override fun renderBar(sheet: Sheet, pageIndex: Int, staffIndex: Int, barIndex: Int,
-            imageWidth: Int, imageHeight: Int): Bitmap {
+            maxImageWidth: Int, maxImageHeight: Int): Bitmap {
+        val scale = updateBarScale(sheet, maxImageWidth, maxImageHeight)
         val pageRenderer = getPage(pageIndex)
         val staff = sheet.pages[pageIndex].staves[staffIndex]
-        val barStart = staff.barLines[barIndex].x
-        val barEnd = staff.barLines[barIndex + 1].x
-        val barWidth = barEnd - barStart
-        val barHeight = staff.endY - staff.startY
-        val scale = if (barWidth * imageHeight > barHeight * imageWidth) {
-            barWidth / imageWidth
-        } else {
-            barHeight / imageHeight
-        }
+        val barTop = staff.startY * pageRenderer.height
+        val barBottom = staff.endY * pageRenderer.height
+        val barStart = staff.barLines[barIndex].x * pageRenderer.width
+        val barEnd = staff.barLines[barIndex + 1].x * pageRenderer.width
+        val imageWidth = Math.round(scale * (barEnd - barStart))
+        val imageHeight = Math.round(scale * (barBottom - barTop))
         val matrix = Matrix()
+        matrix.postTranslate(-barStart, -barTop)
         matrix.postScale(scale, scale)
         val bitmap = Bitmap.createBitmap(imageWidth, imageHeight, Bitmap.Config.ARGB_8888)
         pageRenderer.render(bitmap, null, matrix, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
@@ -84,6 +121,11 @@ class PdfSheetRenderer(context: Context, uri: Uri) : SheetRenderer {
 
     override fun close() {
         cachedPageRenderer?.close()
+    }
+
+    override fun getPageDimensions(i: Int): Pair<Int, Int> {
+        val pageRenderer = getPage(i)
+        return Pair(pageRenderer.width, pageRenderer.height)
     }
 
     private fun getPage(i: Int): PdfRenderer.Page {
@@ -98,4 +140,12 @@ class PdfSheetRenderer(context: Context, uri: Uri) : SheetRenderer {
         }
     }
 
+    private fun updateBarScale(sheet: Sheet, width: Int, height: Int): Float {
+        if (width != cachedImageWidth || height != cachedImageHeight) {
+            cachedImageWidth = width
+            cachedImageHeight = height
+            cachedBarScale = findMaxBarScale(sheet, width, height)
+        }
+        return cachedBarScale
+    }
 }

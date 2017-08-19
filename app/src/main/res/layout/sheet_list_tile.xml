@@ -2,9 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:paddingTop="20dp"
-    android:paddingBottom="20dp"
+    android:layout_height="48dp"
     android:paddingStart="16dp"
     android:paddingEnd="16dp">
 
@@ -13,14 +11,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textSize="16sp"
-        />
-
-    <TextView
-        android:id="@+id/secondary_list_text"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="14sp"
-        android:text="Banana"
         />
 
 </LinearLayout>

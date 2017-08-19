@@ -3,7 +3,7 @@ package com.albertford.autoflip.activities
 import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
+import android.view.View
 import com.albertford.autoflip.*
 import com.albertford.autoflip.models.Sheet
 import io.realm.Realm
@@ -31,6 +31,42 @@ class MeasureSheetActivity : AppCompatActivity() {
 
     private var onLastPage = false
 
+    private val leftButtonListener = View.OnClickListener {
+        when (leftButtonText) {
+            LeftButtonText.SAVE_STAFF -> {
+                preview_image.saveSelection()
+                leftButtonText = LeftButtonText.SAVE_BAR
+                rightButtonText = RightButtonText.NEXT_STAFF
+                right_button.isEnabled = false
+            }
+            LeftButtonText.SAVE_BAR -> {
+                preview_image.saveSelection()
+                right_button.isEnabled = true
+            }
+        }
+    }
+
+    private val rightButtonListener = View.OnClickListener {
+        when (rightButtonText) {
+            RightButtonText.NEXT_STAFF -> {
+                preview_image.nextStaff()
+                leftButtonText = LeftButtonText.SAVE_STAFF
+                rightButtonText = if (onLastPage) RightButtonText.FINISH else RightButtonText.NEXT_PAGE
+            }
+            RightButtonText.FINISH -> {
+                writeToRealm(preview_image.sheet)
+                val intent = Intent(this, MainActivity::class.java)
+                startActivity(intent)
+            }
+            RightButtonText.NEXT_PAGE -> {
+                onLastPage = preview_image.nextPage()
+                if (onLastPage) {
+                    rightButtonText = RightButtonText.FINISH
+                }
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         realm = Realm.getDefaultInstance()
@@ -44,41 +80,8 @@ class MeasureSheetActivity : AppCompatActivity() {
             createState()
         }
 
-        left_button.setOnClickListener {
-            when (leftButtonText) {
-                LeftButtonText.SAVE_STAFF -> {
-                    preview_image.saveSelection()
-                    leftButtonText = LeftButtonText.SAVE_BAR
-                    rightButtonText = RightButtonText.NEXT_STAFF
-                    right_button.isEnabled = false
-                }
-                LeftButtonText.SAVE_BAR -> {
-                    preview_image.saveSelection()
-                    right_button.isEnabled = true
-                }
-            }
-        }
-        right_button.setOnClickListener {
-            when (rightButtonText) {
-                RightButtonText.NEXT_STAFF -> {
-                    preview_image.nextStaff()
-                    leftButtonText = LeftButtonText.SAVE_STAFF
-                    rightButtonText = if (onLastPage) RightButtonText.FINISH else RightButtonText.NEXT_PAGE
-                }
-                RightButtonText.FINISH -> {
-                    writeToRealm(preview_image.sheet)
-                    val intent = Intent(this, MainActivity::class.java)
-                    startActivity(intent)
-                }
-                RightButtonText.NEXT_PAGE -> {
-                    onLastPage = preview_image.nextPage()
-                    Log.v("onLastPage", "$onLastPage")
-                    if (onLastPage) {
-                        rightButtonText = RightButtonText.FINISH
-                    }
-                }
-            }
-        }
+        left_button.setOnClickListener(leftButtonListener)
+        right_button.setOnClickListener(rightButtonListener)
     }
 
     override fun onDestroy() {

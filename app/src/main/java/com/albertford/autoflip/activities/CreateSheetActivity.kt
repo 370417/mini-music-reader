@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.support.v7.app.AlertDialog
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.view.inputmethod.EditorInfo
 import com.albertford.autoflip.PdfSheetRenderer
 import com.albertford.autoflip.R
@@ -30,6 +31,15 @@ class CreateSheetActivity : AppCompatActivity() {
 
     private var uri: String? = null
 
+    private val chooseFile = View.OnClickListener {
+        val intent = Intent(Intent.ACTION_GET_CONTENT)
+        intent.type = "application/pdf"
+        intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true)
+        if (intent.resolveActivity(packageManager) != null) {
+            startActivityForResult(intent, PICK_PDF_REQUEST)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         realm = Realm.getDefaultInstance()
@@ -45,7 +55,7 @@ class CreateSheetActivity : AppCompatActivity() {
             sheet_image.post { renderPreview(Uri.parse(uri)) }
         }
 
-        choose_sheet_button.setOnClickListener { chooseFile() }
+        choose_sheet_button.setOnClickListener(chooseFile)
 
         bpb_input_field.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
@@ -86,15 +96,6 @@ class CreateSheetActivity : AppCompatActivity() {
             } else {
                 uri = null
             }
-        }
-    }
-
-    private fun chooseFile() {
-        val intent = Intent(Intent.ACTION_GET_CONTENT)
-        intent.type = "application/pdf"
-        intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true)
-        if (intent.resolveActivity(packageManager) != null) {
-            startActivityForResult(intent, PICK_PDF_REQUEST)
         }
     }
 
