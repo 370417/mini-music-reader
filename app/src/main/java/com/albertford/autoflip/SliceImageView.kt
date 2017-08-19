@@ -1,10 +1,8 @@
 package com.albertford.autoflip
 
 import android.content.Context
-import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
-import android.graphics.pdf.PdfRenderer
 import android.support.v4.content.ContextCompat
 import android.util.AttributeSet
 import android.view.MotionEvent
@@ -25,7 +23,7 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
     var sheet: Sheet = Sheet()
     var selection: Selection = StaffSelection(0f, 0f)
 
-    var renderer: PdfRenderer? = null
+    var renderer: PdfSheetRenderer? = null
 
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
@@ -37,14 +35,12 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
         }
     }
 
-    override fun onTouchEvent(event: MotionEvent?): Boolean {
-        return when (event?.action) {
-            MotionEvent.ACTION_DOWN -> onActionDown(event)
-            MotionEvent.ACTION_MOVE -> onActionMove(event)
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> onActionCancel()
-            MotionEvent.ACTION_POINTER_UP -> onActionPointerUp(event)
-            else -> super.onTouchEvent(event)
-        }
+    override fun onTouchEvent(event: MotionEvent?): Boolean = when (event?.action) {
+        MotionEvent.ACTION_DOWN -> onActionDown(event)
+        MotionEvent.ACTION_MOVE -> onActionMove(event)
+        MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> onActionCancel()
+        MotionEvent.ACTION_POINTER_UP -> onActionPointerUp(event)
+        else -> super.onTouchEvent(event)
     }
 
     fun saveSelection() {
@@ -62,27 +58,15 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
      */
     fun nextPage(): Boolean {
         renderPage(sheet.pages.size)
-        return sheet.pages.size + 1 == renderer?.pageCount
+        return sheet.pages.size == renderer?.getPageCount()
     }
 
     fun renderPage(i: Int) {
-        val renderer = renderer
-        if (renderer != null) {
-            val pageRenderer = renderer.openPage(i)
-            val imageWidth = pointsToPixels(pageRenderer.width)
-            val imageHeight = pointsToPixels(pageRenderer.height)
-            val fitToWidthScale = maxWidth.toFloat() / imageWidth
-            val scaledWidth = Math.round(imageWidth * fitToWidthScale)
-            val scaledHeight = Math.round(imageHeight * fitToWidthScale)
-            val bitmap = Bitmap.createBitmap(scaledWidth, scaledHeight, Bitmap.Config.ARGB_8888)
-            pageRenderer.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-            pageRenderer.close()
-            setImageBitmap(bitmap)
-
-            if (sheet.pages.size == i) {
-                sheet.pages.add(Page())
-                selection = suggestStaff(sheet)
-            }
+        val bitmap = renderer?.renderFullPage(i, width)
+        setImageBitmap(bitmap)
+        if (sheet.pages.size == i) {
+            sheet.pages.add(Page())
+            selection = suggestStaff(sheet)
         }
     }
 
@@ -143,10 +127,6 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
         }
     }
 
-    private fun pointsToPixels(pixels: Int): Int {
-        return resources.displayMetrics.densityDpi * pixels / 72
-    }
-
     private fun getColorPaint(colorId: Int): Paint {
         val paint = Paint()
         paint.color = ContextCompat.getColor(context, colorId)
@@ -157,16 +137,10 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
 /**
  * Whether a coordinate is within less than HANDLE_PADDING pixels of a 1-pixel thick line
  */
-fun nearLine(coord: Float, target: Float): Boolean {
-    return Math.abs(coord - target) <= HANDLE_PADDING
-}
+fun nearLine(coord: Float, target: Float): Boolean = Math.abs(coord - target) <= HANDLE_PADDING
 
-fun clamp(num: Float, min: Float, max: Float): Float {
-    return if (num < min) {
-        min
-    } else if (num > max) {
-        max
-    } else {
-        num
-    }
+fun clamp(num: Float, min: Float, max: Float): Float = when {
+    num < min -> min
+    num > max -> max
+    else -> num
 }

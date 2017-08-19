@@ -2,9 +2,6 @@ package com.albertford.autoflip.activities
 
 import android.app.Activity
 import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.Matrix
-import android.graphics.pdf.PdfRenderer
 import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
@@ -12,6 +9,7 @@ import android.support.v7.app.AlertDialog
 import android.view.Menu
 import android.view.MenuItem
 import android.view.inputmethod.EditorInfo
+import com.albertford.autoflip.PdfSheetRenderer
 import com.albertford.autoflip.R
 import com.albertford.autoflip.models.Sheet
 import io.realm.Realm
@@ -101,17 +99,9 @@ class CreateSheetActivity : AppCompatActivity() {
     }
 
     private fun renderPreview(uri: Uri) {
-        val width = sheet_image.width
-        val height = sheet_image.height
-        val pdfDescriptor = contentResolver.openFileDescriptor(uri, "r")
-        val renderer = PdfRenderer(pdfDescriptor)
-        val pageRenderer = renderer.openPage(0)
-        val scale = width.toFloat() / pageRenderer.width
-        val matrix = Matrix()
-        matrix.postScale(scale, scale)
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-        pageRenderer.render(bitmap, null, matrix, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-        pageRenderer.close()
+        val pdfSheetRenderer = PdfSheetRenderer(this, uri)
+        val bitmap = pdfSheetRenderer.renderPagePreview(0, sheet_image.width, sheet_image.height)
+        pdfSheetRenderer.close()
         sheet_image.setImageBitmap(bitmap)
     }
 

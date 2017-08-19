@@ -1,15 +1,10 @@
 package com.albertford.autoflip.activities
 
 import android.content.Intent
-import android.graphics.Point
-import android.graphics.pdf.PdfRenderer
-import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import com.albertford.autoflip.BarLineSelection
-import com.albertford.autoflip.BarSelection
-import com.albertford.autoflip.R
-import com.albertford.autoflip.StaffSelection
+import android.util.Log
+import com.albertford.autoflip.*
 import com.albertford.autoflip.models.Sheet
 import io.realm.Realm
 import kotlinx.android.synthetic.main.activity_measure_sheet.*
@@ -42,8 +37,6 @@ class MeasureSheetActivity : AppCompatActivity() {
         setContentView(R.layout.activity_measure_sheet)
 
         setPadding()
-
-        preview_image.maxWidth = calcWidth()
 
         if (savedInstanceState != null) {
             restoreState(savedInstanceState)
@@ -79,6 +72,7 @@ class MeasureSheetActivity : AppCompatActivity() {
                 }
                 RightButtonText.NEXT_PAGE -> {
                     onLastPage = preview_image.nextPage()
+                    Log.v("onLastPage", "$onLastPage")
                     if (onLastPage) {
                         rightButtonText = RightButtonText.FINISH
                     }
@@ -168,21 +162,16 @@ class MeasureSheetActivity : AppCompatActivity() {
     }
 
     private fun loadPdf(uri: String) {
-        val pdfDescriptor = contentResolver.openFileDescriptor(Uri.parse(uri), "r")
-        val renderer = PdfRenderer(pdfDescriptor)
+        val renderer = PdfSheetRenderer(this, uri)
         preview_image.renderer = renderer
-        onLastPage = renderer.pageCount == 1
+        onLastPage = renderer.getPageCount() == 1
         if (onLastPage) {
             rightButtonText = RightButtonText.FINISH
         }
         val pageCount = preview_image.sheet.pages.size
-        preview_image.renderPage(if (pageCount == 0) 0 else pageCount - 1)
-    }
-
-    private fun calcWidth(): Int {
-        val size = Point()
-        windowManager.defaultDisplay.getSize(size)
-        return size.x
+        preview_image.post {
+            preview_image.renderPage(if (pageCount == 0) 0 else pageCount - 1)
+        }
     }
 }
 
