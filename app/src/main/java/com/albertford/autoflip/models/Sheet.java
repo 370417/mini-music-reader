@@ -96,4 +96,14 @@ public class Sheet extends RealmObject implements Parcelable {
         parcel.writeInt(bpb);
         parcel.writeTypedList(pages);
     }
+
+    public int countBars() {
+        int barCount = 0;
+        for (Page page : pages) {
+            for (Staff staff : page.getStaves()) {
+                barCount += staff.getBarLines().size() - 1;
+            }
+        }
+        return barCount;
+    }
 }

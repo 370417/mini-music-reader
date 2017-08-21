@@ -4,7 +4,9 @@
     android:layout_width="match_parent"
     android:layout_height="48dp"
     android:paddingStart="16dp"
-    android:paddingEnd="16dp">
+    android:paddingEnd="16dp"
+    android:gravity="center"
+    >
 
     <TextView
         android:id="@+id/primary_list_text"

@@ -16,9 +16,7 @@ private const val DEFAULT_BAR_START = 0.1f
 private const val DEFAULT_BAR_END = 0.3f
 
 interface Selection : Parcelable {
-    override fun describeContents(): Int {
-        return 0
-    }
+    override fun describeContents(): Int = 0
 
     fun move(page: Page, dx: Float, dy: Float)
 
@@ -84,7 +82,7 @@ class StaffSelection(var startY: Float, var endY: Float) : Selection {
         return newSelection
     }
 
-    fun flip() {
+    private fun flip() {
         val temp = startY
         startY = endY
         endY = temp
@@ -170,7 +168,7 @@ class BarSelection(var startX: Float, var endX: Float) : Selection {
         return suggestBarLine(lastStaff)
     }
 
-    fun flip() {
+    private fun flip() {
         val temp = startX
         startX = endX
         endX = temp

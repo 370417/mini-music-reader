@@ -27,7 +27,7 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
 
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
-        if (canvas != null) {
+        if (canvas != null && sheet.pages.isNotEmpty()) {
             selection.mask(canvas, sheet.pages.last(), maskDark)
             drawSheet(canvas)
             selection.project(canvas, sheet)
