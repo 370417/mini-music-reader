@@ -33,7 +33,9 @@
             android:parentActivityName=".activities.MainActivity"
             android:windowSoftInputMode="adjustResize">
         </activity>
-        <activity android:name=".activities.ViewSheetActivity">
+        <activity
+            android:name=".activities.ViewSheetActivity"
+            android:theme="@style/AppTheme.NoActionBar">
         </activity>
     </application>
 
