@@ -3,7 +3,6 @@ package com.albertford.autoflip.activities
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
-import android.util.Log
 import com.albertford.autoflip.PdfSheetRenderer
 import com.albertford.autoflip.R
 import com.albertford.autoflip.SheetRenderer
@@ -48,7 +47,7 @@ class ViewSheetActivity : AppCompatActivity() {
         barList = sheetRenderer.createBarList(sheet)
 
         secondary_image.post {
-            scale = sheetRenderer.findMaxBarScale(barList, play_button.width, play_button.height)
+            scale = sheetRenderer.findMaxTwoBarScale(barList, play_button.width, play_button.height)
             renderBar()
         }
 
@@ -62,8 +61,14 @@ class ViewSheetActivity : AppCompatActivity() {
     }
 
     private fun renderBar() {
-        val bitmap = sheetRenderer.renderBar(barList, barIndex, scale)
-        primary_image.setImageBitmap(bitmap)
+        val primaryBitmap = sheetRenderer.renderBar(barList, barIndex, scale)
+        primary_image.setImageBitmap(primaryBitmap)
+        val secondaryBitmap = if (barIndex < barList.size - 1) {
+            sheetRenderer.renderBar(barList, barIndex + 1, scale)
+        } else {
+            null
+        }
+        secondary_image.setImageBitmap(secondaryBitmap)
     }
 
     private fun loadSheet(uri: String): Sheet {
@@ -72,7 +77,6 @@ class ViewSheetActivity : AppCompatActivity() {
                 .equalTo("uri", uri)
                 .findFirst()
         realm.commitTransaction()
-        Log.v("PAGES", "${sheet.pages}")
         return sheet
     }
 }

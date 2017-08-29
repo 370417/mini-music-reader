@@ -7,6 +7,7 @@ import android.graphics.pdf.PdfRenderer
 import android.net.Uri
 import com.albertford.autoflip.models.Bar
 import com.albertford.autoflip.models.Sheet
+import com.albertford.autoflip.models.Staff
 
 interface SheetRenderer {
     fun getPageCount(): Int
@@ -14,21 +15,21 @@ interface SheetRenderer {
     /**
      * Render a full page with a set width, and as tall as necessary.
      */
-    fun renderFullPage(i: Int, width: Int): Bitmap
+    fun renderFullPage(i: Int, width: Int): Bitmap?
 
     /**
      * Render a page with a set width, cut off at a maximmum height, top justified.
      */
-    fun renderPagePreview(i: Int, width: Int, height: Int): Bitmap
+    fun renderPagePreview(i: Int, width: Int, height: Int): Bitmap?
 
     /**
      * Render a single bar as large as possible, preserving aspect ratio.
      */
-    fun renderBar(barList: List<Bar>, index: Int, scale: Float): Bitmap
+    fun renderBar(barList: List<Bar>, index: Int, scale: Float): Bitmap?
 
     fun close()
 
-    fun getPageDimensions(i: Int): Pair<Int, Int>
+    fun createBarList(sheet: Sheet): List<Bar>
 
     /**
      * Find the largest scale that fits every bar onto the screen.
@@ -62,25 +63,6 @@ interface SheetRenderer {
         }
         return maxScale
     }
-
-    fun createBarList(sheet: Sheet): List<Bar> {
-        val barList = ArrayList<Bar>()
-        for (pageIndex in sheet.pages.indices) {
-            val (pageWidth, pageHeight) = getPageDimensions(pageIndex)
-            for (staff in sheet.pages[pageIndex].staves) {
-                for (barIndex in 0 until staff.barLines.size - 1) {
-                    val barStart = staff.barLines[barIndex].x
-                    val barEnd = staff.barLines[barIndex + 1].x
-                    val top = pageHeight * staff.startY
-                    val left = pageWidth * barStart
-                    val width = pageWidth * (barEnd - barStart)
-                    val height = pageHeight * (staff.endY - staff.startY)
-                    barList.add(Bar(pageIndex, top, left, width, height))
-                }
-            }
-        }
-        return barList
-    }
 }
 
 private fun calcScale(containerWidth: Int, containerHeight: Int, width: Float,
@@ -107,16 +89,18 @@ class PdfSheetRenderer(context: Context, uri: Uri) : SheetRenderer {
 
     override fun getPageCount(): Int = renderer.pageCount
 
-    override fun renderFullPage(i: Int, width: Int): Bitmap {
+    override fun renderFullPage(i: Int, width: Int): Bitmap? {
         val pageRenderer = getPage(i)
+        pageRenderer ?: return null
         val height = pageRenderer.height * width / pageRenderer.width
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         pageRenderer.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
         return bitmap
     }
 
-    override fun renderPagePreview(i: Int, width: Int, height: Int): Bitmap {
+    override fun renderPagePreview(i: Int, width: Int, height: Int): Bitmap? {
         val pageRenderer = getPage(i)
+        pageRenderer ?: return null
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val scale = width.toFloat() / pageRenderer.width
         val matrix = Matrix()
@@ -125,9 +109,11 @@ class PdfSheetRenderer(context: Context, uri: Uri) : SheetRenderer {
         return bitmap
     }
 
-    override fun renderBar(barList: List<Bar>, index: Int, scale: Float): Bitmap {
-        val bar = barList[index]
+    override fun renderBar(barList: List<Bar>, index: Int, scale: Float): Bitmap? {
+        val bar = barList.getOrNull(index)
+        bar ?: return null
         val pageRenderer = getPage(bar.pageIndex)
+        pageRenderer ?: return null
         val imageWidth = Math.round(scale * bar.width)
         val imageHeight = Math.round(scale * bar.height)
         val bitmap = Bitmap.createBitmap(imageWidth, imageHeight, Bitmap.Config.ARGB_8888)
@@ -142,15 +128,36 @@ class PdfSheetRenderer(context: Context, uri: Uri) : SheetRenderer {
         cachedPageRenderer?.close()
     }
 
-    override fun getPageDimensions(i: Int): Pair<Int, Int> {
-        val pageRenderer = getPage(i)
-        return Pair(pageRenderer.width, pageRenderer.height)
+    override fun createBarList(sheet: Sheet): List<Bar> {
+        val barList = ArrayList<Bar>()
+        for (pageIndex in sheet.pages.indices) {
+            val pageRenderer = getPage(pageIndex)!!
+            for (staff in sheet.pages[pageIndex].staves) {
+                for (barIndex in 0 until staff.barLines.size - 1) {
+                    barList.add(createBar(pageIndex, pageRenderer, staff, barIndex))
+                }
+            }
+        }
+        return barList
     }
 
-    private fun getPage(i: Int): PdfRenderer.Page {
+    private fun createBar(pageIndex: Int, renderer: PdfRenderer.Page, staff: Staff,
+            barIndex: Int): Bar {
+        val barStart = staff.barLines[barIndex].x
+        val barEnd = staff.barLines[barIndex + 1].x
+        val top = renderer.height * staff.startY
+        val left = renderer.width * barStart
+        val width = renderer.width * (barEnd - barStart)
+        val height = renderer.height * (staff.endY - staff.startY)
+        return Bar(pageIndex, top, left, width, height)
+    }
+
+    private fun getPage(i: Int): PdfRenderer.Page? {
         val pageRenderer = cachedPageRenderer
         return if (i == pageRenderer?.index) {
             pageRenderer
+        } else if (i < 0 || i >= renderer.pageCount) {
+            null
         } else {
             pageRenderer?.close()
             val newPageRenderer = renderer.openPage(i)
