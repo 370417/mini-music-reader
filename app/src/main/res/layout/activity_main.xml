@@ -44,6 +44,7 @@
         app:layout_constraintLeft_toLeftOf="parent"
         android:src="@drawable/quarter_rest"
         android:scaleType="center"
+        tools:ignore="ContentDescription"
         />
 
     <View
