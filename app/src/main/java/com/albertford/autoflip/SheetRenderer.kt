@@ -24,8 +24,7 @@ interface SheetRenderer {
     /**
      * Render a single bar as large as possible, preserving aspect ratio.
      */
-    fun renderBar(barList: List<Bar>, index: Int, maxImageWidth: Int,
-            maxImageHeight: Int): Bitmap
+    fun renderBar(barList: List<Bar>, index: Int, scale: Float): Bitmap
 
     fun close()
 
@@ -41,6 +40,28 @@ interface SheetRenderer {
             val scale = calcScale(imageWidth, imageHeight, bar.width, bar.height)
             Math.min(acc, scale)
         }
+
+    fun findMaxTwoBarScale(barList: List<Bar>, imageWidth: Int, imageHeight: Int): Float {
+        var maxScale = Float.POSITIVE_INFINITY
+        for (i in 0 until barList.size - 1) {
+            val firstBar = barList[i]
+            val secondBar = barList[i + 1]
+            val combinedBarWidth: Float
+            val combinedBarHeight: Float
+            if (imageWidth > imageHeight) {
+                combinedBarWidth = firstBar.width + secondBar.width
+                combinedBarHeight = Math.max(firstBar.height, secondBar.height)
+            } else {
+                combinedBarWidth = Math.max(firstBar.width, secondBar.width)
+                combinedBarHeight = firstBar.height + secondBar.height
+            }
+            val scale = calcScale(imageWidth, imageHeight, combinedBarWidth, combinedBarHeight)
+            if (scale < maxScale) {
+                maxScale = scale
+            }
+        }
+        return maxScale
+    }
 
     fun createBarList(sheet: Sheet): List<Bar> {
         val barList = ArrayList<Bar>()
@@ -77,10 +98,6 @@ class PdfSheetRenderer(context: Context, uri: Uri) : SheetRenderer {
 
     private var cachedPageRenderer: PdfRenderer.Page? = null
 
-    private var cachedImageWidth = 0
-    private var cachedImageHeight = 0
-    private var cachedBarScale = 1f
-
     constructor(context: Context, uriString: String) : this(context, Uri.parse(uriString))
 
     init {
@@ -108,17 +125,15 @@ class PdfSheetRenderer(context: Context, uri: Uri) : SheetRenderer {
         return bitmap
     }
 
-    override fun renderBar(barList: List<Bar>, index: Int, maxImageWidth: Int,
-            maxImageHeight: Int): Bitmap {
-        val scale = updateBarScale(barList, maxImageWidth, maxImageHeight)
+    override fun renderBar(barList: List<Bar>, index: Int, scale: Float): Bitmap {
         val bar = barList[index]
         val pageRenderer = getPage(bar.pageIndex)
         val imageWidth = Math.round(scale * bar.width)
         val imageHeight = Math.round(scale * bar.height)
+        val bitmap = Bitmap.createBitmap(imageWidth, imageHeight, Bitmap.Config.ARGB_8888)
         val matrix = Matrix()
         matrix.postTranslate(-bar.left, -bar.top)
         matrix.postScale(scale, scale)
-        val bitmap = Bitmap.createBitmap(imageWidth, imageHeight, Bitmap.Config.ARGB_8888)
         pageRenderer.render(bitmap, null, matrix, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
         return bitmap
     }
@@ -142,14 +157,5 @@ class PdfSheetRenderer(context: Context, uri: Uri) : SheetRenderer {
             cachedPageRenderer = newPageRenderer
             newPageRenderer
         }
-    }
-
-    private fun updateBarScale(barList: List<Bar>, width: Int, height: Int): Float {
-        if (width != cachedImageWidth || height != cachedImageHeight) {
-            cachedImageWidth = width
-            cachedImageHeight = height
-            cachedBarScale = findMaxBarScale(barList, width, height)
-        }
-        return cachedBarScale
     }
 }

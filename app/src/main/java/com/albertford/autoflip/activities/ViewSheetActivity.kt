@@ -22,6 +22,8 @@ class ViewSheetActivity : AppCompatActivity() {
     private lateinit var barList: List<Bar>
     private var barIndex = 0
 
+    private var scale = 1f
+
     private var renderHandler = Handler()
     private var renderRunnable = object : Runnable {
         override fun run() {
@@ -45,9 +47,12 @@ class ViewSheetActivity : AppCompatActivity() {
         sheet = loadSheet(uri)
         barList = sheetRenderer.createBarList(sheet)
 
-        sheet_image.post { renderBar() }
+        secondary_image.post {
+            scale = sheetRenderer.findMaxBarScale(barList, play_button.width, play_button.height)
+            renderBar()
+        }
 
-        sheet_image.setOnClickListener { renderHandler.post(renderRunnable) }
+        play_button.setOnClickListener { renderHandler.post(renderRunnable) }
     }
 
     override fun onDestroy() {
@@ -57,9 +62,8 @@ class ViewSheetActivity : AppCompatActivity() {
     }
 
     private fun renderBar() {
-        val bitmap = sheetRenderer.renderBar(barList, barIndex, sheet_image.width,
-                sheet_image.height)
-        sheet_image.setImageBitmap(bitmap)
+        val bitmap = sheetRenderer.renderBar(barList, barIndex, scale)
+        primary_image.setImageBitmap(bitmap)
     }
 
     private fun loadSheet(uri: String): Sheet {
