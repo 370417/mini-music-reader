@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.support.annotation.StringRes
 import android.support.v7.app.AlertDialog
 import android.view.Menu
 import android.view.MenuItem
@@ -12,6 +13,7 @@ import android.view.View
 import android.view.inputmethod.EditorInfo
 import com.albertford.autoflip.PdfSheetRenderer
 import com.albertford.autoflip.R
+import com.albertford.autoflip.SheetRenderer
 import com.albertford.autoflip.models.Sheet
 import io.realm.Realm
 import kotlinx.android.synthetic.main.activity_create_sheet.*
@@ -100,9 +102,9 @@ class CreateSheetActivity : AppCompatActivity() {
     }
 
     private fun renderPreview(uri: Uri) {
-        val pdfSheetRenderer = PdfSheetRenderer(this, uri)
-        val bitmap = pdfSheetRenderer.renderPagePreview(0, sheet_image.width, sheet_image.height)
-        pdfSheetRenderer.close()
+        val sheetRenderer: SheetRenderer = PdfSheetRenderer(this, uri)
+        val bitmap = sheetRenderer.renderPagePreview(0, sheet_image.width, sheet_image.height)
+        sheetRenderer.close()
         sheet_image.setImageBitmap(bitmap)
     }
 
@@ -146,23 +148,27 @@ class CreateSheetActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * @return whether the uri is valid
+     */
     private fun validateUri(): Boolean {
         val uri = uri
         return if (uri == null) {
-            AlertDialog.Builder(this)
-                    .setMessage(R.string.error_no_uri)
-                    .create()
-                    .show()
+            showAlert(R.string.error_no_uri)
             false
         } else if (!isUriUnique(uri)) {
-            AlertDialog.Builder(this)
-                    .setMessage(R.string.error_non_unique_uri)
-                    .create()
-                    .show()
+            showAlert(R.string.error_non_unique_uri)
             false
         } else {
             true
         }
+    }
+
+    private fun showAlert(@StringRes msg: Int) {
+        AlertDialog.Builder(this)
+                .setMessage(msg)
+                .create()
+                .show()
     }
 
     private fun validateName(): Boolean {

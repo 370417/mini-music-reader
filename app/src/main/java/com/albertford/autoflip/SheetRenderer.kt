@@ -42,6 +42,9 @@ interface SheetRenderer {
             Math.min(acc, scale)
         }
 
+    /**
+     * Find the largest scale that fits every adjacent pair of bars onto the screen.
+     */
     fun findMaxTwoBarScale(barList: List<Bar>, imageWidth: Int, imageHeight: Int): Float {
         var maxScale = Float.POSITIVE_INFINITY
         for (i in 0 until barList.size - 1) {
