@@ -3,7 +3,7 @@
     package="com.albertford.autoflip">
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="com.google.android.apps.photos.permission.GOOGLE_PHOTOS"/>
+    <uses-permission android:name="android.permission.MANAGE_DOCUMENTS"/>
 
     <application
         android:name=".AutoFlip"

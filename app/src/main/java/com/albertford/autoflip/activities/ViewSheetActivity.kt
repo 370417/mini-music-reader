@@ -36,6 +36,12 @@ class ViewSheetActivity : AppCompatActivity() {
         }
     }
 
+    private var countDownDunnable = object : Runnable {
+        override fun run() {
+
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         realm = Realm.getDefaultInstance()

@@ -18,8 +18,6 @@ import com.albertford.autoflip.models.Sheet
 import io.realm.Realm
 import kotlinx.android.synthetic.main.activity_create_sheet.*
 
-const val PICK_PDF_REQUEST = 1
-
 const val NAME_KEY = "NAME_KEY"
 const val URI_KEY = "URI_KEY"
 const val BPM_KEY = "BPM_KEY"
@@ -29,12 +27,12 @@ private const val STATE_URI = "STATE_URI"
 
 class CreateSheetActivity : AppCompatActivity() {
 
-    private lateinit var realm: Realm
+//    private lateinit var realm: Realm
 
     private var uri: String? = null
 
     private val chooseFile = View.OnClickListener {
-        val intent = Intent(Intent.ACTION_GET_CONTENT)
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
         intent.type = "application/pdf"
         intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true)
         if (intent.resolveActivity(packageManager) != null) {
@@ -44,7 +42,7 @@ class CreateSheetActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        realm = Realm.getDefaultInstance()
+//        realm = Realm.getDefaultInstance()
         setContentView(R.layout.activity_create_sheet)
 
         setSupportActionBar(toolbar)
@@ -72,10 +70,10 @@ class CreateSheetActivity : AppCompatActivity() {
         outState?.putString(STATE_URI, uri)
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        realm.close()
-    }
+//    override fun onDestroy() {
+//        super.onDestroy()
+//        realm.close()
+//    }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_form, menu)
@@ -212,11 +210,12 @@ class CreateSheetActivity : AppCompatActivity() {
     }
 
     private fun isUriUnique(uri: String): Boolean {
-        realm.beginTransaction()
-        val sameUri = realm.where(Sheet::class.java)
-                .equalTo("uri", uri)
-                .findFirst()
-        realm.commitTransaction()
-        return sameUri == null
+//        realm.beginTransaction()
+//        val sameUri = realm.where(Sheet::class.java)
+//                .equalTo("uri", uri)
+//                .findFirst()
+//        realm.commitTransaction()
+//        return sameUri == null
+        return true
     }
 }

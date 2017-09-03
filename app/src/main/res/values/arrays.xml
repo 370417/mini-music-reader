@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="sheet_type">
+        <item>Choose Pdf</item>
+        <item>Choose Image</item>
+    </string-array>
+</resources>
