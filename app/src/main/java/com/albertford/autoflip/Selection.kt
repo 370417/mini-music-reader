@@ -4,9 +4,8 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.os.Parcel
 import android.os.Parcelable
-import com.albertford.autoflip.models.BarLine
 import com.albertford.autoflip.models.Page
-import com.albertford.autoflip.models.Sheet
+import com.albertford.autoflip.models.SheetPartition
 import com.albertford.autoflip.models.Staff
 
 private const val DEFAULT_STAFF_START = 0.1f
@@ -24,11 +23,11 @@ interface Selection : Parcelable {
 
     fun mask(canvas: Canvas, page: Page, paint: Paint)
 
-    fun project(canvas: Canvas, sheet: Sheet)
+    fun project(canvas: Canvas, sheetPartition: SheetPartition)
 
     fun drawHandles(canvas: Canvas, paint: Paint)
 
-    fun save(sheet: Sheet): Selection
+    fun save(sheetPartition: SheetPartition): Selection
 }
 
 private enum class Handle {
@@ -64,8 +63,8 @@ class StaffSelection(var startY: Float, var endY: Float) : Selection {
         maskStaff(canvas, startY, endY, paint)
     }
 
-    override fun project(canvas: Canvas, sheet: Sheet) {
-        val (size, delta) = suggestProjectedStaff(sheet, this)
+    override fun project(canvas: Canvas, sheetPartition: SheetPartition) {
+        val (size, delta) = suggestProjectedStaff(sheetPartition, this)
         val period = size + delta
         projectHorizontal(canvas, startY, period)
         projectHorizontal(canvas, endY, period)
@@ -76,9 +75,9 @@ class StaffSelection(var startY: Float, var endY: Float) : Selection {
         drawHorizontal(canvas, endY, 0f, 1f, paint)
     }
 
-    override fun save(sheet: Sheet): Selection {
-        val newSelection = suggestFirstBar(sheet)
-        sheet.pages.last().staves.add(Staff(startY, endY))
+    override fun save(sheetPartition: SheetPartition): Selection {
+        val newSelection = suggestFirstBar(sheetPartition)
+        sheetPartition.pages.last().staves.add(Staff(startY, endY))
         return newSelection
     }
 
@@ -108,13 +107,9 @@ class StaffSelection(var startY: Float, var endY: Float) : Selection {
     }
 
     companion object CREATOR : Parcelable.Creator<StaffSelection> {
-        override fun createFromParcel(parcel: Parcel): StaffSelection {
-            return StaffSelection(parcel.readFloat(), parcel.readFloat())
-        }
+        override fun createFromParcel(parcel: Parcel) = StaffSelection(parcel.readFloat(), parcel.readFloat())
 
-        override fun newArray(size: Int): Array<StaffSelection?> {
-            return arrayOfNulls(size)
-        }
+        override fun newArray(size: Int): Array<StaffSelection?> = arrayOfNulls(size)
     }
 }
 
@@ -150,9 +145,9 @@ class BarSelection(var startX: Float, var endX: Float) : Selection {
         drawRect(canvas, endX, lastStaff.startY, 1f, lastStaff.endY, paint)
     }
 
-    override fun project(canvas: Canvas, sheet: Sheet) {
+    override fun project(canvas: Canvas, sheetPartition: SheetPartition) {
         val period = endX - startX
-        val staff = sheet.pages.last().staves.last()
+        val staff = sheetPartition.pages.last().staves.last()
         projectVertical(canvas, endX, period, staff.startY, staff.endY)
     }
 
@@ -161,10 +156,10 @@ class BarSelection(var startX: Float, var endX: Float) : Selection {
         drawVertical(canvas, endX, 0f, 1f, paint)
     }
 
-    override fun save(sheet: Sheet): Selection {
-        val lastStaff = sheet.pages.last().staves.last()
-        lastStaff.barLines.add(BarLine(startX))
-        lastStaff.barLines.add(BarLine(endX))
+    override fun save(sheetPartition: SheetPartition): Selection {
+        val lastStaff = sheetPartition.pages.last().staves.last()
+        lastStaff.barLines.add(startX)
+        lastStaff.barLines.add(endX)
         return suggestBarLine(lastStaff)
     }
 
@@ -191,37 +186,31 @@ class BarSelection(var startX: Float, var endX: Float) : Selection {
     }
 
     companion object CREATOR : Parcelable.Creator<BarSelection> {
-        override fun createFromParcel(parcel: Parcel): BarSelection {
-            return BarSelection(parcel.readFloat(), parcel.readFloat())
-        }
+        override fun createFromParcel(parcel: Parcel) = BarSelection(parcel.readFloat(), parcel.readFloat())
 
-        override fun newArray(size: Int): Array<BarSelection?> {
-            return arrayOfNulls(size)
-        }
+        override fun newArray(size: Int): Array<BarSelection?> = arrayOfNulls(size)
     }
 }
 
 class BarLineSelection(var x: Float) : Selection {
     override fun move(page: Page, dx: Float, dy: Float) {
         val lastStaff = page.staves.last()
-        x = clamp(x + dx, lastStaff.barLines.last().x, 1f)
+        x = clamp(x + dx, lastStaff.barLines.last(), 1f)
     }
 
-    override fun handleTouched(x: Float, y: Float, width: Int, height: Int): Boolean {
-        return nearLine(x, this.x * width)
-    }
+    override fun handleTouched(x: Float, y: Float, width: Int, height: Int) = nearLine(x, this.x * width)
 
     override fun mask(canvas: Canvas, page: Page, paint: Paint) {
         val lastStaff = page.staves.last()
         maskStaff(canvas, lastStaff.startY, lastStaff.endY, paint)
-        val startX = lastStaff.barLines.last().x
+        val startX = lastStaff.barLines.last()
         drawRect(canvas, 0f, lastStaff.startY, startX, lastStaff.endY, paint)
         drawRect(canvas, x, lastStaff.startY, 1f, lastStaff.endY, paint)
     }
 
-    override fun project(canvas: Canvas, sheet: Sheet) {
-        val staff = sheet.pages.last().staves.last()
-        val period = x - staff.barLines.last().x
+    override fun project(canvas: Canvas, sheetPartition: SheetPartition) {
+        val staff = sheetPartition.pages.last().staves.last()
+        val period = x - staff.barLines.last()
         projectVertical(canvas, x, period, staff.startY, staff.endY)
     }
 
@@ -229,9 +218,9 @@ class BarLineSelection(var x: Float) : Selection {
         drawVertical(canvas, x, 0f, 1f, paint)
     }
 
-    override fun save(sheet: Sheet): Selection {
-        val lastStaff = sheet.pages.last().staves.last()
-        lastStaff.barLines.add(BarLine(x))
+    override fun save(sheetPartition: SheetPartition): Selection {
+        val lastStaff = sheetPartition.pages.last().staves.last()
+        lastStaff.barLines.add(x)
         return suggestBarLine(lastStaff)
     }
 
@@ -247,29 +236,25 @@ class BarLineSelection(var x: Float) : Selection {
     }
 
     companion object CREATOR : Parcelable.Creator<BarLineSelection> {
-        override fun createFromParcel(parcel: Parcel): BarLineSelection {
-            return BarLineSelection(parcel.readFloat())
-        }
+        override fun createFromParcel(parcel: Parcel) = BarLineSelection(parcel.readFloat())
 
-        override fun newArray(size: Int): Array<BarLineSelection?> {
-            return arrayOfNulls(size)
-        }
+        override fun newArray(size: Int): Array<BarLineSelection?> = arrayOfNulls(size)
     }
 }
 
-fun suggestStaff(sheet: Sheet): StaffSelection {
-    val page = sheet.pages.last()
+fun suggestStaff(sheetPartition: SheetPartition): StaffSelection {
+    val page = sheetPartition.pages.last()
     return when (page.staves.size) {
-        0 -> suggestFirstStaff(sheet)
-        1 -> suggestSecondStaff(sheet)
+        0 -> suggestFirstStaff(sheetPartition)
+        1 -> suggestSecondStaff(sheetPartition)
         else -> suggestOtherStaff(page)
     }
 }
 
-private fun suggestFirstStaff(sheet: Sheet): StaffSelection {
-    val lastPage = sheet.pages[sheet.pages.size - 1]
+private fun suggestFirstStaff(sheetPartition: SheetPartition): StaffSelection {
+    val lastPage = sheetPartition.pages[sheetPartition.pages.size - 1]
     return try {
-        val refPage = sheet.pages.last { it.staves.isNotEmpty() }
+        val refPage = sheetPartition.pages.last { it.staves.isNotEmpty() }
         val firstStaff = refPage.staves[0]
         StaffSelection(firstStaff.startY, firstStaff.endY).clipOverflow(lastPage)
     } catch (e: NoSuchElementException) {
@@ -277,12 +262,12 @@ private fun suggestFirstStaff(sheet: Sheet): StaffSelection {
     }
 }
 
-private fun suggestSecondStaff(sheet: Sheet): StaffSelection {
-    val lastPage = sheet.pages[sheet.pages.size - 1]
+private fun suggestSecondStaff(sheetPartition: SheetPartition): StaffSelection {
+    val lastPage = sheetPartition.pages[sheetPartition.pages.size - 1]
     val lastStaff = lastPage.staves.last()
     val size = lastStaff.endY - lastStaff.startY
     val delta = try {
-        val refPage = sheet.pages.last { it.staves.size > 1 }
+        val refPage = sheetPartition.pages.last { it.staves.size > 1 }
         refPage.staves[1].startY - refPage.staves[0].endY
     } catch (e: NoSuchElementException) {
         0f
@@ -301,12 +286,12 @@ private fun suggestOtherStaff(page: Page): StaffSelection {
             lastStaff.endY + delta + size).clipOverflow(page)
 }
 
-fun suggestProjectedStaff(sheet: Sheet, selection: StaffSelection): Pair<Float, Float> {
-    val page = sheet.pages.last()
+fun suggestProjectedStaff(sheetPartition: SheetPartition, selection: StaffSelection): Pair<Float, Float> {
+    val page = sheetPartition.pages.last()
     val size = selection.endY - selection.startY
     val delta = if (page.staves.isEmpty()) {
         try {
-            val refPage = sheet.pages.last { it.staves.size > 1 }
+            val refPage = sheetPartition.pages.last { it.staves.size > 1 }
             refPage.staves[1].startY - refPage.staves[0].endY
         } catch (e: NoSuchElementException) {
             0f
@@ -318,13 +303,13 @@ fun suggestProjectedStaff(sheet: Sheet, selection: StaffSelection): Pair<Float, 
     return Pair(size, delta)
 }
 
-fun suggestFirstBar(sheet: Sheet): BarSelection {
-    val lastPage = sheet.pages.last()
+fun suggestFirstBar(sheetPartition: SheetPartition): BarSelection {
+    val lastPage = sheetPartition.pages.last()
     return if (lastPage.staves.isNotEmpty()) {
         suggestBarFromPage(lastPage).clipOverflow()
     } else {
         try {
-            val refPage = sheet.pages.last { it.staves.isNotEmpty() }
+            val refPage = sheetPartition.pages.last { it.staves.isNotEmpty() }
             suggestBarFromPage(refPage).clipOverflow()
         } catch (e: NoSuchElementException) {
             BarSelection(DEFAULT_BAR_START, DEFAULT_BAR_END)
@@ -334,13 +319,13 @@ fun suggestFirstBar(sheet: Sheet): BarSelection {
 
 private fun suggestBarFromPage(page: Page): BarSelection {
     val barLines = page.staves.last().barLines
-    return BarSelection(barLines[0].x, barLines[1].x)
+    return BarSelection(barLines[0], barLines[1])
 }
 
 fun suggestBarLine(staff: Staff): BarLineSelection {
     val lineCount = staff.barLines.size
-    val lastBarLine = staff.barLines[lineCount - 1].x
-    val secondLastBarLine = staff.barLines[lineCount - 2].x
+    val lastBarLine = staff.barLines[lineCount - 1]
+    val secondLastBarLine = staff.barLines[lineCount - 2]
     return BarLineSelection(2 * lastBarLine - secondLastBarLine).clipOverflow()
 }
 

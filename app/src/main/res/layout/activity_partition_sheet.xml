@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.design.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.albertford.autoflip.activities.PartitionSheetActivity"
+    >
+
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:background="@color/colorPrimary"
+        android:elevation="4dp"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        >
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/untitled"
+            android:inputType="text"
+            android:maxLines="1"
+            />
+
+    </android.support.v7.widget.Toolbar>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/colorMask"
+        />
+
+    <android.support.constraint.ConstraintLayout
+        android:id="@+id/bottom_sheet"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_behavior="android.support.design.widget.BottomSheetBehavior"
+        app:behavior_peekHeight="48dp"
+        android:elevation="2dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="16dp"
+        android:background="@android:color/white"
+        >
+
+        <LinearLayout
+            android:id="@+id/peek_layout"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toTopOf="@id/bottom_sheet"
+            app:layout_constraintLeft_toLeftOf="@id/bottom_sheet"
+            app:layout_constraintRight_toRightOf="@id/bottom_sheet"
+            android:orientation="horizontal"
+            >
+
+            <TextView
+                android:text="@string/page"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+                />
+
+            <TextView
+                android:id="@+id/page_number_text"
+                android:text="1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+                />
+
+            <TextView
+                android:id="@+id/of_text"
+                android:text="@string/page"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+                android:visibility="gone"
+                />
+
+            <TextView
+                android:id="@+id/page_count_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                />
+
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                />
+
+            <Button
+                android:id="@+id/secondary_button"
+                android:text="@string/next_page"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="?android:attr/borderlessButtonStyle"
+                android:visibility="gone"
+                />
+
+            <Button
+                android:id="@+id/primary_button"
+                android:text="@string/start"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="?android:attr/borderlessButtonStyle"
+                />
+
+        </LinearLayout>
+
+        <android.support.design.widget.TextInputLayout
+            android:id="@+id/beats_minute_layout"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toBottomOf="@id/peek_layout"
+            app:layout_constraintLeft_toLeftOf="@id/bottom_sheet"
+            app:layout_constraintRight_toRightOf="@id/bottom_sheet"
+            >
+            <android.support.design.widget.TextInputEditText
+                android:id="@+id/beats_minute_field"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/beats_per_minute"
+                android:inputType="numberDecimal"
+                android:maxLines="1"
+                />
+        </android.support.design.widget.TextInputLayout>
+
+        <android.support.design.widget.TextInputLayout
+            android:id="@+id/beats_measure_layout"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toBottomOf="@id/beats_minute_layout"
+            app:layout_constraintLeft_toLeftOf="@id/bottom_sheet"
+            app:layout_constraintRight_toRightOf="@id/bottom_sheet"
+            >
+            <android.support.design.widget.TextInputEditText
+                android:id="@+id/beats_measure_field"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/beats_per_measure"
+                android:inputType="number"
+                android:maxLines="1"
+                />
+        </android.support.design.widget.TextInputLayout>
+
+        <CheckBox
+            android:id="@+id/begin_repeat_checkbox"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toBottomOf="@id/beats_measure_layout"
+            app:layout_constraintLeft_toLeftOf="@id/bottom_sheet"
+            />
+
+        <TextView
+            android:id="@+id/begin_repeat_label"
+            android:text="@string/begin_repeat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toTopOf="@id/begin_repeat_checkbox"
+            app:layout_constraintLeft_toRightOf="@id/begin_repeat_checkbox"
+            android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+            />
+
+        <CheckBox
+            android:id="@+id/end_repeat_checkbox"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toBottomOf="@id/begin_repeat_checkbox"
+            app:layout_constraintLeft_toLeftOf="@id/bottom_sheet"
+            />
+
+        <TextView
+            android:id="@+id/end_repeat_label"
+            android:text="@string/end_repeat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toTopOf="@id/end_repeat_checkbox"
+            app:layout_constraintLeft_toRightOf="@id/end_repeat_checkbox"
+            android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+            />
+
+    </android.support.constraint.ConstraintLayout>
+
+</android.support.design.widget.CoordinatorLayout>

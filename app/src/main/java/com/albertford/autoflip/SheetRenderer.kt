@@ -6,7 +6,7 @@ import android.graphics.Matrix
 import android.graphics.pdf.PdfRenderer
 import android.net.Uri
 import com.albertford.autoflip.models.Bar
-import com.albertford.autoflip.models.Sheet
+import com.albertford.autoflip.models.SheetPartition
 import com.albertford.autoflip.models.Staff
 
 interface SheetRenderer {
@@ -29,7 +29,7 @@ interface SheetRenderer {
 
     fun close()
 
-    fun createBarList(sheet: Sheet): List<Bar>
+    fun createBarList(sheetPartition: SheetPartition): List<Bar>
 
     /**
      * Find the largest scale that fits every bar onto the screen.
@@ -131,11 +131,11 @@ class PdfSheetRenderer(context: Context, uri: Uri) : SheetRenderer {
         cachedPageRenderer?.close()
     }
 
-    override fun createBarList(sheet: Sheet): List<Bar> {
+    override fun createBarList(sheetPartition: SheetPartition): List<Bar> {
         val barList = ArrayList<Bar>()
-        for (pageIndex in sheet.pages.indices) {
+        for (pageIndex in sheetPartition.pages.indices) {
             val pageRenderer = getPage(pageIndex)!!
-            for (staff in sheet.pages[pageIndex].staves) {
+            for (staff in sheetPartition.pages[pageIndex].staves) {
                 for (barIndex in 0 until staff.barLines.size - 1) {
                     barList.add(createBar(pageIndex, pageRenderer, staff, barIndex))
                 }
@@ -146,8 +146,8 @@ class PdfSheetRenderer(context: Context, uri: Uri) : SheetRenderer {
 
     private fun createBar(pageIndex: Int, renderer: PdfRenderer.Page, staff: Staff,
             barIndex: Int): Bar {
-        val barStart = staff.barLines[barIndex].x
-        val barEnd = staff.barLines[barIndex + 1].x
+        val barStart = staff.barLines[barIndex]
+        val barEnd = staff.barLines[barIndex + 1]
         val top = renderer.height * staff.startY
         val left = renderer.width * barStart
         val width = renderer.width * (barEnd - barStart)

@@ -6,23 +6,16 @@ import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v7.app.AlertDialog
-import android.view.View
 import android.widget.Toast
 import com.albertford.autoflip.R
-import com.albertford.autoflip.SheetAdapter
-import com.albertford.autoflip.models.Sheet
-import com.albertford.autoflip.readAllSheets
-import io.realm.Realm
-import io.realm.RealmResults
 import kotlinx.android.synthetic.main.activity_main.*
 
 const val PICK_PDF_REQUEST = 0
 const val PICK_IMAGE_REQUEST = 1
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var realm: Realm
 
-    private val dialogListener = DialogInterface.OnClickListener { dialog, i ->
+    private val dialogListener = DialogInterface.OnClickListener { _, i ->
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
         val requestCode: Int
         if (i == 0) {
@@ -39,22 +32,19 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        realm = Realm.getDefaultInstance()
         setContentView(R.layout.activity_main)
 
-        val results = readAllSheets(realm)
-        recycler_view.adapter = SheetAdapter(results)
+//        val results = readAllSheets(realm)
+//        recycler_view.adapter = SheetAdapter(results)
 
         setSupportActionBar(toolbar)
 
-        if (results.isNotEmpty()) {
-            empty_image.visibility = View.GONE
-            empty_overlay.visibility = View.GONE
-        }
+//        if (results.isNotEmpty()) {
+//            empty_image.visibility = View.GONE
+//            empty_overlay.visibility = View.GONE
+//        }
 
         floating_action_button.setOnClickListener {
-//            val intent = Intent(this, CreateSheetActivity::class.java)
-//            startActivity(intent)
             val builder = AlertDialog.Builder(this)
             builder.setTitle(R.string.new_sheet_label)
                     .setItems(R.array.sheet_type, dialogListener)
@@ -69,21 +59,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        realm.close()
-    }
-
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (resultCode != Activity.RESULT_OK || data?.data == null) {
             return
         }
-        when (requestCode) {
-            PICK_PDF_REQUEST -> {
-                data.data
-            }
-            PICK_IMAGE_REQUEST -> {}
-        }
+        val intent = Intent(this, PartitionSheetActivity::class.java)
+        intent.putExtra("URI", data.data)
+        intent.putExtra("TYPE", resultCode)
+        startActivity(intent)
     }
 }

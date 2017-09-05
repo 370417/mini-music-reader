@@ -5,17 +5,13 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import com.albertford.autoflip.*
-import com.albertford.autoflip.models.Sheet
-import io.realm.Realm
+import com.albertford.autoflip.models.SheetPartition
 import kotlinx.android.synthetic.main.activity_measure_sheet.*
 
 private const val STATE_LAST_PAGE = "STATE_LAST_PAGE"
-private const val STATE_SELECTION = "STATE_SELECTION"
 private const val STATE_SHEET = "STATE_SHEET"
 
 class MeasureSheetActivity : AppCompatActivity() {
-
-    private lateinit var realm: Realm
 
     private var leftButtonText = LeftButtonText.SAVE_STAFF
         set(value) {
@@ -54,7 +50,7 @@ class MeasureSheetActivity : AppCompatActivity() {
                 rightButtonText = if (onLastPage) RightButtonText.FINISH else RightButtonText.NEXT_PAGE
             }
             RightButtonText.FINISH -> {
-                writeToRealm(preview_image.sheet)
+//                writeToRealm(preview_image.sheetPartition)
                 val intent = Intent(this, MainActivity::class.java)
                 startActivity(intent)
             }
@@ -69,7 +65,6 @@ class MeasureSheetActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        realm = Realm.getDefaultInstance()
         setContentView(R.layout.activity_measure_sheet)
 
         setPadding()
@@ -84,15 +79,9 @@ class MeasureSheetActivity : AppCompatActivity() {
         right_button.setOnClickListener(rightButtonListener)
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        realm.close()
-    }
-
     override fun onSaveInstanceState(outState: Bundle?) {
         outState?.putBoolean(STATE_LAST_PAGE, onLastPage)
-        outState?.putParcelable(STATE_SELECTION, preview_image.selection)
-        outState?.putParcelable(STATE_SHEET, preview_image.sheet)
+        outState?.putParcelable(STATE_SHEET, preview_image.sheetPartition)
 
         super.onSaveInstanceState(outState)
     }
@@ -111,19 +100,17 @@ class MeasureSheetActivity : AppCompatActivity() {
         val uri = intent.getStringExtra(URI_KEY)
         val bpm = intent.getFloatExtra(BPM_KEY, 0f)
         val bpb = intent.getIntExtra(BPB_KEY, 0)
-        preview_image.sheet = Sheet(name, uri, bpm, bpb)
+        preview_image.sheetPartition = SheetPartition(name, uri, bpm, bpb)
         loadPdf(uri)
     }
 
     private fun restoreState(savedInstanceState: Bundle) {
-        val sheet = savedInstanceState.getParcelable<Sheet>(
+        val sheet = savedInstanceState.getParcelable<SheetPartition>(
                 STATE_SHEET)
-        preview_image.sheet = sheet
+        preview_image.sheetPartition = sheet
         onLastPage = savedInstanceState.getBoolean(STATE_LAST_PAGE)
-        preview_image.selection = savedInstanceState.getParcelable(
-                STATE_SELECTION)
         loadPdf(sheet.uri)
-        when (preview_image.selection) {
+        when (preview_image.sheetPartition?.selection) {
             is StaffSelection -> {
                 leftButtonText = LeftButtonText.SAVE_STAFF
                 rightButtonText = if (onLastPage) RightButtonText.FINISH else RightButtonText.NEXT_PAGE
@@ -137,12 +124,6 @@ class MeasureSheetActivity : AppCompatActivity() {
                 leftButtonText = LeftButtonText.SAVE_BAR
                 rightButtonText = RightButtonText.NEXT_STAFF
             }
-        }
-    }
-
-    private fun writeToRealm(sheet: Sheet) {
-        realm.executeTransaction {
-            realm.copyToRealmOrUpdate(sheet)
         }
     }
 
@@ -171,9 +152,11 @@ class MeasureSheetActivity : AppCompatActivity() {
         if (onLastPage) {
             rightButtonText = RightButtonText.FINISH
         }
-        val pageCount = preview_image.sheet.pages.size
+        val sheet = preview_image.sheetPartition
+        sheet ?: return
+        val pageCount = sheet.pages.size
         preview_image.post {
-            preview_image.renderPage(if (pageCount == 0) 0 else pageCount - 1)
+            preview_image.renderPage(sheet, if (pageCount == 0) 0 else pageCount - 1)
         }
     }
 }

@@ -7,7 +7,7 @@ import android.arch.persistence.room.Query;
 @Dao
 public interface UriDao {
 
-    @Query("SELECT * FROM pageuri WHERE id = :id ORDER BY pagenumber")
+    @Query("SELECT * FROM pageuri WHERE sheetId = :id ORDER BY pagenumber")
     PageUri[] loadUris(int id);
 
     @Insert

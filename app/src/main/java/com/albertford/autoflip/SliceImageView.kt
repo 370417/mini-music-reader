@@ -20,36 +20,44 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
     private var lastTouchX = 0f
     private var lastTouchY = 0f
 
-    var sheet: Sheet = Sheet()
-    var selection: Selection = StaffSelection(0f, 0f)
+    var sheetPartition: SheetPartition? = null
 
-    var renderer: PdfSheetRenderer? = null
+    var renderer: SheetRenderer? = null
 
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
-        if (canvas != null && sheet.pages.isNotEmpty()) {
-            selection.mask(canvas, sheet.pages.last(), maskDark)
-            drawSheet(canvas)
-            selection.project(canvas, sheet)
-            selection.drawHandles(canvas, accent)
+        val sheet = sheetPartition
+        if (canvas != null && sheet != null && sheet.pages.isNotEmpty()) {
+            sheet.selection.mask(canvas, sheet.pages.last(), maskDark)
+            drawSheet(sheet, canvas)
+            sheet.selection.project(canvas, sheet)
+            sheet.selection.drawHandles(canvas, accent)
         }
     }
 
-    override fun onTouchEvent(event: MotionEvent?): Boolean = when (event?.action) {
-        MotionEvent.ACTION_DOWN -> onActionDown(event)
-        MotionEvent.ACTION_MOVE -> onActionMove(event)
-        MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> onActionCancel()
-        MotionEvent.ACTION_POINTER_UP -> onActionPointerUp(event)
-        else -> super.onTouchEvent(event)
+    override fun onTouchEvent(event: MotionEvent?): Boolean {
+        val sheet = sheetPartition
+        sheet ?: return super.onTouchEvent(event)
+        return when (event?.action) {
+            MotionEvent.ACTION_DOWN -> onActionDown(sheet, event)
+            MotionEvent.ACTION_MOVE -> onActionMove(sheet, event)
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> onActionCancel()
+            MotionEvent.ACTION_POINTER_UP -> onActionPointerUp(event)
+            else -> super.onTouchEvent(event)
+        }
     }
 
     fun saveSelection() {
-        selection = selection.save(sheet)
+        val sheet = sheetPartition
+        sheet ?: return
+        sheet.selection = sheet.selection.save(sheet)
         invalidate()
     }
 
     fun nextStaff() {
-        selection = suggestStaff(sheet)
+        val sheet = sheetPartition
+        sheet ?: return
+        sheet.selection = suggestStaff(sheet)
         invalidate()
     }
 
@@ -57,21 +65,23 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
      * @return Whether the current page (after this function executes) is the last one
      */
     fun nextPage(): Boolean {
-        renderPage(sheet.pages.size)
+        val sheet = sheetPartition
+        sheet ?: return false
+        renderPage(sheet, sheet.pages.size)
         return sheet.pages.size == renderer?.getPageCount()
     }
 
-    fun renderPage(i: Int) {
+    fun renderPage(sheet: SheetPartition, i: Int) {
         val bitmap = renderer?.renderFullPage(i, width)
         setImageBitmap(bitmap)
         if (sheet.pages.size == i) {
             sheet.pages.add(Page())
-            selection = suggestStaff(sheet)
+            sheet.selection = suggestStaff(sheet)
         }
     }
 
-    private fun onActionDown(event: MotionEvent): Boolean {
-        return if (selection.handleTouched(event.x, event.y, width, height)) {
+    private fun onActionDown(sheet: SheetPartition, event: MotionEvent): Boolean {
+        return if (sheet.selection.handleTouched(event.x, event.y, width, height)) {
             lastTouchX = event.x
             lastTouchY = event.y
             activePointerId = event.getPointerId(event.actionIndex)
@@ -82,7 +92,7 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
         }
     }
 
-    private fun onActionMove(event: MotionEvent): Boolean {
+    private fun onActionMove(sheet: SheetPartition, event: MotionEvent): Boolean {
         if (activePointerId == MotionEvent.INVALID_POINTER_ID) {
             return false
         }
@@ -93,7 +103,7 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
         val dy = (y - lastTouchY) / height
         lastTouchX = x
         lastTouchY = y
-        selection.move(sheet.pages.last(), dx, dy)
+        sheet.selection.move(sheet.pages.last(), dx, dy)
         invalidate()
         return true
     }
@@ -114,15 +124,15 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
         return true
     }
 
-    private fun drawSheet(canvas: Canvas) {
-        val page = sheet.pages[sheet.pages.size - 1]
+    private fun drawSheet(sheetPartition: SheetPartition, canvas: Canvas) {
+        val page = sheetPartition.pages[sheetPartition.pages.size - 1]
         for (staff in page.staves) {
             val startY = staff.startY
             val endY = staff.endY
             drawHorizontal(canvas, startY, 0f, width.toFloat(), white)
             drawHorizontal(canvas, endY, 0f, width.toFloat(), white)
             for (barLine in staff.barLines) {
-                drawVertical(canvas, barLine.x, startY, endY, white)
+                drawVertical(canvas, barLine, startY, endY, white)
             }
         }
     }

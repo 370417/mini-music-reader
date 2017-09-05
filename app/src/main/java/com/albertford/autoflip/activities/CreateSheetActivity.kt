@@ -14,8 +14,6 @@ import android.view.inputmethod.EditorInfo
 import com.albertford.autoflip.PdfSheetRenderer
 import com.albertford.autoflip.R
 import com.albertford.autoflip.SheetRenderer
-import com.albertford.autoflip.models.Sheet
-import io.realm.Realm
 import kotlinx.android.synthetic.main.activity_create_sheet.*
 
 const val NAME_KEY = "NAME_KEY"
@@ -211,7 +209,7 @@ class CreateSheetActivity : AppCompatActivity() {
 
     private fun isUriUnique(uri: String): Boolean {
 //        realm.beginTransaction()
-//        val sameUri = realm.where(Sheet::class.java)
+//        val sameUri = realm.where(SheetPartition::class.java)
 //                .equalTo("uri", uri)
 //                .findFirst()
 //        realm.commitTransaction()

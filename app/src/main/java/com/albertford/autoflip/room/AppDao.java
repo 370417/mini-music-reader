@@ -6,10 +6,10 @@ import android.arch.persistence.room.Query;
 
 @Dao
 public interface AppDao {
-    @Query("SELECT * FROM sheet ORDER BY name")
+    @Query("SELECT * FROM sheetPartition ORDER BY name")
     Sheet[] loadAllSheets();
 
-    @Query("SELECT * FROM sheet WHERE id = :id")
+    @Query("SELECT * FROM sheetPartition WHERE id = :id")
     Sheet loadSheet(int id);
 
     @Query("SELECT * FROM pageuri WHERE id = :id ORDER BY pagenumber")

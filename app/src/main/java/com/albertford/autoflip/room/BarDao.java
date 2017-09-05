@@ -7,7 +7,7 @@ import android.arch.persistence.room.Query;
 @Dao
 public interface BarDao {
 
-    @Query("SELECT * FROM bar WHERE id = :id ORDER BY index")
+    @Query("SELECT * FROM bar WHERE sheetId = :id ORDER BY barIndex")
     Bar[] loadBars(int id);
 
     @Insert

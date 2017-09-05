@@ -8,7 +8,7 @@ import android.arch.persistence.room.PrimaryKey;
     entity = Sheet.class,
     parentColumns = "id",
     childColumns = "sheetId"))
-public class PageUri {
+class PageUri {
     @PrimaryKey
     private String uri;
 
@@ -16,4 +16,28 @@ public class PageUri {
 
     // For pdfs, this is always -1
     private int pageNumber;
+
+    public String getUri() {
+        return uri;
+    }
+
+    public void setUri(String uri) {
+        this.uri = uri;
+    }
+
+    public int getSheetId() {
+        return sheetId;
+    }
+
+    public void setSheetId(int sheetId) {
+        this.sheetId = sheetId;
+    }
+
+    public int getPageNumber() {
+        return pageNumber;
+    }
+
+    public void setPageNumber(int pageNumber) {
+        this.pageNumber = pageNumber;
+    }
 }

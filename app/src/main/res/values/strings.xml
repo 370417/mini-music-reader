@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">Auto Flip</string>
 
+    <string name="start">START</string>
     <string name="finish">FINISH</string>
     <string name="next_page">NEXT PAGE</string>
     <string name="next_staff">NEXT STAFF</string>
@@ -21,4 +22,14 @@
     <string name="error_non_unique_uri">This file has already been added.</string>
 
     <string name="play_button">Play button</string>
+
+    <!-- Partition Sheet Vocabulary -->
+    <string name="untitled">Untitled</string>
+    <string name="page">Page\u0020</string>
+    <string name="page_of">\u0020of\u0020</string>
+    <string name="default_page_number">1/</string>
+    <string name="beats_per_minute">Beats per minute</string>
+    <string name="beats_per_measure">Beats per measure</string>
+    <string name="begin_repeat">Begin repeat</string>
+    <string name="end_repeat">End repeat</string>
 </resources>

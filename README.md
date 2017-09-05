@@ -1,4 +1,4 @@
 # Auto Flip
 
-An app to turn the pages of your sheet music for you.
+An app to turn the pages of your sheetPartition music for you.
 
