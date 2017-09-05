@@ -1,13 +1,19 @@
 package com.albertford.autoflip.activities
 
-import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.design.widget.BottomSheetBehavior
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import com.albertford.autoflip.PdfSheetRenderer
 import com.albertford.autoflip.R
+import com.albertford.autoflip.SheetRenderer
+import io.reactivex.Single
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
+import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_partition_sheet.*
 
 class PartitionSheetActivity : AppCompatActivity() {
@@ -15,9 +21,11 @@ class PartitionSheetActivity : AppCompatActivity() {
     private var changeTitleButton: MenuItem? = null
 
     private var uri: String? = null
-    private var sheetIsPdf = true
+    private var sheetRenderer: SheetRenderer? = null
 
     private var title: String? = null
+
+    private var sheetSubscription: Disposable? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,6 +40,14 @@ class PartitionSheetActivity : AppCompatActivity() {
         readUri()
 
         start_finish_button.setOnClickListener(startButtonListener)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        val sheetSub = sheetSubscription
+        if (sheetSub != null && !sheetSub.isDisposed) {
+            sheetSub.dispose()
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -58,13 +74,21 @@ class PartitionSheetActivity : AppCompatActivity() {
         val imageUriString = intent.getStringExtra("IMAGE")
         if (pdfUriString != null) {
             uri = pdfUriString
-            sheetIsPdf = true
+            val pdfSingle = Single.fromCallable {
+                PdfSheetRenderer(this, pdfUriString)
+            }
+            sheetSubscription = pdfSingle
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe({ renderer ->
+                        sheetRenderer = renderer
+                    }, { error ->
+                        Log.e("AutoFlip", error.toString())
+                    })
         } else if (imageUriString != null) {
             uri = imageUriString
-            sheetIsPdf = false
         } else {
-            val intent = Intent(this, MainActivity::class.java)
-            startActivity(intent)
+            finish()
         }
     }
 
