@@ -25,6 +25,8 @@
 
     <!-- Partition Sheet Vocabulary -->
     <string name="untitled">Untitled</string>
+    <string name="action_save">Save</string>
+    <string name="action_edit">Edit</string>
     <string name="page">Page\u0020</string>
     <string name="page_of">\u0020of\u0020</string>
     <string name="default_page_number">1/</string>

@@ -21,6 +21,7 @@
         >
 
         <EditText
+            android:id="@+id/title_field"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/untitled"
@@ -29,6 +30,17 @@
             />
 
     </android.support.v7.widget.Toolbar>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingTop="?attr/actionBarSize"
+        android:paddingBottom="48dp"
+        >
+
+
+
+    </FrameLayout>
 
     <View
         android:layout_width="match_parent"
@@ -97,7 +109,7 @@
                 />
 
             <Button
-                android:id="@+id/secondary_button"
+                android:id="@+id/next_page_button"
                 android:text="@string/next_page"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -106,7 +118,7 @@
                 />
 
             <Button
-                android:id="@+id/primary_button"
+                android:id="@+id/start_finish_button"
                 android:text="@string/start"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

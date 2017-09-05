@@ -10,8 +10,9 @@ import android.widget.Toast
 import com.albertford.autoflip.R
 import kotlinx.android.synthetic.main.activity_main.*
 
-const val PICK_PDF_REQUEST = 0
-const val PICK_IMAGE_REQUEST = 1
+const val PICK_PDF_REQUEST = 1
+const val PICK_IMAGE_REQUEST = 2
+const val NO_REQUEST = -1
 
 class MainActivity : AppCompatActivity() {
 
@@ -65,8 +66,8 @@ class MainActivity : AppCompatActivity() {
             return
         }
         val intent = Intent(this, PartitionSheetActivity::class.java)
-        intent.putExtra("URI", data.data)
-        intent.putExtra("TYPE", resultCode)
+        val key = if (requestCode == PICK_PDF_REQUEST) "PDF" else "IMAGE"
+        intent.putExtra(key, data.data.toString())
         startActivity(intent)
     }
 }

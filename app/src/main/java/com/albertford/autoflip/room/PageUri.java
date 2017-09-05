@@ -8,7 +8,7 @@ import android.arch.persistence.room.PrimaryKey;
     entity = Sheet.class,
     parentColumns = "id",
     childColumns = "sheetId"))
-class PageUri {
+public class PageUri {
     @PrimaryKey
     private String uri;
 

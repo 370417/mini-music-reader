@@ -4,9 +4,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:id="@+id/action_next"
+        android:id="@+id/action_title"
         android:icon="@drawable/ic_done_white_24dp"
-        android:title="Save"
+        android:title="@string/action_save"
         app:showAsAction="ifRoom"
         />
 
