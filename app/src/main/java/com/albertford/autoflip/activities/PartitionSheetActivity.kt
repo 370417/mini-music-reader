@@ -22,6 +22,7 @@ class PartitionSheetActivity : AppCompatActivity() {
 
     private var uri: String? = null
     private var sheetRenderer: SheetRenderer? = null
+    private var pageIndex = 0
 
     private var title: String? = null
 
@@ -36,9 +37,12 @@ class PartitionSheetActivity : AppCompatActivity() {
 
         val bottomSheetBehavior = BottomSheetBehavior.from(bottom_sheet)
         bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+        bottomSheetBehavior.setBottomSheetCallback(bottomSheetCallback)
 
         readUri()
+        initPageCount()
 
+        overlay_view.setOnTouchListener(overlayViewListener)
         start_finish_button.setOnClickListener(startButtonListener)
     }
 
@@ -63,10 +67,42 @@ class PartitionSheetActivity : AppCompatActivity() {
         return super.onOptionsItemSelected(item)
     }
 
+    private val bottomSheetCallback = object : BottomSheetBehavior.BottomSheetCallback() {
+        override fun onSlide(bottomSheet: View, slideOffset: Float) {
+            overlay_view.opacity = slideOffset
+        }
+
+        override fun onStateChanged(bottomSheet: View, newState: Int) {
+
+        }
+    }
+
+    private val overlayViewListener = View.OnTouchListener { _, _ ->
+        if (overlay_view.opacity == 1f) {
+            val bottomSheetBehavior = BottomSheetBehavior.from(bottom_sheet)
+            bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+            true
+        } else {
+            false
+        }
+    }
+
     private val startButtonListener = View.OnClickListener {
+        start_finish_button.text = resources.getString(R.string.finish)
+        start_finish_button.setOnClickListener(finishButtonListener)
+        val renderer = sheetRenderer
+        if (renderer is PdfSheetRenderer) {
+            if (renderer.getPageCount() != 1) {
+                start_finish_button.visibility = View.GONE
+                next_page_button.visibility = View.VISIBLE
+            }
+        }
         val bottomSheetBehavior = BottomSheetBehavior.from(bottom_sheet)
         bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
-        start_finish_button.text = resources.getString(R.string.finish)
+    }
+
+    private val finishButtonListener = View.OnClickListener {
+
     }
 
     private fun readUri() {
@@ -82,6 +118,10 @@ class PartitionSheetActivity : AppCompatActivity() {
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe({ renderer ->
                         sheetRenderer = renderer
+                        sheet_image.post {
+                            renderCurrentPage()
+                            initPageCount()
+                        }
                     }, { error ->
                         Log.e("AutoFlip", error.toString())
                     })
@@ -89,6 +129,16 @@ class PartitionSheetActivity : AppCompatActivity() {
             uri = imageUriString
         } else {
             finish()
+        }
+    }
+
+    private fun initPageCount() {
+        val renderer = sheetRenderer
+        page_number_text.text = (pageIndex + 1).toString()
+        if (renderer is PdfSheetRenderer) {
+            of_text.visibility = View.VISIBLE
+            page_count_text.text = renderer.getPageCount().toString()
+            page_count_text.visibility = View.VISIBLE
         }
     }
 
@@ -103,11 +153,15 @@ class PartitionSheetActivity : AppCompatActivity() {
             changeTitleButton?.setIcon(R.drawable.ic_mode_edit_white_24dp)
             changeTitleButton?.title = resources.getString(R.string.action_edit)
         } else {
-            title_field.setText(title)
             title_field.visibility = View.VISIBLE
             title = null
             changeTitleButton?.setIcon(R.drawable.ic_done_white_24dp)
             changeTitleButton?.title = resources.getString(R.string.action_save)
         }
+    }
+
+    private fun renderCurrentPage() {
+        val bitmap = sheetRenderer?.renderFullPage(pageIndex, sheet_image.width)
+        sheet_image.setImageBitmap(bitmap)
     }
 }

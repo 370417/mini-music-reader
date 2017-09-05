@@ -31,21 +31,26 @@
 
     </android.support.v7.widget.Toolbar>
 
-    <FrameLayout
+    <android.support.v4.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:paddingTop="?attr/actionBarSize"
         android:paddingBottom="48dp"
         >
 
+        <ImageView
+            android:id="@+id/sheet_image"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@android:color/white"
+            />
 
+    </android.support.v4.widget.NestedScrollView>
 
-    </FrameLayout>
-
-    <View
+    <com.albertford.autoflip.OverlayView
+        android:id="@+id/overlay_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/colorMask"
         />
 
     <android.support.constraint.ConstraintLayout
@@ -88,7 +93,7 @@
 
             <TextView
                 android:id="@+id/of_text"
-                android:text="@string/page"
+                android:text="@string/page_of"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="@style/TextAppearance.AppCompat.Medium"
@@ -99,6 +104,7 @@
                 android:id="@+id/page_count_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.AppCompat.Medium"
                 android:visibility="gone"
                 />
 

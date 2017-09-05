@@ -10,8 +10,6 @@ import com.albertford.autoflip.models.SheetPartition
 import com.albertford.autoflip.models.Staff
 
 interface SheetRenderer {
-    fun getPageCount(): Int
-
     /**
      * Render a full page with a set width, and as tall as necessary.
      */
@@ -90,7 +88,7 @@ class PdfSheetRenderer(context: Context, uri: Uri) : SheetRenderer {
         renderer = PdfRenderer(pdfDescriptor)
     }
 
-    override fun getPageCount(): Int = renderer.pageCount
+    fun getPageCount(): Int = renderer.pageCount
 
     override fun renderFullPage(i: Int, width: Int): Bitmap? {
         val pageRenderer = getPage(i)

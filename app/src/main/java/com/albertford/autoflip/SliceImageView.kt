@@ -68,7 +68,8 @@ class SliceImageView(context: Context?, attrs: AttributeSet?) : ImageView(contex
         val sheet = sheetPartition
         sheet ?: return false
         renderPage(sheet, sheet.pages.size)
-        return sheet.pages.size == renderer?.getPageCount()
+//        return sheet.pages.size == renderer?.getPageCount()
+        return true
     }
 
     fun renderPage(sheet: SheetPartition, i: Int) {
