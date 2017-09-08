@@ -38,7 +38,7 @@
         android:paddingBottom="48dp"
         >
 
-        <ImageView
+        <com.albertford.autoflip.PartitionImageView
             android:id="@+id/sheet_image"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

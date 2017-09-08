@@ -22,6 +22,14 @@ public class Bar {
 
     private float height;
 
+    private float beatsPerMinute;
+
+    private int beatsPerMeasure;
+
+    private boolean leftBeginRepeat;
+
+    private boolean rightEndRepeat;
+
     public int getSheetId() {
         return sheetId;
     }
@@ -76,5 +84,37 @@ public class Bar {
 
     public void setHeight(float height) {
         this.height = height;
+    }
+
+    public float getBeatsPerMinute() {
+        return beatsPerMinute;
+    }
+
+    public void setBeatsPerMinute(float beatsPerMinute) {
+        this.beatsPerMinute = beatsPerMinute;
+    }
+
+    public int getBeatsPerMeasure() {
+        return beatsPerMeasure;
+    }
+
+    public void setBeatsPerMeasure(int beatsPerMeasure) {
+        this.beatsPerMeasure = beatsPerMeasure;
+    }
+
+    public boolean isLeftBeginRepeat() {
+        return leftBeginRepeat;
+    }
+
+    public void setLeftBeginRepeat(boolean leftBeginRepeat) {
+        this.leftBeginRepeat = leftBeginRepeat;
+    }
+
+    public boolean isRightEndRepeat() {
+        return rightEndRepeat;
+    }
+
+    public void setRightEndRepeat(boolean rightEndRepeat) {
+        this.rightEndRepeat = rightEndRepeat;
     }
 }

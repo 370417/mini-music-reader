@@ -7,6 +7,7 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import com.albertford.autoflip.PartitionImageView
 import com.albertford.autoflip.PdfSheetRenderer
 import com.albertford.autoflip.R
 import com.albertford.autoflip.SheetRenderer
@@ -17,6 +18,8 @@ import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_partition_sheet.*
 
 class PartitionSheetActivity : AppCompatActivity() {
+
+    private var bottomSheetBehavior: BottomSheetBehavior<View>? = null
 
     private var changeTitleButton: MenuItem? = null
 
@@ -35,14 +38,16 @@ class PartitionSheetActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        val bottomSheetBehavior = BottomSheetBehavior.from(bottom_sheet)
-        bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
-        bottomSheetBehavior.setBottomSheetCallback(bottomSheetCallback)
+        bottomSheetBehavior = BottomSheetBehavior.from(bottom_sheet)
+        bottomSheetBehavior?.state = BottomSheetBehavior.STATE_EXPANDED
+        bottomSheetBehavior?.setBottomSheetCallback(bottomSheetCallback)
 
         readUri()
         initPageCount()
 
         overlay_view.setOnTouchListener(overlayViewListener)
+        sheet_image.setOnLongClickListener(sheet_image.onLongClickListener)
+        bottom_sheet.setOnClickListener(bottomSheetListener)
         start_finish_button.setOnClickListener(startButtonListener)
     }
 
@@ -68,6 +73,7 @@ class PartitionSheetActivity : AppCompatActivity() {
     }
 
     private val bottomSheetCallback = object : BottomSheetBehavior.BottomSheetCallback() {
+        /** Darken the sheet image when the bottom sheet is expanded */
         override fun onSlide(bottomSheet: View, slideOffset: Float) {
             overlay_view.opacity = slideOffset
         }
@@ -77,14 +83,18 @@ class PartitionSheetActivity : AppCompatActivity() {
         }
     }
 
+    /** Collapse bottom sheet when you click outside it */
     private val overlayViewListener = View.OnTouchListener { _, _ ->
         if (overlay_view.opacity == 1f) {
-            val bottomSheetBehavior = BottomSheetBehavior.from(bottom_sheet)
-            bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+            bottomSheetBehavior?.state = BottomSheetBehavior.STATE_COLLAPSED
             true
         } else {
             false
         }
+    }
+
+    private val bottomSheetListener = View.OnClickListener {
+        bottomSheetBehavior?.state = BottomSheetBehavior.STATE_EXPANDED
     }
 
     private val startButtonListener = View.OnClickListener {
@@ -97,8 +107,7 @@ class PartitionSheetActivity : AppCompatActivity() {
                 next_page_button.visibility = View.VISIBLE
             }
         }
-        val bottomSheetBehavior = BottomSheetBehavior.from(bottom_sheet)
-        bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+        bottomSheetBehavior?.state = BottomSheetBehavior.STATE_COLLAPSED
     }
 
     private val finishButtonListener = View.OnClickListener {
