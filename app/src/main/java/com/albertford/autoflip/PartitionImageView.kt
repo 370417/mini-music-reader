@@ -5,6 +5,7 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.support.v4.content.ContextCompat
 import android.util.AttributeSet
+import android.util.Log
 import android.view.MotionEvent
 import android.view.ViewConfiguration
 import android.widget.ImageView
@@ -25,6 +26,13 @@ class PartitionImageView(context: Context?, attrs: AttributeSet) : ImageView (co
     }
 
     var slideOffset = 0f
+        set(value) {
+            field = value
+            barOverlayPaint.alpha = Math.round(lightestOverlay * value)
+            invalidate()
+        }
+
+    var onSelectBarListener: (() -> Unit)? = null
 
     private var page = PagePartition()
 
@@ -35,6 +43,7 @@ class PartitionImageView(context: Context?, attrs: AttributeSet) : ImageView (co
 
     private var longClickSubscription: Disposable? = null
 
+    private val barOverlayPaint = makePaint(0, 0, 0, 0)
     private val accentPaint = getColorPaint(R.color.colorAccent)
 
     private val whiteLinePaint = {
@@ -56,9 +65,10 @@ class PartitionImageView(context: Context?, attrs: AttributeSet) : ImageView (co
             val staff = page.getSelectedStaff()
             staff.bars.sort()
             val index = -staff.bars.binarySearch(BarPartition(click.x)) - 1
-            if (index > 1 && index < staff.bars.size) {
+            if (index > 0 && index < staff.bars.size) {
                 clickOrigin = null
-
+                page.selectedBarIndex = index - 1
+                onSelectBarListener?.invoke()
             }
         }
     }
@@ -70,24 +80,31 @@ class PartitionImageView(context: Context?, attrs: AttributeSet) : ImageView (co
                 canvas?.drawRect(0f, 0f, width.toFloat(), height.toFloat(), lightestOverlayPaint)
             }
             page.selectedBarIndex < 0 -> {
-                val selectedStaff = page.getSelectedStaff()
-                canvas?.drawRect(0f, 0f, width.toFloat(), selectedStaff.start, lightestOverlayPaint)
-                canvas?.drawRect(0f, selectedStaff.end, width.toFloat(), height.toFloat(), lightestOverlayPaint)
+                val staff = page.getSelectedStaff()
+                canvas?.drawRect(0f, 0f, width.toFloat(), staff.start, lightestOverlayPaint)
+                canvas?.drawRect(0f, staff.end, width.toFloat(), height.toFloat(), lightestOverlayPaint)
             }
-            else -> {}
+            else -> {
+                val staff = page.getSelectedStaff()
+                canvas?.drawRect(0f, 0f, width.toFloat(), staff.start, lightestOverlayPaint)
+                canvas?.drawRect(0f, staff.end, width.toFloat(), height.toFloat(), lightestOverlayPaint)
+                val firstBar = staff.bars[page.selectedBarIndex]
+                val secondBar = staff.bars[page.selectedBarIndex + 1]
+                canvas?.drawRect(0f, staff.start, firstBar.x, staff.end, barOverlayPaint)
+                canvas?.drawRect(secondBar.x, staff.start, width.toFloat(), staff.end, barOverlayPaint)
+            }
         }
         for (staffIndex in page.staves.indices) {
             val staff = page.staves[staffIndex]
-            if (staffIndex == page.selectedStaffIndex) {
-                for (bar in staff.bars) {
-                    canvas?.drawLine(bar.x, staff.start, bar.x, staff.end, accentLinePaint)
-                }
+            val barPaint = if (staffIndex == page.selectedStaffIndex) {
+                accentLinePaint
             } else {
-                canvas?.drawLine(0f, staff.start, width.toFloat(), staff.start, whiteLinePaint)
-                canvas?.drawLine(0f, staff.end, width.toFloat(), staff.end, whiteLinePaint)
-                for (bar in staff.bars) {
-                    canvas?.drawLine(bar.x, staff.start, bar.x, staff.end, whiteLinePaint)
-                }
+                whiteLinePaint
+            }
+            canvas?.drawLine(0f, staff.start, width.toFloat(), staff.start, whiteLinePaint)
+            canvas?.drawLine(0f, staff.end, width.toFloat(), staff.end, whiteLinePaint)
+            for (bar in staff.bars) {
+                canvas?.drawLine(bar.x, staff.start, bar.x, staff.end, barPaint)
             }
         }
     }
@@ -135,11 +152,10 @@ class PartitionImageView(context: Context?, attrs: AttributeSet) : ImageView (co
                     is StaffSelectedClick -> {
                         page.getSelectedStaff().bars.add(BarPartition(event.x))
                         clickOrigin = BarDrag()
-                        longClickSubscription = Completable
-                                .timer(longClickDuration, TimeUnit.MILLISECONDS)
-                                .subscribeOn(Schedulers.io())
-                                .observeOn(AndroidSchedulers.mainThread())
-                                .subscribe(onLongClickListener)
+                        val subscription = longClickSubscription
+                        if (subscription != null && !subscription.isDisposed) {
+                            subscription.dispose()
+                        }
                     }
                     is BarDrag -> {
                         page.getSelectedStaff().bars.last().x = event.x
@@ -151,6 +167,10 @@ class PartitionImageView(context: Context?, attrs: AttributeSet) : ImageView (co
         return true
     }
 
+    fun deselectBar() {
+        page.selectedBarIndex = -1
+    }
+
     private fun onTouchStaff(event: MotionEvent): ClickOrigin? {
         val staff = page.getSelectedStaff()
         return when {
@@ -158,7 +178,15 @@ class PartitionImageView(context: Context?, attrs: AttributeSet) : ImageView (co
             approxEqual(event.y, staff.end) -> StaffSelectedDrag(false)
             event.y < staff.start -> StaffDeselected()
             event.y > staff.end -> StaffDeselected()
-            else -> StaffSelectedClick(event.x)
+            else -> {
+                longClickSubscription = Completable
+                        .timer(longClickDuration, TimeUnit.MILLISECONDS)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .doOnComplete(onLongClickListener)
+                        .subscribe()
+                StaffSelectedClick(event.x)
+            }
         }
     }
 

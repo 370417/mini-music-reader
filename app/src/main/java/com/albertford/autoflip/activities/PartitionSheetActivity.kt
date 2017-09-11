@@ -43,7 +43,9 @@ class PartitionSheetActivity : AppCompatActivity() {
         initPageCount()
 
         bottom_sheet.setOnTouchListener { _ , _ -> true }
+        sheet_image.onSelectBarListener = onSelectBarListener
         start_finish_button.setOnClickListener(startButtonListener)
+        bottom_cancel_button.setOnClickListener(cancelButtonListener)
     }
 
     override fun onDestroy() {
@@ -75,6 +77,7 @@ class PartitionSheetActivity : AppCompatActivity() {
 
         override fun onStateChanged(bottomSheet: View, newState: Int) {
             if (newState == BottomSheetBehavior.STATE_COLLAPSED) {
+                sheet_image.deselectBar()
                 if (bottom_buttons_layout.visibility == View.GONE) {
                     begin_repeat_layout.visibility = View.VISIBLE
                     end_repeat_layout.visibility = View.VISIBLE
@@ -82,6 +85,10 @@ class PartitionSheetActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private val onSelectBarListener = {
+        bottomSheetBehavior?.state = BottomSheetBehavior.STATE_EXPANDED
     }
 
     private val startButtonListener = View.OnClickListener {
@@ -99,6 +106,10 @@ class PartitionSheetActivity : AppCompatActivity() {
 
     private val finishButtonListener = View.OnClickListener {
 
+    }
+
+    private val cancelButtonListener = View.OnClickListener {
+        bottomSheetBehavior?.state = BottomSheetBehavior.STATE_COLLAPSED
     }
 
     private fun readUri() {
