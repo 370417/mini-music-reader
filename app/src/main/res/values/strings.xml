@@ -7,6 +7,8 @@
     <string name="next_staff">NEXT STAFF</string>
     <string name="save_staff">SAVE STAFF</string>
     <string name="save_bar">SAVE BAR</string>
+    <string name="cancel">CANCEL</string>
+    <string name="apply">APPLY</string>
 
     <string name="new_sheet_label">Create Sheet</string>
     <string name="choose_file">CHOOSE FILE</string>
@@ -34,4 +36,5 @@
     <string name="beats_per_measure">Beats per measure</string>
     <string name="begin_repeat">Begin repeat</string>
     <string name="end_repeat">End repeat</string>
+    <string name="one">1</string>
 </resources>

@@ -10,10 +10,27 @@ class StaffPartition(var start: Float, var end: Float) : Comparable<StaffPartiti
     val center: Float
         get() = (start + end) / 2
 
+    init { reorder() }
+
     constructor(height: Float) : this(height, height)
 
     constructor(parcel: Parcel) : this(parcel.readFloat(), parcel.readFloat()) {
         parcel.readTypedList(bars, BarPartition.CREATOR)
+    }
+
+    /**
+     * Flip start & end if start > end.
+     * @return true if start & end were flipped.
+     */
+    fun reorder(): Boolean {
+        return if (start > end) {
+            val temp = start
+            start = end
+            end = temp
+            true
+        } else {
+            false
+        }
     }
 
     override fun compareTo(other: StaffPartition): Int = when {

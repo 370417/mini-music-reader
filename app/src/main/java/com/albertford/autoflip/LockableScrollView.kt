@@ -7,5 +7,18 @@ import android.view.MotionEvent
 
 class LockableScrollView(context: Context?, attrs: AttributeSet?) : NestedScrollView(context,
         attrs) {
-    override fun onInterceptTouchEvent(ev: MotionEvent?): Boolean = false
+    var actionDownEvent: MotionEvent? = null
+
+    override fun onInterceptTouchEvent(ev: MotionEvent?): Boolean {
+        if (ev != null && ev.pointerCount > 1) {
+            super.onTouchEvent(actionDownEvent)
+            super.onInterceptTouchEvent(ev)
+            return true
+        } else {
+            if (ev?.action == MotionEvent.ACTION_DOWN) {
+                actionDownEvent = ev
+            }
+            return false
+        }
+    }
 }

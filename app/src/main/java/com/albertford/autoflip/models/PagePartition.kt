@@ -21,19 +21,32 @@ class PagePartition(var selectedStaffIndex: Int, var selectedBarIndex: Int) : Pa
         parcel?.writeTypedList(staves)
     }
 
-    fun insertNewStaffIndex(height: Float): Int {
-        val staff = StaffPartition(height)
-        var index = staves.binarySearch(staff)
-        if (index < 0) {
-            index = -index - 1
-        }
-        return index
-    }
+    fun getSelectedStaff() = staves[selectedStaffIndex]
 
-    fun insertNewStaff(height: Float, index: Int) {
-        staves.add(index, StaffPartition(height))
-        selectedStaffIndex = index
+    /**
+     * Insert a new staff and select it.
+     * @param initY inital click y coordinate
+     * @param dragY y coordinate of drag
+     * @return true if dragY corresponds to the staff's start, not end
+     */
+    fun insertNewStaff(initY: Float, dragY: Float) : Boolean {
+        val staff = StaffPartition(initY)
+        val index = staves.binarySearch(staff)
+        val positiveIndex = if (index < 0) {
+            -index - 1
+        } else {
+            index
+        }
+        staves.add(positiveIndex, staff)
+        selectedStaffIndex = positiveIndex
         selectedBarIndex = -1
+        return if (initY < dragY) {
+            staff.end = dragY
+            false
+        } else {
+            staff.start = dragY
+            true
+        }
     }
 
     companion object CREATOR : Parcelable.Creator<PagePartition> {

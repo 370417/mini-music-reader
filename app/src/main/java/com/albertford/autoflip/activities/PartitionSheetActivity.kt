@@ -7,10 +7,7 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import com.albertford.autoflip.PartitionImageView
-import com.albertford.autoflip.PdfSheetRenderer
-import com.albertford.autoflip.R
-import com.albertford.autoflip.SheetRenderer
+import com.albertford.autoflip.*
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
@@ -45,9 +42,7 @@ class PartitionSheetActivity : AppCompatActivity() {
         readUri()
         initPageCount()
 
-        overlay_view.setOnTouchListener(overlayViewListener)
-        sheet_image.setOnLongClickListener(sheet_image.onLongClickListener)
-        bottom_sheet.setOnClickListener(bottomSheetListener)
+        bottom_sheet.setOnTouchListener { _ , _ -> true }
         start_finish_button.setOnClickListener(startButtonListener)
     }
 
@@ -75,26 +70,18 @@ class PartitionSheetActivity : AppCompatActivity() {
     private val bottomSheetCallback = object : BottomSheetBehavior.BottomSheetCallback() {
         /** Darken the sheet image when the bottom sheet is expanded */
         override fun onSlide(bottomSheet: View, slideOffset: Float) {
-            overlay_view.opacity = slideOffset
+            sheet_image.slideOffset = slideOffset
         }
 
         override fun onStateChanged(bottomSheet: View, newState: Int) {
-
+            if (newState == BottomSheetBehavior.STATE_COLLAPSED) {
+                if (bottom_buttons_layout.visibility == View.GONE) {
+                    begin_repeat_layout.visibility = View.VISIBLE
+                    end_repeat_layout.visibility = View.VISIBLE
+                    bottom_buttons_layout.visibility = View.VISIBLE
+                }
+            }
         }
-    }
-
-    /** Collapse bottom sheet when you click outside it */
-    private val overlayViewListener = View.OnTouchListener { _, _ ->
-        if (overlay_view.opacity == 1f) {
-            bottomSheetBehavior?.state = BottomSheetBehavior.STATE_COLLAPSED
-            true
-        } else {
-            false
-        }
-    }
-
-    private val bottomSheetListener = View.OnClickListener {
-        bottomSheetBehavior?.state = BottomSheetBehavior.STATE_EXPANDED
     }
 
     private val startButtonListener = View.OnClickListener {
