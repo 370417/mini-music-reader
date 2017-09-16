@@ -44,6 +44,7 @@ class PartitionSheetActivity : AppCompatActivity() {
 
         bottom_sheet.setOnTouchListener { _ , _ -> true }
         sheet_image.onSelectBarListener = onSelectBarListener
+        next_page_button.setOnClickListener(nextButtonListener)
         start_finish_button.setOnClickListener(startButtonListener)
         bottom_cancel_button.setOnClickListener(cancelButtonListener)
     }
@@ -53,6 +54,9 @@ class PartitionSheetActivity : AppCompatActivity() {
         val sheetSub = sheetSubscription
         if (sheetSub != null && !sheetSub.isDisposed) {
             sheetSub.dispose()
+        }
+        if (sheet_image.longClickSubscription?.isDisposed == false) {
+            sheet_image.longClickSubscription?.dispose()
         }
     }
 
@@ -78,10 +82,11 @@ class PartitionSheetActivity : AppCompatActivity() {
         override fun onStateChanged(bottomSheet: View, newState: Int) {
             if (newState == BottomSheetBehavior.STATE_COLLAPSED) {
                 sheet_image.deselectBar()
-                if (bottom_buttons_layout.visibility == View.GONE) {
-                    begin_repeat_layout.visibility = View.VISIBLE
-                    end_repeat_layout.visibility = View.VISIBLE
-                    bottom_buttons_layout.visibility = View.VISIBLE
+                if (bottom_apply_button.visibility == View.GONE) {
+                    begin_repeat_checkbox.visibility = View.VISIBLE
+                    end_repeat_checkbox.visibility = View.VISIBLE
+                    bottom_apply_button.visibility = View.VISIBLE
+                    bottom_cancel_button.visibility = View.VISIBLE
                 }
             }
         }
@@ -89,6 +94,10 @@ class PartitionSheetActivity : AppCompatActivity() {
 
     private val onSelectBarListener = {
         bottomSheetBehavior?.state = BottomSheetBehavior.STATE_EXPANDED
+    }
+
+    private val nextButtonListener = View.OnClickListener {
+
     }
 
     private val startButtonListener = View.OnClickListener {
@@ -102,6 +111,7 @@ class PartitionSheetActivity : AppCompatActivity() {
             }
         }
         bottomSheetBehavior?.state = BottomSheetBehavior.STATE_COLLAPSED
+        sheet_image.allowTouch = true
     }
 
     private val finishButtonListener = View.OnClickListener {
