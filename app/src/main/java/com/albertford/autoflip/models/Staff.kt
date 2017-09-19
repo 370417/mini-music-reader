@@ -5,7 +5,7 @@ import android.os.Parcelable
 
 class Staff(var start: Float, var end: Float) : Comparable<Staff>, Parcelable {
 
-    val bars: MutableList<BarLine> = ArrayList()
+    val barLines: MutableList<BarLine> = ArrayList()
 
     private val center: Float
         get() = (start + end) / 2
@@ -15,7 +15,7 @@ class Staff(var start: Float, var end: Float) : Comparable<Staff>, Parcelable {
     constructor(height: Float) : this(height, height)
 
     constructor(parcel: Parcel) : this(parcel.readFloat(), parcel.readFloat()) {
-        parcel.readTypedList(bars, BarLine.CREATOR)
+        parcel.readTypedList(barLines, BarLine.CREATOR)
     }
 
     /**
@@ -44,7 +44,7 @@ class Staff(var start: Float, var end: Float) : Comparable<Staff>, Parcelable {
     override fun writeToParcel(parcel: Parcel?, int: Int) {
         parcel?.writeFloat(start)
         parcel?.writeFloat(end)
-        parcel?.writeTypedList(bars)
+        parcel?.writeTypedList(barLines)
     }
 
     companion object CREATOR : Parcelable.Creator<Staff> {

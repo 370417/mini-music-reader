@@ -8,6 +8,8 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import com.albertford.autoflip.*
+import com.albertford.autoflip.models.Page
+import com.albertford.autoflip.room.Sheet
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
@@ -38,6 +40,8 @@ class PartitionSheetActivity : AppCompatActivity() {
         bottomSheetBehavior = BottomSheetBehavior.from(bottom_sheet)
         bottomSheetBehavior?.state = BottomSheetBehavior.STATE_EXPANDED
         bottomSheetBehavior?.setBottomSheetCallback(bottomSheetCallback)
+
+        writeNewSheet()
 
         readUri()
         initPageCount()
@@ -81,7 +85,7 @@ class PartitionSheetActivity : AppCompatActivity() {
 
         override fun onStateChanged(bottomSheet: View, newState: Int) {
             if (newState == BottomSheetBehavior.STATE_COLLAPSED) {
-                sheet_image.deselectBar()
+                sheet_image.page?.selectedBarIndex = -1
                 if (bottom_apply_button.visibility == View.GONE) {
                     begin_repeat_checkbox.visibility = View.VISIBLE
                     end_repeat_checkbox.visibility = View.VISIBLE
@@ -92,12 +96,18 @@ class PartitionSheetActivity : AppCompatActivity() {
         }
     }
 
-    private val onSelectBarListener = {
+    private val onSelectBarListener = { beginRepeat: Boolean, endRepeat: Boolean ->
+        next_page_button.isEnabled = false
+        start_finish_button.isEnabled = false
+        beats_measure_field.text = null
+        beats_minute_field.text = null
+        begin_repeat_checkbox.isChecked = beginRepeat
+        end_repeat_checkbox.isChecked = endRepeat
         bottomSheetBehavior?.state = BottomSheetBehavior.STATE_EXPANDED
     }
 
     private val nextButtonListener = View.OnClickListener {
-
+        pageIndex++
     }
 
     private val startButtonListener = View.OnClickListener {
@@ -112,6 +122,7 @@ class PartitionSheetActivity : AppCompatActivity() {
         }
         bottomSheetBehavior?.state = BottomSheetBehavior.STATE_COLLAPSED
         sheet_image.allowTouch = true
+        sheet_image.page = Page(0, sheet_image.width.toFloat())
     }
 
     private val finishButtonListener = View.OnClickListener {
@@ -119,6 +130,8 @@ class PartitionSheetActivity : AppCompatActivity() {
     }
 
     private val cancelButtonListener = View.OnClickListener {
+        next_page_button.isEnabled = true
+        start_finish_button.isEnabled = true
         bottomSheetBehavior?.state = BottomSheetBehavior.STATE_COLLAPSED
     }
 
@@ -180,5 +193,14 @@ class PartitionSheetActivity : AppCompatActivity() {
     private fun renderCurrentPage() {
         val bitmap = sheetRenderer?.renderFullPage(pageIndex, sheet_image.width)
         sheet_image.setImageBitmap(bitmap)
+    }
+
+    private fun writeNewSheet() {
+        val sheet = Sheet(0, resources.getString(R.string.untitled))
+        Single.fromCallable {
+            AutoFlip.database?.sheetDao()?.insertSheet(sheet)
+        }.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe { sheetId ->
+            sheet.id = sheetId ?: 0
+        }
     }
 }

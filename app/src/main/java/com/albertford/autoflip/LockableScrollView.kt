@@ -5,13 +5,19 @@ import android.support.v4.widget.NestedScrollView
 import android.util.AttributeSet
 import android.view.MotionEvent
 
+/**
+ * A scroll view that requires two or more fingers to scroll.
+ */
+
 class LockableScrollView(context: Context?, attrs: AttributeSet?) : NestedScrollView(context,
         attrs) {
-    var actionDownEvent: MotionEvent? = null
+    private var actionDownEvent: MotionEvent? = null
 
     override fun onInterceptTouchEvent(ev: MotionEvent?): Boolean {
         if (ev != null && ev.pointerCount > 1) {
-            super.onTouchEvent(actionDownEvent)
+            if (ev.pointerCount == 2) {
+                super.onTouchEvent(actionDownEvent)
+            }
             super.onInterceptTouchEvent(ev)
             return true
         } else {

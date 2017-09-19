@@ -33,9 +33,9 @@ class PartitionImageView(context: Context?, attrs: AttributeSet) : ImageView (co
             invalidate()
         }
 
-    var onSelectBarListener: (() -> Unit)? = null
+    var onSelectBarListener: ((beginRepeat: Boolean, endRepeat: Boolean) -> Unit)? = null
 
-    private var page = Page(0, 1f)
+    var page: Page? = null
 
     private var clickOrigin: ClickOrigin? = null
 
@@ -61,26 +61,31 @@ class PartitionImageView(context: Context?, attrs: AttributeSet) : ImageView (co
     }()
 
     private val onLongClickListener = Action {
-        val click = clickOrigin
-        if (click is StaffSelectedClick) {
-            val staff = page.staves.last()
-            staff.bars.sort()
-            val index = -staff.bars.binarySearch(BarLine(click.x)) - 1
-            if (index > 0 && index < staff.bars.size) {
-                clickOrigin = null
-                page.selectedBarIndex = index - 1
-                onSelectBarListener?.invoke()
+        val page = page
+        if (page != null && page.staves.isNotEmpty()) {
+            val click = clickOrigin
+            if (click is StaffSelectedClick) {
+                val staff = page.staves.last()
+                staff.barLines.sort()
+                val index = -staff.barLines.binarySearch(BarLine(click.x)) - 1
+                if (index > 0 && index < staff.barLines.size) {
+                    clickOrigin = null
+                    page.selectedBarIndex = index - 1
+                    val firstBarLine = staff.barLines[index - 1]
+                    val secondBarLine = staff.barLines[index]
+                    onSelectBarListener?.invoke(firstBarLine.beginRepeat, secondBarLine.endRepeat)
+                }
             }
         }
     }
 
-    override fun onFinishInflate() {
-        super.onFinishInflate()
-        page.scale = width.toFloat()
-    }
-
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
+        val page = page
+        if (page == null) {
+            canvas?.drawRect(0f, 0f, width.toFloat(), height.toFloat(), lightestOverlayPaint)
+            return
+        }
         when {
             !page.staffSelected -> {
                 canvas?.drawRect(0f, 0f, width.toFloat(), height.toFloat(), lightestOverlayPaint)
@@ -94,8 +99,8 @@ class PartitionImageView(context: Context?, attrs: AttributeSet) : ImageView (co
                 val staff = page.staves.last()
                 canvas?.drawRect(0f, 0f, width.toFloat(), staff.start, lightestOverlayPaint)
                 canvas?.drawRect(0f, staff.end, width.toFloat(), height.toFloat(), lightestOverlayPaint)
-                val firstBar = staff.bars[page.selectedBarIndex]
-                val secondBar = staff.bars[page.selectedBarIndex + 1]
+                val firstBar = staff.barLines[page.selectedBarIndex]
+                val secondBar = staff.barLines[page.selectedBarIndex + 1]
                 canvas?.drawRect(0f, staff.start, firstBar.x, staff.end, barOverlayPaint)
                 canvas?.drawRect(secondBar.x, staff.start, width.toFloat(), staff.end, barOverlayPaint)
             }
@@ -109,7 +114,7 @@ class PartitionImageView(context: Context?, attrs: AttributeSet) : ImageView (co
             }
             canvas?.drawLine(0f, staff.start, width.toFloat(), staff.start, whiteLinePaint)
             canvas?.drawLine(0f, staff.end, width.toFloat(), staff.end, whiteLinePaint)
-            for (bar in staff.bars) {
+            for (bar in staff.barLines) {
                 canvas?.drawLine(bar.x, staff.start, bar.x, staff.end, barPaint)
             }
         }
@@ -119,11 +124,13 @@ class PartitionImageView(context: Context?, attrs: AttributeSet) : ImageView (co
         if (!allowTouch) {
             return true
         }
+        val page = page
+        page ?: return false
         when (event?.action) {
             MotionEvent.ACTION_DOWN -> {
                 clickOrigin = when {
                     !page.staffSelected -> PageSelectedClick(event.y)
-                    page.selectedBarIndex < 0 -> onTouchStaff(event)
+                    page.selectedBarIndex < 0 -> onTouchStaff(page, event)
                     else -> null
                 }
             }
@@ -131,7 +138,7 @@ class PartitionImageView(context: Context?, attrs: AttributeSet) : ImageView (co
                 when (clickOrigin) {
                     is StaffDeselected -> page.deselectStaff()
                     is StaffSelectedClick -> {
-                        page.staves.last().bars.add(BarLine(event.x))
+                        page.staves.last().barLines.add(BarLine(event.x))
                     }
                 }
                 invalidate()
@@ -159,7 +166,7 @@ class PartitionImageView(context: Context?, attrs: AttributeSet) : ImageView (co
                         }
                     }
                     is StaffSelectedClick -> {
-                        page.staves.last().bars.add(BarLine(event.x))
+                        page.staves.last().barLines.add(BarLine(event.x))
                         clickOrigin = BarDrag()
                         val subscription = longClickSubscription
                         if (subscription != null && !subscription.isDisposed) {
@@ -167,7 +174,7 @@ class PartitionImageView(context: Context?, attrs: AttributeSet) : ImageView (co
                         }
                     }
                     is BarDrag -> {
-                        page.staves.last().bars.last().x = event.x
+                        page.staves.last().barLines.last().x = event.x
                     }
                 }
                 invalidate()
@@ -176,11 +183,7 @@ class PartitionImageView(context: Context?, attrs: AttributeSet) : ImageView (co
         return true
     }
 
-    fun deselectBar() {
-        page.selectedBarIndex = -1
-    }
-
-    private fun onTouchStaff(event: MotionEvent): ClickOrigin? {
+    private fun onTouchStaff(page: Page, event: MotionEvent): ClickOrigin? {
         val staff = page.staves.last()
         return when {
             approxEqual(event.y, staff.start) -> StaffSelectedDrag(true)

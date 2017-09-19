@@ -7,6 +7,6 @@ import android.arch.persistence.room.PrimaryKey
 @Entity(indices = arrayOf(Index("id")))
 class Sheet(
         @PrimaryKey(autoGenerate = true)
-        var id: Int,
+        var id: Long,
         var name: String?
 )

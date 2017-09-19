@@ -3,6 +3,7 @@ package com.albertford.autoflip.room
 import android.arch.persistence.room.Dao
 import android.arch.persistence.room.Insert
 import android.arch.persistence.room.Query
+import android.arch.persistence.room.Update
 import io.reactivex.Flowable
 import io.reactivex.Maybe
 
@@ -17,4 +18,7 @@ interface SheetDao {
 
     @Insert
     fun insertSheet(sheet: Sheet): Long
+
+    @Update
+    fun updateSheet(sheet: Sheet)
 }
