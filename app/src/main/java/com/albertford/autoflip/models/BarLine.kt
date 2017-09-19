@@ -3,13 +3,13 @@ package com.albertford.autoflip.models
 import android.os.Parcel
 import android.os.Parcelable
 
-class BarPartition(var x: Float, var leftBeginRepeat: Boolean, var rightEndRepeat: Boolean) : Comparable<BarPartition>, Parcelable {
+class BarLine(var x: Float, var beginRepeat: Boolean, var endRepeat: Boolean) : Comparable<BarLine>, Parcelable {
 
     constructor(x: Float) : this(x, false, false)
 
     constructor(parcel: Parcel) : this(parcel.readFloat(), parcel.readInt() == 1, parcel.readInt() == 1)
 
-    override fun compareTo(other: BarPartition) = when {
+    override fun compareTo(other: BarLine) = when {
         x < other.x -> -1
         x > other.x -> 1
         else -> 0
@@ -19,18 +19,18 @@ class BarPartition(var x: Float, var leftBeginRepeat: Boolean, var rightEndRepea
 
     override fun writeToParcel(parcel: Parcel?, int: Int) {
         parcel?.writeFloat(x)
-        parcel?.writeInt(if (leftBeginRepeat) 1 else 0)
-        parcel?.writeInt(if (rightEndRepeat) 1 else 0)
+        parcel?.writeInt(if (beginRepeat) 1 else 0)
+        parcel?.writeInt(if (endRepeat) 1 else 0)
     }
 
-    companion object CREATOR : Parcelable.Creator<BarPartition> {
+    companion object CREATOR : Parcelable.Creator<BarLine> {
         override fun createFromParcel(parcel: Parcel?) = if (parcel != null) {
-            BarPartition(parcel)
+            BarLine(parcel)
         } else {
-            BarPartition(0f)
+            BarLine(0f)
         }
 
-        override fun newArray(size: Int) = arrayOfNulls<BarPartition>(size)
+        override fun newArray(size: Int) = arrayOfNulls<BarLine>(size)
     }
 
 }

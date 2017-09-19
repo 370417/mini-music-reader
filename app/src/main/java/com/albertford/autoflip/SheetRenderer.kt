@@ -5,9 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.Matrix
 import android.graphics.pdf.PdfRenderer
 import android.net.Uri
-import com.albertford.autoflip.models.Bar
-import com.albertford.autoflip.models.SheetPartition
-import com.albertford.autoflip.models.Staff
+import com.albertford.autoflip.room.Bar
 
 interface SheetRenderer {
     /**
@@ -26,8 +24,6 @@ interface SheetRenderer {
     fun renderBar(barList: List<Bar>, index: Int, scale: Float): Bitmap?
 
     fun close()
-
-    fun createBarList(sheetPartition: SheetPartition): List<Bar>
 
     /**
      * Find the largest scale that fits every bar onto the screen.
@@ -113,7 +109,7 @@ class PdfSheetRenderer(context: Context, uri: Uri) : SheetRenderer {
     override fun renderBar(barList: List<Bar>, index: Int, scale: Float): Bitmap? {
         val bar = barList.getOrNull(index)
         bar ?: return null
-        val pageRenderer = getPage(bar.pageIndex)
+        val pageRenderer = getPage(bar.pageNumber)
         pageRenderer ?: return null
         val imageWidth = Math.round(scale * bar.width)
         val imageHeight = Math.round(scale * bar.height)
@@ -127,30 +123,6 @@ class PdfSheetRenderer(context: Context, uri: Uri) : SheetRenderer {
 
     override fun close() {
         cachedPageRenderer?.close()
-    }
-
-    override fun createBarList(sheetPartition: SheetPartition): List<Bar> {
-        val barList = ArrayList<Bar>()
-        for (pageIndex in sheetPartition.pages.indices) {
-            val pageRenderer = getPage(pageIndex)!!
-            for (staff in sheetPartition.pages[pageIndex].staves) {
-                for (barIndex in 0 until staff.barLines.size - 1) {
-                    barList.add(createBar(pageIndex, pageRenderer, staff, barIndex))
-                }
-            }
-        }
-        return barList
-    }
-
-    private fun createBar(pageIndex: Int, renderer: PdfRenderer.Page, staff: Staff,
-            barIndex: Int): Bar {
-        val barStart = staff.barLines[barIndex]
-        val barEnd = staff.barLines[barIndex + 1]
-        val top = renderer.height * staff.startY
-        val left = renderer.width * barStart
-        val width = renderer.width * (barEnd - barStart)
-        val height = renderer.height * (staff.endY - staff.startY)
-        return Bar(pageIndex, top, left, width, height)
     }
 
     private fun getPage(i: Int): PdfRenderer.Page? {

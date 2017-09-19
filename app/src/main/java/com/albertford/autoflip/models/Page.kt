@@ -2,28 +2,89 @@ package com.albertford.autoflip.models
 
 import android.os.Parcel
 import android.os.Parcelable
-import kotlin.collections.ArrayList
+import com.albertford.autoflip.room.Bar
 
-class Page() : Parcelable {
+class Page(val pageIndex: Int, var scale: Float, var staffSelected: Boolean, var selectedBarIndex: Int) : Parcelable {
 
     val staves: MutableList<Staff> = ArrayList()
 
-    private constructor(parcel: Parcel) : this() {
+    constructor(pageIndex: Int, scale: Float) : this(pageIndex, scale, false, -1)
+
+    constructor(parcel: Parcel) : this(parcel.readInt(), parcel.readFloat(), parcel.readInt() == 0, parcel.readInt()) {
         parcel.readTypedList(staves, Staff.CREATOR)
     }
 
     override fun describeContents() = 0
 
-    override fun writeToParcel(parcel: Parcel, i: Int) {
-        parcel.writeTypedList(staves)
+    override fun writeToParcel(parcel: Parcel?, int: Int) {
+        parcel?.writeInt(pageIndex)
+        parcel?.writeFloat(scale)
+        parcel?.writeInt(if (staffSelected) 1 else 0)
+        parcel?.writeInt(selectedBarIndex)
+        parcel?.writeTypedList(staves)
     }
 
-    companion object {
-
-        val CREATOR: Parcelable.Creator<Page> = object : Parcelable.Creator<Page> {
-            override fun createFromParcel(parcel: Parcel) = Page(parcel)
-
-            override fun newArray(size: Int): Array<Page?> = arrayOfNulls(size)
+    /**
+     * Insert a new staff and select it.
+     * @param initY inital click y coordinate
+     * @param dragY y coordinate of drag
+     * @return true if dragY corresponds to the staff's start, not end
+     */
+    fun insertNewStaff(initY: Float, dragY: Float) : Boolean {
+        val staff = Staff(initY)
+        staves.add(staff)
+        staffSelected = true
+        selectedBarIndex = -1
+        return if (initY < dragY) {
+            staff.end = dragY
+            false
+        } else {
+            staff.start = dragY
+            true
         }
     }
+
+    fun deselectStaff() {
+        staves.last().bars.sort()
+        staffSelected = false
+        selectedBarIndex = -1
+    }
+
+    fun write(sheetId: Int, pageScale: Int) {
+        staves.sort()
+        val bars: MutableList<Bar> = ArrayList()
+        var totalBarIndex = 0
+        val factor = pageScale / scale
+        for (staff in staves) {
+            for (barIndex in 0 until staff.bars.size - 1) {
+                val firstBar = staff.bars[barIndex]
+                val secondBar = staff.bars[barIndex + 1]
+                bars.add(Bar(
+                        sheetId,
+                        totalBarIndex,
+                        pageIndex,
+                        staff.start * factor,
+                        firstBar.x * factor,
+                        (secondBar.x - firstBar.x) * factor,
+                        (staff.end - staff.start) * factor,
+                        1f,
+                        1,
+                        false,
+                        false
+                ))
+                totalBarIndex += 1
+            }
+        }
+    }
+
+    companion object CREATOR : Parcelable.Creator<Page> {
+        override fun createFromParcel(parcel: Parcel?) = if (parcel != null) {
+            Page(parcel)
+        } else {
+            Page(0, 1f)
+        }
+
+        override fun newArray(size: Int) = arrayOfNulls<Page>(size)
+    }
+
 }

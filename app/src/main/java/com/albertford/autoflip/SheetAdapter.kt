@@ -6,9 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import com.albertford.autoflip.activities.URI_KEY
 import com.albertford.autoflip.activities.ViewSheetActivity
-import com.albertford.autoflip.models.SheetPartition
 
 class SheetAdapter() : RecyclerView.Adapter<SheetAdapter.ViewHolder>() {
 

@@ -8,8 +8,8 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.ViewConfiguration
 import android.widget.ImageView
-import com.albertford.autoflip.models.BarPartition
-import com.albertford.autoflip.models.PagePartition
+import com.albertford.autoflip.models.BarLine
+import com.albertford.autoflip.models.Page
 import io.reactivex.Completable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
@@ -35,7 +35,7 @@ class PartitionImageView(context: Context?, attrs: AttributeSet) : ImageView (co
 
     var onSelectBarListener: (() -> Unit)? = null
 
-    private var page = PagePartition(0, 1f)
+    private var page = Page(0, 1f)
 
     private var clickOrigin: ClickOrigin? = null
 
@@ -65,7 +65,7 @@ class PartitionImageView(context: Context?, attrs: AttributeSet) : ImageView (co
         if (click is StaffSelectedClick) {
             val staff = page.staves.last()
             staff.bars.sort()
-            val index = -staff.bars.binarySearch(BarPartition(click.x)) - 1
+            val index = -staff.bars.binarySearch(BarLine(click.x)) - 1
             if (index > 0 && index < staff.bars.size) {
                 clickOrigin = null
                 page.selectedBarIndex = index - 1
@@ -131,7 +131,7 @@ class PartitionImageView(context: Context?, attrs: AttributeSet) : ImageView (co
                 when (clickOrigin) {
                     is StaffDeselected -> page.deselectStaff()
                     is StaffSelectedClick -> {
-                        page.staves.last().bars.add(BarPartition(event.x))
+                        page.staves.last().bars.add(BarLine(event.x))
                     }
                 }
                 invalidate()
@@ -159,7 +159,7 @@ class PartitionImageView(context: Context?, attrs: AttributeSet) : ImageView (co
                         }
                     }
                     is StaffSelectedClick -> {
-                        page.staves.last().bars.add(BarPartition(event.x))
+                        page.staves.last().bars.add(BarLine(event.x))
                         clickOrigin = BarDrag()
                         val subscription = longClickSubscription
                         if (subscription != null && !subscription.isDisposed) {
@@ -212,6 +212,12 @@ class PartitionImageView(context: Context?, attrs: AttributeSet) : ImageView (co
     }
 
     private fun approxEqual(a: Float, b: Float) = Math.abs(a - b) < touchSlop
+}
+
+private fun makePaint(a: Int, r: Int, g: Int, b: Int): Paint {
+    val paint = Paint()
+    paint.setARGB(a, r, g, b)
+    return paint
 }
 
 private sealed class ClickOrigin
