@@ -8,8 +8,8 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import com.albertford.autoflip.*
-import com.albertford.autoflip.models.Page
-import com.albertford.autoflip.room.Sheet
+import com.albertford.autoflip.models.*
+import com.albertford.autoflip.room.*
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
@@ -25,6 +25,7 @@ class PartitionSheetActivity : AppCompatActivity() {
     private var uri: String? = null
     private var sheetRenderer: SheetRenderer? = null
     private var pageIndex = 0
+    private var sheet = Sheet(0, "Untitled")
 
     private var title: String? = null
 
@@ -41,7 +42,7 @@ class PartitionSheetActivity : AppCompatActivity() {
         bottomSheetBehavior?.state = BottomSheetBehavior.STATE_EXPANDED
         bottomSheetBehavior?.setBottomSheetCallback(bottomSheetCallback)
 
-        writeNewSheet()
+        insertSheet()
 
         readUri()
         initPageCount()
@@ -107,10 +108,30 @@ class PartitionSheetActivity : AppCompatActivity() {
     }
 
     private val nextButtonListener = View.OnClickListener {
+        val pageWidth = sheetRenderer?.getPageWidth(pageIndex) ?: -1
+        val oldPage = sheet_image.page
+        oldPage ?: return@OnClickListener
+        val bars = oldPage.toBarArray(sheet.id, pageWidth)
+        Single.fromCallable {
+            database?.barDao()?.insertBars(*bars)
+        }.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe()
         pageIndex++
+        val lastBar = bars.last()
+        sheet_image.setImageBitmap(sheetRenderer?.renderFullPage(pageIndex, sheet_image.width))
+        sheet_image.page = Page(oldPage, lastBar.beatsPerMinute, lastBar.beatsPerMeasure)
+        val renderer = sheetRenderer
+        if (renderer is PdfSheetRenderer && pageIndex + 1 == renderer.getPageCount()) {
+            next_page_button.visibility = View.GONE
+            start_finish_button.visibility = View.VISIBLE
+        }
     }
 
     private val startButtonListener = View.OnClickListener {
+        val bpbValid = validateBpb()
+        val bpmValid = validateBpm()
+        if (!bpbValid || !bpmValid) {
+            return@OnClickListener
+        }
         start_finish_button.text = resources.getString(R.string.finish)
         start_finish_button.setOnClickListener(finishButtonListener)
         val renderer = sheetRenderer
@@ -119,6 +140,8 @@ class PartitionSheetActivity : AppCompatActivity() {
                 start_finish_button.visibility = View.GONE
                 next_page_button.visibility = View.VISIBLE
             }
+        } else {
+            next_page_button.visibility = View.VISIBLE
         }
         bottomSheetBehavior?.state = BottomSheetBehavior.STATE_COLLAPSED
         sheet_image.allowTouch = true
@@ -126,7 +149,13 @@ class PartitionSheetActivity : AppCompatActivity() {
     }
 
     private val finishButtonListener = View.OnClickListener {
-
+        val pageWidth = sheetRenderer?.getPageWidth(pageIndex) ?: -1
+        val bars = sheet_image.page?.toBarArray(sheet.id, pageWidth)
+        bars ?: return@OnClickListener
+        Single.fromCallable {
+            database?.barDao()?.insertBars(*bars)
+        }
+        finish()
     }
 
     private val cancelButtonListener = View.OnClickListener {
@@ -195,12 +224,38 @@ class PartitionSheetActivity : AppCompatActivity() {
         sheet_image.setImageBitmap(bitmap)
     }
 
-    private fun writeNewSheet() {
-        val sheet = Sheet(0, resources.getString(R.string.untitled))
+    private fun insertSheet() {
+        sheet.name = resources.getString(R.string.untitled)
         Single.fromCallable {
-            AutoFlip.database?.sheetDao()?.insertSheet(sheet)
+            database?.sheetDao()?.insertSheet(sheet)
         }.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe { sheetId ->
             sheet.id = sheetId ?: 0
+        }
+    }
+
+    /**
+     * @return true if bpm field is valid (not empty)
+     */
+    private fun validateBpm(): Boolean {
+        return if (beats_minute_field.text.isEmpty()) {
+            beats_minute_layout.error = resources.getString(R.string.error_required_field)
+            false
+        } else {
+            beats_minute_layout.error = null
+            true
+        }
+    }
+
+    /**
+     * @return true if bpb field is valid (not empty)
+     */
+    private fun validateBpb(): Boolean {
+        return if (beats_measure_field.text.isEmpty()) {
+            beats_measure_layout.error = resources.getString(R.string.error_required_field)
+            false
+        } else {
+            beats_measure_layout.error = null
+            true
         }
     }
 }

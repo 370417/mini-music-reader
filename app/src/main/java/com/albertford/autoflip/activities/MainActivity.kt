@@ -6,13 +6,15 @@ import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v7.app.AlertDialog
+import android.view.View
 import android.widget.Toast
-import com.albertford.autoflip.R
+import com.albertford.autoflip.*
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_main.*
 
 const val PICK_PDF_REQUEST = 1
 const val PICK_IMAGE_REQUEST = 2
-const val NO_REQUEST = -1
 
 class MainActivity : AppCompatActivity() {
 
@@ -37,12 +39,18 @@ class MainActivity : AppCompatActivity() {
 
 //        val results = readAllSheets(realm)
 //        recycler_view.adapter = SheetAdapter(results)
+        database?.sheetDao()?.selectAllSheets()
+                ?.subscribeOn(Schedulers.io())
+                ?.observeOn(AndroidSchedulers.mainThread())
+                ?.subscribe { sheets ->
+                    recycler_view.adapter = SheetAdapter(sheets.toMutableList())
+                }
 
         setSupportActionBar(toolbar)
 
 //        if (results.isNotEmpty()) {
-//            empty_image.visibility = View.GONE
-//            empty_overlay.visibility = View.GONE
+            empty_image.visibility = View.GONE
+            empty_overlay.visibility = View.GONE
 //        }
 
         floating_action_button.setOnClickListener {

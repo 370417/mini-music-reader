@@ -4,13 +4,13 @@ import android.app.Application
 import android.arch.persistence.room.Room
 import com.albertford.autoflip.room.AppDatabase
 
-class AutoFlip : Application() {
-    companion object {
-        var database: AppDatabase? = null
-    }
+var database: AppDatabase? = null
 
+class AutoFlip : Application() {
     override fun onCreate() {
         super.onCreate()
-        database = Room.databaseBuilder(this, AppDatabase::class.java, "AppDatabase").build()
+        database = Room.databaseBuilder(this, AppDatabase::class.java, "AppDatabase")
+                .fallbackToDestructiveMigration()
+                .build()
     }
 }

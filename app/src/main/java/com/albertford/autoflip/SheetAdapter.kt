@@ -7,16 +7,17 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import com.albertford.autoflip.activities.ViewSheetActivity
+import com.albertford.autoflip.room.Sheet
 
-class SheetAdapter() : RecyclerView.Adapter<SheetAdapter.ViewHolder>() {
+class SheetAdapter(private val sheets: MutableList<Sheet>) : RecyclerView.Adapter<SheetAdapter.ViewHolder>() {
 
     class ViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
         val primaryTextView: TextView? = view.findViewById(R.id.primary_list_text)
     }
 
     override fun onBindViewHolder(holder: ViewHolder?, position: Int) {
-//        val sheet = realmResults[position]
-//        holder?.primaryTextView?.text = sheet.name
+        val sheet = sheets[position]
+        holder?.primaryTextView?.text = sheet.name
 //        holder?.view?.setOnClickListener { view ->
 //            val intent = Intent(view.context, ViewSheetActivity::class.java)
 //            intent.putExtra(URI_KEY, sheet.uri)
@@ -24,7 +25,7 @@ class SheetAdapter() : RecyclerView.Adapter<SheetAdapter.ViewHolder>() {
 //        }
     }
 
-    override fun getItemCount(): Int = 0//realmResults.size
+    override fun getItemCount(): Int = sheets.size
 
     override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): ViewHolder {
         val tileView = LayoutInflater.from(parent?.context).inflate(R.layout.sheet_list_tile,

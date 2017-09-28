@@ -9,6 +9,6 @@ import android.arch.persistence.room.PrimaryKey
 class PageUri (
         @PrimaryKey
         var uri: String?,
-        var sheetId: Int,
+        var sheetId: Long,
         var pageNumber: Int
 )

@@ -1,4 +1,4 @@
-package com.albertford.autoflip
+package com.albertford.autoflip.views
 
 import android.content.Context
 import android.support.v4.widget.NestedScrollView

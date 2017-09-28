@@ -7,9 +7,9 @@ import android.arch.persistence.room.ForeignKey
         foreignKeys = arrayOf(ForeignKey(entity = Sheet::class, parentColumns = arrayOf("id"),
                 childColumns = arrayOf("sheetId"))))
 data class Bar(
-        var sheetId: Int,
+        var sheetId: Long,
         var barIndex: Int,
-        var pageNumber: Int,
+        var pageIndex: Int,
         var top: Float,
         var left: Float,
         var width: Float,

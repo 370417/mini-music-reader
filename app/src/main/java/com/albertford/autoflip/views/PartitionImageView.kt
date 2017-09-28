@@ -1,4 +1,4 @@
-package com.albertford.autoflip
+package com.albertford.autoflip.views
 
 import android.content.Context
 import android.graphics.Canvas
@@ -8,6 +8,7 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.ViewConfiguration
 import android.widget.ImageView
+import com.albertford.autoflip.R
 import com.albertford.autoflip.models.BarLine
 import com.albertford.autoflip.models.Page
 import io.reactivex.Completable
@@ -21,7 +22,8 @@ class PartitionImageView(context: Context?, attrs: AttributeSet) : ImageView (co
 
     companion object {
         private val lightestOverlay = 64
-        private val lightestOverlayPaint = makePaint(lightestOverlay, 0, 0, 0)
+        private val lightestOverlayPaint = makePaint(
+                lightestOverlay, 0, 0, 0)
     }
 
     var allowTouch = false
@@ -29,7 +31,8 @@ class PartitionImageView(context: Context?, attrs: AttributeSet) : ImageView (co
     var slideOffset = 0f
         set(value) {
             field = value
-            barOverlayPaint.alpha = Math.round(lightestOverlay * value)
+            barOverlayPaint.alpha = Math.round(
+                    lightestOverlay * value)
             invalidate()
         }
 
@@ -83,22 +86,28 @@ class PartitionImageView(context: Context?, attrs: AttributeSet) : ImageView (co
         super.onDraw(canvas)
         val page = page
         if (page == null) {
-            canvas?.drawRect(0f, 0f, width.toFloat(), height.toFloat(), lightestOverlayPaint)
+            canvas?.drawRect(0f, 0f, width.toFloat(), height.toFloat(),
+                    lightestOverlayPaint)
             return
         }
         when {
             !page.staffSelected -> {
-                canvas?.drawRect(0f, 0f, width.toFloat(), height.toFloat(), lightestOverlayPaint)
+                canvas?.drawRect(0f, 0f, width.toFloat(), height.toFloat(),
+                        lightestOverlayPaint)
             }
             page.selectedBarIndex < 0 -> {
                 val staff = page.staves.last()
-                canvas?.drawRect(0f, 0f, width.toFloat(), staff.start, lightestOverlayPaint)
-                canvas?.drawRect(0f, staff.end, width.toFloat(), height.toFloat(), lightestOverlayPaint)
+                canvas?.drawRect(0f, 0f, width.toFloat(), staff.start,
+                        lightestOverlayPaint)
+                canvas?.drawRect(0f, staff.end, width.toFloat(), height.toFloat(),
+                        lightestOverlayPaint)
             }
             else -> {
                 val staff = page.staves.last()
-                canvas?.drawRect(0f, 0f, width.toFloat(), staff.start, lightestOverlayPaint)
-                canvas?.drawRect(0f, staff.end, width.toFloat(), height.toFloat(), lightestOverlayPaint)
+                canvas?.drawRect(0f, 0f, width.toFloat(), staff.start,
+                        lightestOverlayPaint)
+                canvas?.drawRect(0f, staff.end, width.toFloat(), height.toFloat(),
+                        lightestOverlayPaint)
                 val firstBar = staff.barLines[page.selectedBarIndex]
                 val secondBar = staff.barLines[page.selectedBarIndex + 1]
                 canvas?.drawRect(0f, staff.start, firstBar.x, staff.end, barOverlayPaint)
@@ -186,8 +195,10 @@ class PartitionImageView(context: Context?, attrs: AttributeSet) : ImageView (co
     private fun onTouchStaff(page: Page, event: MotionEvent): ClickOrigin? {
         val staff = page.staves.last()
         return when {
-            approxEqual(event.y, staff.start) -> StaffSelectedDrag(true)
-            approxEqual(event.y, staff.end) -> StaffSelectedDrag(false)
+            approxEqual(event.y, staff.start) -> StaffSelectedDrag(
+                    true)
+            approxEqual(event.y, staff.end) -> StaffSelectedDrag(
+                    false)
             event.y < staff.start -> {
                 page.deselectStaff()
                 null

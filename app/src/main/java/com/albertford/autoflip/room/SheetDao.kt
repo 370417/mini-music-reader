@@ -1,24 +1,24 @@
 package com.albertford.autoflip.room
 
-import android.arch.persistence.room.Dao
-import android.arch.persistence.room.Insert
-import android.arch.persistence.room.Query
-import android.arch.persistence.room.Update
-import io.reactivex.Flowable
+import android.arch.persistence.room.*
 import io.reactivex.Maybe
+import io.reactivex.Single
 
 @Dao
 interface SheetDao {
 
     @Query("SELECT * FROM sheet ORDER BY name")
-    fun loadAllSheets(): Flowable<Array<Sheet>>
+    fun selectAllSheets(): Single<Array<Sheet>>
 
     @Query("SELECT * FROM sheet WHERE id = :id")
-    fun loadSheet(id: Int): Maybe<Sheet>
+    fun selectSheetById(id: Long): Maybe<SheetAndRelations>
 
     @Insert
     fun insertSheet(sheet: Sheet): Long
 
     @Update
     fun updateSheet(sheet: Sheet)
+
+    @Delete
+    fun deleteSheets(vararg sheet: Sheet)
 }

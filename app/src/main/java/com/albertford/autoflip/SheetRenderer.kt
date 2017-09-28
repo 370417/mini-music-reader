@@ -25,6 +25,8 @@ interface SheetRenderer {
 
     fun close()
 
+    fun getPageWidth(i: Int): Int
+
     /**
      * Find the largest scale that fits every bar onto the screen.
      * This scale converts coordinates from the page scale to the image scale.
@@ -109,7 +111,7 @@ class PdfSheetRenderer(context: Context, uri: Uri) : SheetRenderer {
     override fun renderBar(barList: List<Bar>, index: Int, scale: Float): Bitmap? {
         val bar = barList.getOrNull(index)
         bar ?: return null
-        val pageRenderer = getPage(bar.pageNumber)
+        val pageRenderer = getPage(bar.pageIndex)
         pageRenderer ?: return null
         val imageWidth = Math.round(scale * bar.width)
         val imageHeight = Math.round(scale * bar.height)
@@ -123,6 +125,11 @@ class PdfSheetRenderer(context: Context, uri: Uri) : SheetRenderer {
 
     override fun close() {
         cachedPageRenderer?.close()
+    }
+
+    override fun getPageWidth(i: Int): Int {
+        val pageRenderer = getPage(i)
+        return pageRenderer?.width ?: -1
     }
 
     private fun getPage(i: Int): PdfRenderer.Page? {

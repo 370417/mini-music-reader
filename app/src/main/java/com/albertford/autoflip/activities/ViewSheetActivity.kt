@@ -3,9 +3,7 @@ package com.albertford.autoflip.activities
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
-import com.albertford.autoflip.PdfSheetRenderer
-import com.albertford.autoflip.R
-import com.albertford.autoflip.SheetRenderer
+import com.albertford.autoflip.*
 import kotlinx.android.synthetic.main.activity_view_sheet.*
 
 class ViewSheetActivity : AppCompatActivity() {
