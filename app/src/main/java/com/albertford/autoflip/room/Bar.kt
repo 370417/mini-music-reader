@@ -5,7 +5,7 @@ import android.arch.persistence.room.ForeignKey
 
 @Entity(primaryKeys = arrayOf("sheetId", "barIndex"),
         foreignKeys = arrayOf(ForeignKey(entity = Sheet::class, parentColumns = arrayOf("id"),
-                childColumns = arrayOf("sheetId"))))
+                childColumns = arrayOf("sheetId"), onDelete = ForeignKey.CASCADE)))
 data class Bar(
         var sheetId: Long,
         var barIndex: Int,

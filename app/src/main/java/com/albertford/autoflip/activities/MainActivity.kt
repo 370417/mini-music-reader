@@ -9,6 +9,8 @@ import android.support.v7.app.AlertDialog
 import android.support.v7.widget.helper.ItemTouchHelper
 import android.widget.Toast
 import com.albertford.autoflip.*
+import com.albertford.autoflip.room.Sheet
+import io.reactivex.Completable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_main.*
@@ -46,6 +48,10 @@ class MainActivity : AppCompatActivity() {
                     val callback = ItemTouchHelperCallback(adapter)
                     val touchHelper = ItemTouchHelper(callback)
                     touchHelper.attachToRecyclerView(recycler_view)
+
+//                    Completable.fromAction {
+//                        database?.sheetDao()?.deleteSheets(*sheets)
+//                    }.subscribeOn(Schedulers.io()).subscribe()
                 }
 
         setSupportActionBar(toolbar)

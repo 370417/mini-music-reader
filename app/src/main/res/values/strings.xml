@@ -1,29 +1,32 @@
 <resources>
     <string name="app_name">Mini Music Reader</string>
 
-    <string name="start">START</string>
-    <string name="finish">FINISH</string>
-    <string name="next_page">NEXT PAGE</string>
-    <string name="next_staff">NEXT STAFF</string>
-    <string name="save_staff">SAVE STAFF</string>
-    <string name="save_bar">SAVE BAR</string>
-    <string name="cancel">CANCEL</string>
-    <string name="apply">APPLY</string>
+    <string name="start">Start</string>
+    <string name="finish">Finish</string>
+    <string name="next_page">Next Page</string>
+    <!--<string name="next_staff">NEXT STAFF</string>-->
+    <!--<string name="save_staff">SAVE STAFF</string>-->
+    <!--<string name="save_bar">SAVE BAR</string>-->
+    <string name="cancel">Cancel</string>
+    <string name="apply">Apply</string>
+    <string name="undo">Undo</string>
 
     <string name="new_sheet_label">Create Sheet</string>
-    <string name="choose_file">CHOOSE FILE</string>
+    <!--<string name="choose_file">CHOOSE FILE</string>-->
     <string name="sheet_name">Name</string>
     <string name="sheet_bpm">Tempo</string>
     <string name="sheet_bpb">Beats per measure</string>
     <string name="action_continue">Continue</string>
     <string name="error_required_field">This field is required</string>
-    <string name="error_non_zero">Must be non-zero</string>
-    <string name="error_not_int">Must be a whole number</string>
-    <string name="error_not_float">Must be a number</string>
-    <string name="error_no_uri">Please choose a file.</string>
-    <string name="error_non_unique_uri">This file has already been added.</string>
+    <!--<string name="error_non_zero">Must be non-zero</string>-->
+    <!--<string name="error_not_int">Must be a whole number</string>-->
+    <!--<string name="error_not_float">Must be a number</string>-->
+    <!--<string name="error_no_uri">Please choose a file.</string>-->
+    <!--<string name="error_non_unique_uri">This file has already been added.</string>-->
 
     <string name="play_button">Play button</string>
+
+    <string name="deleted_msg">Deleted</string>
 
     <!-- Partition Sheet Vocabulary -->
     <string name="untitled">Untitled</string>

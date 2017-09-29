@@ -10,6 +10,7 @@ import android.view.View
 import com.albertford.autoflip.*
 import com.albertford.autoflip.models.*
 import com.albertford.autoflip.room.*
+import io.reactivex.Completable
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
@@ -112,13 +113,15 @@ class PartitionSheetActivity : AppCompatActivity() {
         val oldPage = sheet_image.page
         oldPage ?: return@OnClickListener
         val bars = oldPage.toBarArray(sheet.id, pageWidth)
-        Single.fromCallable {
-            database?.barDao()?.insertBars(*bars)
-        }.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe()
+        if (bars.isNotEmpty()) {
+            Completable.fromAction {
+                database?.barDao()?.insertBars(*bars)
+            }.subscribeOn(Schedulers.io()).subscribe()
+        }
         pageIndex++
-        val lastBar = bars.last()
+        val lastBar = bars.lastOrNull()
         sheet_image.setImageBitmap(sheetRenderer?.renderFullPage(pageIndex, sheet_image.width))
-        sheet_image.page = Page(oldPage, lastBar.beatsPerMinute, lastBar.beatsPerMeasure)
+        sheet_image.page = Page(oldPage, lastBar?.beatsPerMinute, lastBar?.beatsPerMeasure)
         val renderer = sheetRenderer
         if (renderer is PdfSheetRenderer && pageIndex + 1 == renderer.getPageCount()) {
             next_page_button.visibility = View.GONE
@@ -149,13 +152,19 @@ class PartitionSheetActivity : AppCompatActivity() {
     }
 
     private val finishButtonListener = View.OnClickListener {
+        start_finish_button.isEnabled = false
         val pageWidth = sheetRenderer?.getPageWidth(pageIndex) ?: -1
         val bars = sheet_image.page?.toBarArray(sheet.id, pageWidth)
         bars ?: return@OnClickListener
-        Single.fromCallable {
-            database?.barDao()?.insertBars(*bars)
+        if (bars.isNotEmpty()) {
+            Completable.fromAction {
+                database?.barDao()?.insertBars(*bars)
+            }.doOnComplete {
+                finish()
+            }.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe()
+        } else {
+            finish()
         }
-        finish()
     }
 
     private val cancelButtonListener = View.OnClickListener {

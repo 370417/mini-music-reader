@@ -12,7 +12,7 @@ import com.albertford.autoflip.room.Sheet
 private const val ITEM_EMPTY = 0
 private const val ITEM_TEXT = 1
 
-class SheetAdapter(private val sheets: MutableList<Sheet>) : RecyclerView.Adapter<RecyclerView.ViewHolder>(), ItemTouchHelperAdapter {
+class SheetAdapter(val sheets: MutableList<Sheet>) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     class TextViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
         val primaryTextView: TextView? = view.findViewById(R.id.primary_list_text)
@@ -51,15 +51,6 @@ class SheetAdapter(private val sheets: MutableList<Sheet>) : RecyclerView.Adapte
                     TextViewHolder(inflate(R.layout.sheet_list_tile, parent))
                 }
             }
-
-    override fun isSwipeEnabled(): Boolean = sheets.isNotEmpty()
-
-    override fun onItemDismiss(position: Int) {
-        if (position < sheets.size) {
-            sheets.removeAt(position)
-            notifyItemRemoved(position)
-        }
-    }
 }
 
 private fun inflate(id: Int, parent: ViewGroup?) = LayoutInflater.from(parent?.context).inflate(id, parent, false)

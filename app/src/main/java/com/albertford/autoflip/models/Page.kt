@@ -4,6 +4,9 @@ import android.os.Parcel
 import android.os.Parcelable
 import com.albertford.autoflip.room.Bar
 
+private const val DEFAULT_BPM = 60f
+private const val DEFAULT_BPB = 4
+
 class Page(
         private val pageIndex: Int,
         private var scale: Float,
@@ -16,10 +19,10 @@ class Page(
 
     val staves: MutableList<Staff> = ArrayList()
 
-    constructor(pageIndex: Int, scale: Float) : this(pageIndex, scale, false, -1, 0, 60f, 4)
+    constructor(pageIndex: Int, scale: Float) : this(pageIndex, scale, false, -1, 0, DEFAULT_BPM, DEFAULT_BPB)
 
-    constructor(page: Page, initBpm: Float, initBpb: Int) :
-            this(page.pageIndex + 1, page.scale, false, -1, page.barIndex + 1, initBpm, initBpb)
+    constructor(page: Page, initBpm: Float?, initBpb: Int?) :
+            this(page.pageIndex + 1, page.scale, false, -1, page.barIndex + 1, initBpm ?: DEFAULT_BPM, initBpb ?: DEFAULT_BPB)
 
     constructor(parcel: Parcel) : this(
             parcel.readInt(),
