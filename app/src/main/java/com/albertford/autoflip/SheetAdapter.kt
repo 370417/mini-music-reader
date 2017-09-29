@@ -9,15 +9,22 @@ import android.widget.TextView
 import com.albertford.autoflip.activities.ViewSheetActivity
 import com.albertford.autoflip.room.Sheet
 
-class SheetAdapter(private val sheets: MutableList<Sheet>) : RecyclerView.Adapter<SheetAdapter.ViewHolder>() {
+private const val ITEM_EMPTY = 0
+private const val ITEM_TEXT = 1
 
-    class ViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
+class SheetAdapter(private val sheets: MutableList<Sheet>) : RecyclerView.Adapter<RecyclerView.ViewHolder>(), ItemTouchHelperAdapter {
+
+    class TextViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
         val primaryTextView: TextView? = view.findViewById(R.id.primary_list_text)
     }
 
-    override fun onBindViewHolder(holder: ViewHolder?, position: Int) {
-        val sheet = sheets[position]
-        holder?.primaryTextView?.text = sheet.name
+    class EmptyViewHolder(view: View) : RecyclerView.ViewHolder(view)
+
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder?, position: Int) {
+        if (holder is TextViewHolder) {
+            val sheet = sheets[position]
+            holder.primaryTextView?.text = sheet.name
+        }
 //        holder?.view?.setOnClickListener { view ->
 //            val intent = Intent(view.context, ViewSheetActivity::class.java)
 //            intent.putExtra(URI_KEY, sheet.uri)
@@ -25,11 +32,34 @@ class SheetAdapter(private val sheets: MutableList<Sheet>) : RecyclerView.Adapte
 //        }
     }
 
-    override fun getItemCount(): Int = sheets.size
+    override fun getItemCount(): Int = Math.max(sheets.size, 1)
 
-    override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): ViewHolder {
-        val tileView = LayoutInflater.from(parent?.context).inflate(R.layout.sheet_list_tile,
-                parent, false)
-        return ViewHolder(tileView)
+    override fun getItemViewType(position: Int): Int {
+        return if (sheets.isEmpty()) {
+            ITEM_EMPTY
+        } else {
+            ITEM_TEXT
+        }
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): RecyclerView.ViewHolder =
+            when (viewType) {
+                ITEM_EMPTY -> {
+                    EmptyViewHolder(inflate(R.layout.quarter_rest_tile, parent))
+                }
+                else -> {
+                    TextViewHolder(inflate(R.layout.sheet_list_tile, parent))
+                }
+            }
+
+    override fun isSwipeEnabled(): Boolean = sheets.isNotEmpty()
+
+    override fun onItemDismiss(position: Int) {
+        if (position < sheets.size) {
+            sheets.removeAt(position)
+            notifyItemRemoved(position)
+        }
     }
 }
+
+private fun inflate(id: Int, parent: ViewGroup?) = LayoutInflater.from(parent?.context).inflate(id, parent, false)

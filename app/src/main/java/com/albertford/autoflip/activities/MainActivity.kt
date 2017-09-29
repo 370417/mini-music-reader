@@ -6,7 +6,7 @@ import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v7.app.AlertDialog
-import android.view.View
+import android.support.v7.widget.helper.ItemTouchHelper
 import android.widget.Toast
 import com.albertford.autoflip.*
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -37,21 +37,18 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-//        val results = readAllSheets(realm)
-//        recycler_view.adapter = SheetAdapter(results)
         database?.sheetDao()?.selectAllSheets()
                 ?.subscribeOn(Schedulers.io())
                 ?.observeOn(AndroidSchedulers.mainThread())
                 ?.subscribe { sheets ->
-                    recycler_view.adapter = SheetAdapter(sheets.toMutableList())
+                    val adapter = SheetAdapter(sheets.toMutableList())
+                    recycler_view.adapter = adapter
+                    val callback = ItemTouchHelperCallback(adapter)
+                    val touchHelper = ItemTouchHelper(callback)
+                    touchHelper.attachToRecyclerView(recycler_view)
                 }
 
         setSupportActionBar(toolbar)
-
-//        if (results.isNotEmpty()) {
-            empty_image.visibility = View.GONE
-            empty_overlay.visibility = View.GONE
-//        }
 
         floating_action_button.setOnClickListener {
             val builder = AlertDialog.Builder(this)
