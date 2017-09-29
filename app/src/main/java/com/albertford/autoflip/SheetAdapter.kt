@@ -26,12 +26,12 @@ class SheetAdapter(val sheets: MutableList<Sheet>) : RecyclerView.Adapter<Recycl
         if (holder is TextViewHolder) {
             val sheet = sheets[position]
             holder.primaryTextView?.text = sheet.name
+            holder.view.setOnClickListener { view ->
+                val intent = Intent(view.context, ViewSheetActivity::class.java)
+                intent.putExtra("SHEET_ID", sheet.id)
+                view.context.startActivity(intent)
+            }
         }
-//        holder?.view?.setOnClickListener { view ->
-//            val intent = Intent(view.context, ViewSheetActivity::class.java)
-//            intent.putExtra(URI_KEY, sheet.uri)
-//            view.context.startActivity(intent)
-//        }
     }
 
     override fun getItemCount(): Int = Math.max(sheets.size, 1)

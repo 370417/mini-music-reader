@@ -39,17 +39,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-//        database?.sheetDao()?.selectAllSheets()
-//                ?.subscribeOn(Schedulers.io())
-//                ?.observeOn(AndroidSchedulers.mainThread())
-//                ?.subscribe { sheets ->
-//                    val adapter = SheetAdapter(sheets.toMutableList())
-//                    recycler_view.adapter = adapter
-//                    val callback = ItemTouchHelperCallback(adapter)
-//                    val touchHelper = ItemTouchHelper(callback)
-//                    touchHelper.attachToRecyclerView(recycler_view)
-//                }
-
         setSupportActionBar(toolbar)
 
         val adapter = SheetAdapter()
@@ -73,29 +62,33 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (resultCode != Activity.RESULT_OK) {
+            return
+        }
+        when (requestCode) {
+            PICK_PDF_REQUEST -> {
+                data ?: return
+                val intent = Intent(this, PartitionSheetActivity::class.java)
+                intent.putExtra("PDF", data.data.toString())
+                startActivity(intent)
+            }
+        }
+    }
+
     override fun onResume() {
         super.onResume()
-
         database?.sheetDao()?.selectAllSheets()
                 ?.subscribeOn(Schedulers.io())
                 ?.observeOn(AndroidSchedulers.mainThread())
                 ?.subscribe { sheets ->
                     val adapter = recycler_view.adapter
                     if (adapter is SheetAdapter) {
+                        adapter.sheets.clear()
                         adapter.sheets.addAll(sheets)
                         adapter.notifyDataSetChanged()
                     }
                 }
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (resultCode != Activity.RESULT_OK || data?.data == null) {
-            return
-        }
-        val intent = Intent(this, PartitionSheetActivity::class.java)
-        val key = if (requestCode == PICK_PDF_REQUEST) "PDF" else "IMAGE"
-        intent.putExtra(key, data.data.toString())
-        startActivity(intent)
     }
 }
