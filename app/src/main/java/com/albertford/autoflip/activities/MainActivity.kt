@@ -39,22 +39,24 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        database?.sheetDao()?.selectAllSheets()
-                ?.subscribeOn(Schedulers.io())
-                ?.observeOn(AndroidSchedulers.mainThread())
-                ?.subscribe { sheets ->
-                    val adapter = SheetAdapter(sheets.toMutableList())
-                    recycler_view.adapter = adapter
-                    val callback = ItemTouchHelperCallback(adapter)
-                    val touchHelper = ItemTouchHelper(callback)
-                    touchHelper.attachToRecyclerView(recycler_view)
-
-//                    Completable.fromAction {
-//                        database?.sheetDao()?.deleteSheets(*sheets)
-//                    }.subscribeOn(Schedulers.io()).subscribe()
-                }
+//        database?.sheetDao()?.selectAllSheets()
+//                ?.subscribeOn(Schedulers.io())
+//                ?.observeOn(AndroidSchedulers.mainThread())
+//                ?.subscribe { sheets ->
+//                    val adapter = SheetAdapter(sheets.toMutableList())
+//                    recycler_view.adapter = adapter
+//                    val callback = ItemTouchHelperCallback(adapter)
+//                    val touchHelper = ItemTouchHelper(callback)
+//                    touchHelper.attachToRecyclerView(recycler_view)
+//                }
 
         setSupportActionBar(toolbar)
+
+        val adapter = SheetAdapter()
+        recycler_view.adapter = adapter
+        val callback = ItemTouchHelperCallback(adapter)
+        val touchHelper = ItemTouchHelper(callback)
+        touchHelper.attachToRecyclerView(recycler_view)
 
         floating_action_button.setOnClickListener {
             val builder = AlertDialog.Builder(this)
@@ -69,6 +71,21 @@ class MainActivity : AppCompatActivity() {
             toast.show()
             false
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        database?.sheetDao()?.selectAllSheets()
+                ?.subscribeOn(Schedulers.io())
+                ?.observeOn(AndroidSchedulers.mainThread())
+                ?.subscribe { sheets ->
+                    val adapter = recycler_view.adapter
+                    if (adapter is SheetAdapter) {
+                        adapter.sheets.addAll(sheets)
+                        adapter.notifyDataSetChanged()
+                    }
+                }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

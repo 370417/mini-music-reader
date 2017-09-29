@@ -11,7 +11,7 @@ class ItemTouchHelperCallback(private val sheetAdapter: SheetAdapter) : ItemTouc
 
     override fun getMovementFlags(recyclerView: RecyclerView?,
             viewHolder: RecyclerView.ViewHolder?): Int =
-            makeMovementFlags(0, ItemTouchHelper.START or ItemTouchHelper.END)
+            makeMovementFlags(0, ItemTouchHelper.END)
 
     override fun isLongPressDragEnabled(): Boolean = false
 

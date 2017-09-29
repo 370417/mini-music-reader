@@ -14,6 +14,8 @@ private const val ITEM_TEXT = 1
 
 class SheetAdapter(val sheets: MutableList<Sheet>) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
+    constructor() : this(ArrayList())
+
     class TextViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
         val primaryTextView: TextView? = view.findViewById(R.id.primary_list_text)
     }
