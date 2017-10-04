@@ -9,14 +9,11 @@ import android.support.v7.app.AlertDialog
 import android.support.v7.widget.helper.ItemTouchHelper
 import android.widget.Toast
 import com.albertford.autoflip.*
-import com.albertford.autoflip.room.Sheet
-import io.reactivex.Completable
+import com.albertford.autoflip.room.IMG_SHEET
+import com.albertford.autoflip.room.PDF_SHEET
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_main.*
-
-const val PICK_PDF_REQUEST = 1
-const val PICK_IMAGE_REQUEST = 2
 
 class MainActivity : AppCompatActivity() {
 
@@ -25,10 +22,10 @@ class MainActivity : AppCompatActivity() {
         val requestCode: Int
         if (i == 0) {
             intent.type = "application/pdf"
-            requestCode = PICK_PDF_REQUEST
+            requestCode = PDF_SHEET
         } else {
             intent.type = "image/*"
-            requestCode = PICK_IMAGE_REQUEST
+            requestCode = IMG_SHEET
         }
         if (intent.resolveActivity(packageManager) != null) {
             startActivityForResult(intent, requestCode)
@@ -68,10 +65,11 @@ class MainActivity : AppCompatActivity() {
             return
         }
         when (requestCode) {
-            PICK_PDF_REQUEST -> {
+            PDF_SHEET, IMG_SHEET -> {
                 data ?: return
                 val intent = Intent(this, PartitionSheetActivity::class.java)
-                intent.putExtra("PDF", data.data.toString())
+                intent.putExtra("URI", data.data.toString())
+                intent.putExtra("TYPE", requestCode)
                 startActivity(intent)
             }
         }

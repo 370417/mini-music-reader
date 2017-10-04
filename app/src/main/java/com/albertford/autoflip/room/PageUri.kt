@@ -5,7 +5,7 @@ import android.arch.persistence.room.ForeignKey
 import android.arch.persistence.room.PrimaryKey
 
 @Entity(foreignKeys = arrayOf(ForeignKey(entity = Sheet::class, parentColumns = arrayOf("id"),
-        childColumns = arrayOf("sheetId"))))
+        childColumns = arrayOf("sheetId"), onDelete = ForeignKey.CASCADE)))
 class PageUri (
         @PrimaryKey
         var uri: String?,
