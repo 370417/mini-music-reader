@@ -127,7 +127,7 @@ class PartitionSheetActivity : AppCompatActivity() {
         val bars = oldPage.toBarArray(state.sheet.id, pageWidth)
         if (bars.isNotEmpty()) {
             Completable.fromAction {
-                database?.barDao()?.insertBars(*bars)
+                writeBars(bars)
             }.subscribeOn(Schedulers.io()).subscribe()
         }
         state.pageIndex++
@@ -172,7 +172,7 @@ class PartitionSheetActivity : AppCompatActivity() {
         bars ?: return@OnClickListener
         if (bars.isNotEmpty()) {
             Completable.fromAction {
-                database?.barDao()?.insertBars(*bars)
+                writeBars(bars)
             }.doOnComplete {
                 finish()
             }.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe()
@@ -183,6 +183,15 @@ class PartitionSheetActivity : AppCompatActivity() {
 
     private val cancelButtonListener = View.OnClickListener {
         setBottomSheetState(BottomSheetBehavior.STATE_COLLAPSED)
+    }
+
+    private fun writeBars(bars: Array<Bar>) {
+        if (state.sheet.type == IMG_SHEET) {
+            val pageUri = PageUri(state.uri, state.sheet.id, state.pageIndex)
+            database?.uriDao()?.insertUris(pageUri)
+        }
+        database?.barDao()?.insertBars(*bars)
+        database?.sheetDao()?.updateSheet(state.sheet)
     }
 
     private fun loadRenderer() {
@@ -233,6 +242,12 @@ class PartitionSheetActivity : AppCompatActivity() {
         state.sheet.name = resources.getString(R.string.untitled)
         Single.fromCallable {
             database?.sheetDao()?.insertSheet(state.sheet)
+        }.map { sheetId ->
+            if (state.sheet.type == PDF_SHEET) {
+                val pageUri = PageUri(state.uri, sheetId, -1)
+                database?.uriDao()?.insertUris(pageUri)
+            }
+            sheetId
         }.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe { sheetId ->
             state.sheet.id = sheetId ?: 0
         }
@@ -313,68 +328,68 @@ class PartitionSheetActivity : AppCompatActivity() {
         }
         page_number_text.text = (state.pageIndex + 1).toString()
     }
-}
 
-private class State : Parcelable {
+    private class State : Parcelable {
 
-    val sheet: Sheet
-    var pageIndex: Int
-    var isTitleEditable: Boolean
-    var uri: String
-    var bottomSheetState: Int
-    var startButtonVisibility: Int
-    var nextButtonVisibility: Int
-    var finishButtonVisibility: Int
+        val sheet: Sheet
+        var pageIndex: Int
+        var isTitleEditable: Boolean
+        var uri: String
+        var bottomSheetState: Int
+        var startButtonVisibility: Int
+        var nextButtonVisibility: Int
+        var finishButtonVisibility: Int
 
-    constructor(activity: PartitionSheetActivity) {
-        sheet = Sheet(0, "Untitled", activity.intent.getIntExtra("TYPE", IMG_SHEET))
-        pageIndex = 0
-        isTitleEditable = true
-        bottomSheetState = BottomSheetBehavior.STATE_EXPANDED
-        startButtonVisibility = View.VISIBLE
-        nextButtonVisibility = View.GONE
-        finishButtonVisibility = View.GONE
-        val uri = activity.intent.getStringExtra("URI")
-        if (uri != null) {
-            this.uri = uri
-        } else {
-            this.uri = ""
-            activity.finish()
+        constructor(activity: PartitionSheetActivity) {
+            sheet = Sheet(0, "Untitled", activity.intent.getIntExtra("TYPE", IMG_SHEET))
+            pageIndex = 0
+            isTitleEditable = true
+            bottomSheetState = BottomSheetBehavior.STATE_EXPANDED
+            startButtonVisibility = View.VISIBLE
+            nextButtonVisibility = View.GONE
+            finishButtonVisibility = View.GONE
+            val uri = activity.intent.getStringExtra("URI")
+            if (uri != null) {
+                this.uri = uri
+            } else {
+                this.uri = ""
+                activity.finish()
+            }
         }
+
+        private constructor(parcel: Parcel) {
+            sheet = Sheet(parcel.readLong(), parcel.readString(), parcel.readInt())
+            pageIndex = parcel.readInt()
+            isTitleEditable = parcel.readInt() != 0
+            uri = parcel.readString()
+            bottomSheetState = parcel.readInt()
+            startButtonVisibility = parcel.readInt()
+            nextButtonVisibility = parcel.readInt()
+            finishButtonVisibility = parcel.readInt()
+            uri = parcel.readString()
+        }
+
+        override fun writeToParcel(parcel: Parcel?, int: Int) {
+            parcel?.writeLong(sheet.id)
+            parcel?.writeInt(pageIndex)
+            parcel?.writeString(sheet.name)
+            parcel?.writeInt(sheet.type)
+            parcel?.writeInt(if (isTitleEditable) 1 else 0)
+            parcel?.writeString(uri)
+            parcel?.writeInt(bottomSheetState)
+            parcel?.writeInt(startButtonVisibility)
+            parcel?.writeInt(nextButtonVisibility)
+            parcel?.writeInt(finishButtonVisibility)
+            parcel?.writeString(uri)
+        }
+
+        override fun describeContents(): Int = 0
+
+        companion object CREATOR : Parcelable.Creator<State> {
+            override fun newArray(size: Int): Array<State?> = arrayOfNulls(size)
+
+            override fun createFromParcel(parcel: Parcel): State = State(parcel)
+        }
+
     }
-
-    private constructor(parcel: Parcel) {
-        sheet = Sheet(parcel.readLong(), parcel.readString(), parcel.readInt())
-        pageIndex = parcel.readInt()
-        isTitleEditable = parcel.readInt() != 0
-        uri = parcel.readString()
-        bottomSheetState = parcel.readInt()
-        startButtonVisibility = parcel.readInt()
-        nextButtonVisibility = parcel.readInt()
-        finishButtonVisibility = parcel.readInt()
-        uri = parcel.readString()
-    }
-
-    override fun writeToParcel(parcel: Parcel?, int: Int) {
-        parcel?.writeLong(sheet.id)
-        parcel?.writeInt(pageIndex)
-        parcel?.writeString(sheet.name)
-        parcel?.writeInt(sheet.type)
-        parcel?.writeInt(if (isTitleEditable) 1 else 0)
-        parcel?.writeString(uri)
-        parcel?.writeInt(bottomSheetState)
-        parcel?.writeInt(startButtonVisibility)
-        parcel?.writeInt(nextButtonVisibility)
-        parcel?.writeInt(finishButtonVisibility)
-        parcel?.writeString(uri)
-    }
-
-    override fun describeContents(): Int = 0
-
-    companion object CREATOR : Parcelable.Creator<State> {
-        override fun newArray(size: Int): Array<State?> = arrayOfNulls(size)
-
-        override fun createFromParcel(parcel: Parcel): State = State(parcel)
-    }
-
 }

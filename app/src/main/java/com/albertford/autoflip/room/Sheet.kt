@@ -3,6 +3,8 @@ package com.albertford.autoflip.room
 import android.arch.persistence.room.Entity
 import android.arch.persistence.room.Index
 import android.arch.persistence.room.PrimaryKey
+import android.os.Parcel
+import android.os.Parcelable
 
 const val PDF_SHEET = 1
 const val IMG_SHEET = 2
