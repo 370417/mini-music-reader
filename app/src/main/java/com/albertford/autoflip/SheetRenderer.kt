@@ -1,10 +1,13 @@
 package com.albertford.autoflip
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Matrix
 import android.graphics.pdf.PdfRenderer
 import android.net.Uri
+import android.support.v4.content.ContextCompat
 import com.albertford.autoflip.room.Bar
 
 interface SheetRenderer {

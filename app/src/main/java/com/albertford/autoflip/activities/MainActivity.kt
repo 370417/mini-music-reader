@@ -67,6 +67,7 @@ class MainActivity : AppCompatActivity() {
         when (requestCode) {
             PDF_SHEET, IMG_SHEET -> {
                 data ?: return
+                contentResolver.takePersistableUriPermission(data.data, data.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 val intent = Intent(this, PartitionSheetActivity::class.java)
                 intent.putExtra("URI", data.data.toString())
                 intent.putExtra("TYPE", requestCode)
