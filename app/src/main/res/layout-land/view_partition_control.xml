@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:layout_behavior="com.albertford.autoflip.LockableBottomSheetBehavior"
+    app:behavior_peekHeight="@dimen/peek_height"
+    android:elevation="6dp"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:background="@android:color/white"
+    >
+
+    <android.support.constraint.Guideline
+        android:id="@+id/middle_guide"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.5"
+        />
+
+    <TextView
+        android:id="@+id/page_text"
+        android:text="@string/page"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/peek_height"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        android:gravity="center_vertical"
+        />
+
+    <TextView
+        android:id="@+id/page_number_text"
+        android:text="@string/one"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/peek_height"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toRightOf="@id/page_text"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        android:gravity="center_vertical"
+        />
+
+    <TextView
+        android:id="@+id/of_text"
+        android:text="@string/page_of"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/peek_height"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toRightOf="@id/page_number_text"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        android:gravity="center_vertical"
+        android:visibility="gone"
+        />
+
+    <TextView
+        android:id="@+id/page_count_text"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/peek_height"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toRightOf="@id/of_text"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        android:gravity="center_vertical"
+        android:visibility="gone"
+        />
+
+    <Button
+        android:id="@+id/finish_button"
+        android:text="@string/finish"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/peek_height"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        style="@style/Widget.AppCompat.Button.Borderless"
+        />
+
+    <Button
+        android:id="@+id/next_page_button"
+        android:text="@string/next_page"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/peek_height"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintRight_toLeftOf="@id/finish_button"
+        style="@style/Widget.AppCompat.Button.Borderless"
+        android:visibility="gone"
+        />
+
+    <Button
+        android:id="@+id/start_button"
+        android:text="@string/start"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/peek_height"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintRight_toLeftOf="@id/next_page_button"
+        style="@style/Widget.AppCompat.Button.Borderless"
+        />
+
+    <android.support.design.widget.TextInputLayout
+        android:id="@+id/beats_minute_layout"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/page_text"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="@id/middle_guide"
+        app:errorEnabled="true"
+        >
+        <android.support.design.widget.TextInputEditText
+            android:id="@+id/beats_minute_field"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/beats_per_minute"
+            android:inputType="numberDecimal"
+            android:maxLines="1"
+            />
+    </android.support.design.widget.TextInputLayout>
+
+    <android.support.design.widget.TextInputLayout
+        android:id="@+id/beats_measure_layout"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="@id/beats_minute_layout"
+        app:layout_constraintLeft_toLeftOf="@id/middle_guide"
+        app:layout_constraintRight_toRightOf="parent"
+        app:errorEnabled="true"
+        >
+        <android.support.design.widget.TextInputEditText
+            android:id="@+id/beats_measure_field"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/beats_per_measure"
+            android:inputType="number"
+            android:maxLines="1"
+            />
+    </android.support.design.widget.TextInputLayout>
+
+    <CheckBox
+        android:id="@+id/begin_repeat_checkbox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/beats_measure_layout"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:text="@string/begin_repeat"
+        android:visibility="gone"
+        />
+
+    <CheckBox
+        android:id="@+id/end_repeat_checkbox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/beats_measure_layout"
+        app:layout_constraintLeft_toLeftOf="@id/middle_guide"
+        android:text="@string/end_repeat"
+        android:visibility="gone"
+        />
+
+    <Button
+        android:id="@+id/bottom_apply_button"
+        android:text="@string/apply"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/end_repeat_checkbox"
+        app:layout_constraintRight_toRightOf="parent"
+        style="@style/Widget.AppCompat.Button.Borderless"
+        android:textColor="@color/colorPrimary"
+        android:visibility="gone"
+        />
+
+    <Button
+        android:id="@+id/bottom_cancel_button"
+        android:text="@string/cancel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/end_repeat_checkbox"
+        app:layout_constraintRight_toLeftOf="@id/bottom_apply_button"
+        style="@style/Widget.AppCompat.Button.Borderless"
+        android:textColor="@color/colorPrimary"
+        android:visibility="gone"
+        />
+
+</android.support.constraint.ConstraintLayout>

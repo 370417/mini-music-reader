@@ -3,6 +3,7 @@ package com.albertford.autoflip.activities
 import android.Manifest
 import android.animation.ObjectAnimator
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.support.v7.app.AppCompatActivity
 import android.os.*
 import android.support.v4.app.ActivityCompat
@@ -84,7 +85,7 @@ class ViewSheetActivity : AppCompatActivity() {
 
         val canManageDocuments = ContextCompat.checkSelfPermission(this, Manifest.permission.MANAGE_DOCUMENTS) == PackageManager.PERMISSION_GRANTED
         val canReadExternalStorage = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
-        when {
+        /*when {
             canManageDocuments && canReadExternalStorage -> {
                 loadSheet()
                 play_button.setOnClickListener(playButtonListener)
@@ -98,7 +99,9 @@ class ViewSheetActivity : AppCompatActivity() {
             else -> {
                 ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.MANAGE_DOCUMENTS), MANAGE_DOCUMENTS_AND_READ_EXTERNAL_STORAGE_REQUEST)
             }
-        }
+        }*/
+        loadSheet()
+        play_button.setOnClickListener(playButtonListener)
     }
 
     override fun onSaveInstanceState(outState: Bundle?) {
@@ -123,6 +126,12 @@ class ViewSheetActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration?) {
+        super.onConfigurationChanged(newConfig)
+        newConfig ?: return
+        newConfig.orientation
     }
 
     private fun renderTwoBars() {
