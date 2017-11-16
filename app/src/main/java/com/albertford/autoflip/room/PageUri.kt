@@ -8,7 +8,7 @@ import android.arch.persistence.room.PrimaryKey
         childColumns = arrayOf("sheetId"), onDelete = ForeignKey.CASCADE)))
 class PageUri (
         @PrimaryKey
-        var uri: String?,
+        var uri: String,
         var sheetId: Long,
         var pageNumber: Int
 )

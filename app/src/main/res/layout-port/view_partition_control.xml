@@ -5,12 +5,6 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    app:layout_behavior="com.albertford.autoflip.LockableBottomSheetBehavior"
-    app:behavior_peekHeight="@dimen/peek_height"
-    android:elevation="6dp"
-    android:paddingStart="16dp"
-    android:paddingEnd="16dp"
-    android:background="@android:color/white"
     >
 
     <android.support.constraint.Guideline
@@ -74,6 +68,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         style="@style/Widget.AppCompat.Button.Borderless"
+        android:visibility="gone"
         />
 
     <Button

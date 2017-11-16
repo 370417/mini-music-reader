@@ -31,8 +31,8 @@ class PartitionControlView(context: Context?, attrs: AttributeSet) : Coordinator
 
     var partitionControlled: PartitionControlled? = null
 
-    /// TODO: maybe inflate before this
-    private var bottomSheetBehavior: BottomSheetBehavior<View> = BottomSheetBehavior.from(this)
+    private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
+    private var expandBottomSheetOnInit = true
 
     private val bottomSheetCallback = object : BottomSheetBehavior.BottomSheetCallback() {
         override fun onSlide(bottomSheet: View, slideOffset: Float) {
@@ -62,6 +62,7 @@ class PartitionControlView(context: Context?, attrs: AttributeSet) : Coordinator
         val buttonVisibilities = partitionControlled?.startPages()
         next_page_button.visibility = buttonVisibilities?.next ?: next_page_button.visibility
         finish_button.visibility = buttonVisibilities?.finish ?: finish_button.visibility
+        collapse()
     }
 
     private val nextButtonListener = View.OnClickListener {
@@ -77,11 +78,20 @@ class PartitionControlView(context: Context?, attrs: AttributeSet) : Coordinator
 
     private val cancelButtonListener = View.OnClickListener {
         bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+        partitionControlled?.cancelBar()
     }
 
     init {
         inflate(context, R.layout.view_partition_control, this)
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        bottomSheetBehavior = BottomSheetBehavior.from(this)
         bottomSheetBehavior.setBottomSheetCallback(bottomSheetCallback)
+        if (expandBottomSheetOnInit) {
+            bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+        }
         start_button.setOnClickListener(startButtonListener)
         next_page_button.setOnClickListener(nextButtonListener)
         finish_button.setOnClickListener(finishButtonListener)
@@ -97,7 +107,7 @@ class PartitionControlView(context: Context?, attrs: AttributeSet) : Coordinator
                 finish_button.visibility = state.finishButtonVisibility
                 begin_repeat_checkbox.visibility = state.beginCheckboxVisibility
                 end_repeat_checkbox.visibility = state.endCheckboxVisibilty
-                bottomSheetBehavior.state = state.bottomSheetState
+                expandBottomSheetOnInit = state.bottomSheetState == BottomSheetBehavior.STATE_EXPANDED
                 pageIndex = state.pageIndex
             }
             else -> super.onRestoreInstanceState(state)
@@ -195,9 +205,11 @@ private class State : View.BaseSavedState {
 }
 
 interface PartitionControlled {
-    fun startPages(): ButtonVisibilities?
+    fun startPages(): ButtonVisibilities
     fun nextPage(): ButtonVisibilities?
     fun finishPages()
+    fun cancelBar()
+    fun applyBar(beatsPerMinute: Float?, beatsPerMeasure: Int?, beginRepeat: Boolean?, endRepeat: Boolean?)
     fun setSlideOffset(slideOffset: Float)
 }
 

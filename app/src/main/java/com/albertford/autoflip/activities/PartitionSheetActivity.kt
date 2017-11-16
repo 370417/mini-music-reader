@@ -4,7 +4,6 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Parcel
 import android.os.Parcelable
-import android.support.design.widget.BottomSheetBehavior
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -37,6 +36,7 @@ class PartitionSheetActivity : AppCompatActivity(), PartitionControlled {
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
+        bottom_sheet.partitionControlled = this
         bottom_sheet.setOnTouchListener { _ , _ -> true }
         sheet_image.onSelectBarListener = onSelectBarListener
 
@@ -85,7 +85,7 @@ class PartitionSheetActivity : AppCompatActivity(), PartitionControlled {
         return super.onOptionsItemSelected(item)
     }
 
-    override fun startPages(): ButtonVisibilities? {
+    override fun startPages(): ButtonVisibilities {
         bottom_sheet.collapse()
         sheet_image.allowTouch = true
         sheet_image.page = Page(0, sheet_image.width.toFloat())
@@ -143,6 +143,14 @@ class PartitionSheetActivity : AppCompatActivity(), PartitionControlled {
         }
     }
 
+    override fun cancelBar() {
+        sheet_image.allowTouch = true
+    }
+
+    override fun applyBar(beatsPerMinute: Float?, beatsPerMeasure: Int?, beginRepeat: Boolean?, endRepeat: Boolean?) {
+        sheet_image.allowTouch = true
+    }
+
     override fun setSlideOffset(slideOffset: Float) {
         sheet_image.slideOffset = slideOffset
     }
@@ -171,7 +179,6 @@ class PartitionSheetActivity : AppCompatActivity(), PartitionControlled {
                             sheet_image.post {
                                 renderCurrentPage()
                             }
-//                            initPageCount(renderer)
                             bottom_sheet.pageCount = renderer.getPageCount()
                         }
             }

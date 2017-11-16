@@ -185,7 +185,6 @@ class ViewSheetActivity : AppCompatActivity() {
         }
         if (sheet.type == PDF_SHEET) {
             val pageUri = pageUris[0].uri
-            pageUri ?: return
             Single.fromCallable {
                 PdfSheetRenderer(this, pageUri)
             }.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe { renderer ->
