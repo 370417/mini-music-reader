@@ -77,7 +77,7 @@ class PartitionControlView(context: Context?, attrs: AttributeSet) : Coordinator
     }
 
     private val cancelButtonListener = View.OnClickListener {
-        bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+        collapse()
         partitionControlled?.cancelBar()
     }
 
@@ -100,13 +100,15 @@ class PartitionControlView(context: Context?, attrs: AttributeSet) : Coordinator
 
     override fun onRestoreInstanceState(state: Parcelable?) {
         when (state) {
-            is State -> {
+            is ParitionControlState -> {
                 super.onRestoreInstanceState(state.superState)
                 start_button.visibility = state.startButtonVisibility
                 next_page_button.visibility = state.nextButtonVisibility
                 finish_button.visibility = state.finishButtonVisibility
-                begin_repeat_checkbox.visibility = state.beginCheckboxVisibility
-                end_repeat_checkbox.visibility = state.endCheckboxVisibilty
+                begin_repeat_checkbox.visibility = state.barControlsVisibility
+                end_repeat_checkbox.visibility = state.barControlsVisibility
+                bottom_cancel_button.visibility = state.barControlsVisibility
+                bottom_apply_button.visibility = state.barControlsVisibility
                 expandBottomSheetOnInit = state.bottomSheetState == BottomSheetBehavior.STATE_EXPANDED
                 pageIndex = state.pageIndex
             }
@@ -116,7 +118,7 @@ class PartitionControlView(context: Context?, attrs: AttributeSet) : Coordinator
 
     override fun onSaveInstanceState(): Parcelable {
         val superState = super.onSaveInstanceState()
-        return State(superState, this)
+        return ParitionControlState(superState, this)
     }
 
     fun expand(beginRepeat: Boolean, endRepeat: Boolean) {
@@ -154,13 +156,12 @@ class PartitionControlView(context: Context?, attrs: AttributeSet) : Coordinator
     }
 }
 
-private class State : View.BaseSavedState {
+private class ParitionControlState : View.BaseSavedState {
 
     val startButtonVisibility: Int
     val nextButtonVisibility: Int
     val finishButtonVisibility: Int
-    val beginCheckboxVisibility: Int
-    val endCheckboxVisibilty: Int
+    val barControlsVisibility: Int
     val bottomSheetState: Int
     val pageIndex: Int
 
@@ -168,8 +169,7 @@ private class State : View.BaseSavedState {
         startButtonVisibility = view.start_button.visibility
         nextButtonVisibility = view.next_page_button.visibility
         finishButtonVisibility = view.finish_button.visibility
-        beginCheckboxVisibility = view.begin_repeat_checkbox.visibility
-        endCheckboxVisibilty = view.end_repeat_checkbox.visibility
+        barControlsVisibility = view.bottom_apply_button.visibility
         bottomSheetState = BottomSheetBehavior.STATE_EXPANDED
         pageIndex = view.pageIndex
     }
@@ -178,29 +178,26 @@ private class State : View.BaseSavedState {
         startButtonVisibility = parcel.readInt()
         nextButtonVisibility = parcel.readInt()
         finishButtonVisibility = parcel.readInt()
-        beginCheckboxVisibility = parcel.readInt()
-        endCheckboxVisibilty = parcel.readInt()
+        barControlsVisibility = parcel.readInt()
         bottomSheetState = parcel.readInt()
         pageIndex = parcel.readInt()
     }
 
     override fun writeToParcel(parcel: Parcel?, flags: Int) {
-        parcel ?: return
-        parcel.writeInt(startButtonVisibility)
-        parcel.writeInt(nextButtonVisibility)
-        parcel.writeInt(finishButtonVisibility)
-        parcel.writeInt(beginCheckboxVisibility)
-        parcel.writeInt(endCheckboxVisibilty)
-        parcel.writeInt(bottomSheetState)
-        parcel.writeInt(pageIndex)
+        parcel?.run {
+            writeInt(startButtonVisibility)
+            writeInt(nextButtonVisibility)
+            writeInt(finishButtonVisibility)
+            writeInt(barControlsVisibility)
+            writeInt(bottomSheetState)
+            writeInt(pageIndex)
+        }
     }
 
-    override fun describeContents(): Int = 0
+    companion object CREATOR : Parcelable.Creator<ParitionControlState> {
+        override fun newArray(size: Int): Array<ParitionControlState?> = arrayOfNulls(size)
 
-    companion object CREATOR : Parcelable.Creator<State> {
-        override fun newArray(size: Int): Array<State?> = arrayOfNulls(size)
-
-        override fun createFromParcel(parcel: Parcel): State = State(parcel)
+        override fun createFromParcel(parcel: Parcel) = ParitionControlState(parcel)
     }
 }
 

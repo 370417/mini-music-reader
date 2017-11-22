@@ -7,8 +7,11 @@ import android.os.Parcelable
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import com.albertford.autoflip.*
-import com.albertford.autoflip.models.*
+import com.albertford.autoflip.PdfSheetRenderer
+import com.albertford.autoflip.R
+import com.albertford.autoflip.SheetRenderer
+import com.albertford.autoflip.database
+import com.albertford.autoflip.models.Page
 import com.albertford.autoflip.room.*
 import com.albertford.autoflip.views.ButtonVisibilities
 import com.albertford.autoflip.views.PartitionControlled
@@ -43,25 +46,16 @@ class PartitionSheetActivity : AppCompatActivity(), PartitionControlled {
         if (savedInstanceState == null) {
             state = State(this)
             insertSheet()
-            sheet_image.allowTouch = false
         } else {
             state = savedInstanceState.getParcelable("STATE")
             sheet_image.page = savedInstanceState.getParcelable("PAGE")
-            sheet_image.allowTouch = sheet_image.page != null
         }
         loadRenderer()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        val sheetSub = sheetSubscription
-        if (sheetSub?.isDisposed == false) {
-            sheetSub.dispose()
-        }
-        val clickSub = sheet_image.longClickSubscription
-        if (clickSub?.isDisposed == false) {
-            clickSub.dispose()
-        }
+        sheetSubscription?.dispose()
     }
 
     override fun onSaveInstanceState(outState: Bundle?) {
@@ -87,7 +81,6 @@ class PartitionSheetActivity : AppCompatActivity(), PartitionControlled {
 
     override fun startPages(): ButtonVisibilities {
         bottom_sheet.collapse()
-        sheet_image.allowTouch = true
         sheet_image.page = Page(0, sheet_image.width.toFloat())
         val renderer = sheetRenderer
         return when (renderer) {
@@ -130,8 +123,7 @@ class PartitionSheetActivity : AppCompatActivity(), PartitionControlled {
         val renderer = sheetRenderer
         renderer ?: return
         val pageWidth = renderer.getPageWidth(state.pageIndex)
-        val bars = sheet_image.page?.toBarArray(state.sheet.id, pageWidth)
-        bars ?: return
+        val bars = sheet_image.page?.toBarArray(state.sheet.id, pageWidth) ?: return
         if (bars.isNotEmpty()) {
             Completable.fromAction {
                 writeBars(bars)
@@ -144,11 +136,11 @@ class PartitionSheetActivity : AppCompatActivity(), PartitionControlled {
     }
 
     override fun cancelBar() {
-        sheet_image.allowTouch = true
+        sheet_image.page?.selectedBarIndex = -1
     }
 
     override fun applyBar(beatsPerMinute: Float?, beatsPerMeasure: Int?, beginRepeat: Boolean?, endRepeat: Boolean?) {
-        sheet_image.allowTouch = true
+        sheet_image.page?.selectedBarIndex = -1
     }
 
     override fun setSlideOffset(slideOffset: Float) {

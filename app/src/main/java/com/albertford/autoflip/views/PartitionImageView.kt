@@ -3,9 +3,13 @@ package com.albertford.autoflip.views
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.os.Parcel
+import android.os.Parcelable
 import android.support.v4.content.ContextCompat
 import android.util.AttributeSet
+import android.util.Log
 import android.view.MotionEvent
+import android.view.View
 import android.view.ViewConfiguration
 import android.widget.ImageView
 import com.albertford.autoflip.R
@@ -26,11 +30,8 @@ class PartitionImageView(context: Context?, attrs: AttributeSet) : ImageView (co
                 lightestOverlay, 0, 0, 0)
     }
 
-    var allowTouch = false
-
     var slideOffset = 0f
         set(value) {
-            field = value
             barOverlayPaint.alpha = Math.round(
                     lightestOverlay * value)
             invalidate()
@@ -130,11 +131,7 @@ class PartitionImageView(context: Context?, attrs: AttributeSet) : ImageView (co
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
-        if (!allowTouch) {
-            return true
-        }
-        val page = page
-        page ?: return false
+        val page = page ?: return false
         when (event?.action) {
             MotionEvent.ACTION_DOWN -> {
                 clickOrigin = when {
@@ -192,20 +189,40 @@ class PartitionImageView(context: Context?, attrs: AttributeSet) : ImageView (co
         return true
     }
 
+    override fun onSaveInstanceState(): Parcelable {
+        val superState = super.onSaveInstanceState()
+        return PartitionImageState(superState, this)
+    }
+
+    override fun onRestoreInstanceState(state: Parcelable?) {
+        when (state) {
+            is PartitionImageState -> {
+                super.onRestoreInstanceState(state.superState)
+//                allowTouch = state.allowTouch
+                slideOffset = state.slideOffSet
+                page = state.page
+            }
+            else -> super.onRestoreInstanceState(state)
+        }
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        longClickSubscription?.run {
+            dispose()
+        }
+    }
+
     private fun onTouchStaff(page: Page, event: MotionEvent): ClickOrigin? {
         val staff = page.staves.last()
         return when {
-            approxEqual(event.y, staff.start) -> StaffSelectedDrag(
-                    true)
-            approxEqual(event.y, staff.end) -> StaffSelectedDrag(
-                    false)
+            approxEqual(event.y, staff.start) -> StaffSelectedDrag(true)
+            approxEqual(event.y, staff.end) -> StaffSelectedDrag(false)
             event.y < staff.start -> {
-                page.deselectStaff()
-                null
+                StaffDeselected()
             }
             event.y > staff.end -> {
-                page.deselectStaff()
-                null
+                StaffDeselected()
             }
             else -> {
                 longClickSubscription = Completable
@@ -245,3 +262,33 @@ private class StaffDeselected : ClickOrigin()
 private class StaffSelectedClick(var x: Float) : ClickOrigin()
 
 private class BarDrag : ClickOrigin()
+
+private class PartitionImageState : View.BaseSavedState {
+
+    var slideOffSet: Float
+    var page: Page?
+
+    constructor(savedState: Parcelable, view: PartitionImageView) : super(savedState) {
+        slideOffSet = view.slideOffset
+        page = view.page
+    }
+
+    private constructor(parcel: Parcel) : super(parcel) {
+        slideOffSet = parcel.readFloat()
+        page = parcel.readParcelable(Page::class.java.classLoader)
+    }
+
+    override fun writeToParcel(parcel: Parcel?, flags: Int) {
+        parcel?.run {
+            writeFloat(slideOffSet)
+            writeParcelable(page, 0)
+        }
+    }
+
+    companion object CREATOR : Parcelable.Creator<PartitionImageState> {
+        override fun newArray(size: Int): Array<PartitionImageState?> = arrayOfNulls(size)
+
+        override fun createFromParcel(parcel: Parcel) = PartitionImageState(parcel)
+    }
+
+}
