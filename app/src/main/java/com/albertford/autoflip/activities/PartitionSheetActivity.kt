@@ -7,6 +7,9 @@ import android.os.Parcelable
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.view.inputmethod.EditorInfo
+import android.widget.EditText
+import android.widget.TextView
 import com.albertford.autoflip.PdfSheetRenderer
 import com.albertford.autoflip.R
 import com.albertford.autoflip.SheetRenderer
@@ -32,12 +35,22 @@ class PartitionSheetActivity : AppCompatActivity(), PartitionControlled {
 
     private var sheetSubscription: Disposable? = null
 
+    private val onTitleDone = TextView.OnEditorActionListener { _, actionId: Int, _ ->
+        if (actionId == EditorInfo.IME_ACTION_DONE) {
+            if (state.isTitleEditable) {
+                hideTitleField()
+            }
+        }
+        false
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_partition_sheet)
 
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        title_field.setOnEditorActionListener(onTitleDone)
 
         bottom_sheet.partitionControlled = this
         bottom_sheet.setOnTouchListener { _ , _ -> true }
@@ -73,14 +86,18 @@ class PartitionSheetActivity : AppCompatActivity(), PartitionControlled {
 
     override fun onOptionsItemSelected(item: MenuItem?): Boolean {
         if (item?.itemId == R.id.action_title) {
-            state.isTitleEditable = !state.isTitleEditable
             toggleTitle()
         }
         return super.onOptionsItemSelected(item)
     }
 
-    override fun startPages(): ButtonVisibilities {
-        bottom_sheet.collapse()
+    override fun startPages(beatsPerMinute: Float, beatsPerMeasure: Int): ButtonVisibilities {
+//        val focusedView = currentFocus
+//        if (focusedView is EditText) {
+//            focusedView.onEditorAction(EditorInfo.IME_ACTION_DONE)
+//        }
+        title_field.onEditorAction(EditorInfo.IME_ACTION_DONE)
+        currentFocus.clearFocus()
         sheet_image.page = Page(0, sheet_image.width.toFloat())
         val renderer = sheetRenderer
         return when (renderer) {
@@ -181,22 +198,30 @@ class PartitionSheetActivity : AppCompatActivity(), PartitionControlled {
         }
     }
 
-
     private fun toggleTitle() {
         if (state.isTitleEditable) {
-            title_field.visibility = View.VISIBLE
-            changeTitleButton?.setIcon(R.drawable.ic_done_white_24dp)
-            changeTitleButton?.title = resources.getString(R.string.action_save)
+            hideTitleField()
         } else {
-            state.sheet.name = title_field.text.toString()
-            if (state.sheet.name == "") {
-                state.sheet.name = resources.getString(R.string.untitled)
-            }
-            toolbar.title = state.sheet.name
-            title_field.visibility = View.GONE
-            changeTitleButton?.setIcon(R.drawable.ic_mode_edit_white_24dp)
-            changeTitleButton?.title = resources.getString(R.string.action_edit)
+            showTitleField()
         }
+        state.isTitleEditable = !state.isTitleEditable
+    }
+
+    private fun showTitleField() {
+        title_field.visibility = View.VISIBLE
+        changeTitleButton?.setIcon(R.drawable.ic_done_white_24dp)
+        changeTitleButton?.title = resources.getString(R.string.action_save)
+    }
+
+    private fun hideTitleField() {
+        state.sheet.name = title_field.text.toString()
+        if (state.sheet.name == "") {
+            state.sheet.name = resources.getString(R.string.untitled)
+        }
+        toolbar.title = state.sheet.name
+        title_field.visibility = View.GONE
+        changeTitleButton?.setIcon(R.drawable.ic_mode_edit_white_24dp)
+        changeTitleButton?.title = resources.getString(R.string.action_edit)
     }
 
     private fun renderCurrentPage() {
@@ -244,17 +269,17 @@ class PartitionSheetActivity : AppCompatActivity(), PartitionControlled {
             pageIndex = parcel.readInt()
             isTitleEditable = parcel.readInt() != 0
             uri = parcel.readString()
-            uri = parcel.readString()
         }
 
         override fun writeToParcel(parcel: Parcel?, int: Int) {
-            parcel?.writeLong(sheet.id)
-            parcel?.writeInt(pageIndex)
-            parcel?.writeString(sheet.name)
-            parcel?.writeInt(sheet.type)
-            parcel?.writeInt(if (isTitleEditable) 1 else 0)
-            parcel?.writeString(uri)
-            parcel?.writeString(uri)
+            parcel?.run {
+                writeLong(sheet.id)
+                writeString(sheet.name)
+                writeInt(sheet.type)
+                writeInt(pageIndex)
+                writeInt(if (isTitleEditable) 1 else 0)
+                writeString(uri)
+            }
         }
 
         override fun describeContents(): Int = 0

@@ -46,7 +46,7 @@ class PartitionImageView(context: Context?, attrs: AttributeSet) : ImageView (co
     private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop
     private val longClickDuration = ViewConfiguration.getLongPressTimeout().toLong()
 
-    var longClickSubscription: Disposable? = null
+    private var longClickSubscription: Disposable? = null
 
     private val barOverlayPaint = makePaint(0, 0, 0, 0)
     private val accentPaint = getColorPaint(R.color.colorAccent)
@@ -198,7 +198,6 @@ class PartitionImageView(context: Context?, attrs: AttributeSet) : ImageView (co
         when (state) {
             is PartitionImageState -> {
                 super.onRestoreInstanceState(state.superState)
-//                allowTouch = state.allowTouch
                 slideOffset = state.slideOffSet
                 page = state.page
             }
@@ -208,9 +207,7 @@ class PartitionImageView(context: Context?, attrs: AttributeSet) : ImageView (co
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        longClickSubscription?.run {
-            dispose()
-        }
+        longClickSubscription?.dispose()
     }
 
     private fun onTouchStaff(page: Page, event: MotionEvent): ClickOrigin? {

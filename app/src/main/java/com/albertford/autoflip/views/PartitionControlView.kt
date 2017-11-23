@@ -41,8 +41,6 @@ class PartitionControlView(context: Context?, attrs: AttributeSet) : Coordinator
 
         override fun onStateChanged(bottomSheet: View, newState: Int) {
             if (newState == BottomSheetBehavior.STATE_COLLAPSED) {
-                next_page_button.isEnabled = true
-                finish_button.isEnabled = true
                 begin_repeat_checkbox.visibility = View.VISIBLE
                 end_repeat_checkbox.visibility = View.VISIBLE
                 bottom_cancel_button.visibility = View.VISIBLE
@@ -53,13 +51,10 @@ class PartitionControlView(context: Context?, attrs: AttributeSet) : Coordinator
     }
 
     private val startButtonListener = View.OnClickListener {
-        val beatsPerMinuteValid = validateBeatsPerMinute()
-        val beatsPerMeasureValid = validateBeatsPerMeasure()
-        if (!beatsPerMinuteValid || !beatsPerMeasureValid) {
-            return@OnClickListener
-        }
+        val beatsPerMinute = validateBeatsPerMinute() ?: return@OnClickListener
+        val beatsPerMeasure = validateBeatsPerMeasure() ?: return@OnClickListener
         start_button.visibility = View.GONE
-        val buttonVisibilities = partitionControlled?.startPages()
+        val buttonVisibilities = partitionControlled?.startPages(beatsPerMinute, beatsPerMeasure)
         next_page_button.visibility = buttonVisibilities?.next ?: next_page_button.visibility
         finish_button.visibility = buttonVisibilities?.finish ?: finish_button.visibility
         collapse()
@@ -77,8 +72,10 @@ class PartitionControlView(context: Context?, attrs: AttributeSet) : Coordinator
     }
 
     private val cancelButtonListener = View.OnClickListener {
-        collapse()
         partitionControlled?.cancelBar()
+        next_page_button.isEnabled = true
+        finish_button.isEnabled = true
+        collapse()
     }
 
     init {
@@ -125,34 +122,56 @@ class PartitionControlView(context: Context?, attrs: AttributeSet) : Coordinator
         bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
         next_page_button.isEnabled = false
         finish_button.isEnabled = false
-        beats_minute_field.text = null
-        beats_measure_field.text = null
+        beats_minute_field.run {
+            text = null
+            isFocusable = true
+            isFocusableInTouchMode = true
+            isEnabled = true
+        }
+        beats_measure_field.run {
+            text = null
+            isFocusable = true
+            isFocusableInTouchMode = true
+            isEnabled = true
+        }
         begin_repeat_checkbox.isChecked = beginRepeat
         end_repeat_checkbox.isChecked = endRepeat
     }
 
-    fun collapse() {
+    private fun collapse() {
         bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+        beats_minute_field.run {
+            isFocusable = false
+            isFocusableInTouchMode = false
+            isEnabled = false
+        }
+        beats_measure_field.run {
+            isFocusable = false
+            isFocusableInTouchMode = false
+            isEnabled = false
+        }
     }
 
-    private fun validateBeatsPerMinute(): Boolean {
+    private fun validateBeatsPerMinute(): Float? {
         val fieldEmpty = beats_minute_field.text.isEmpty()
-        if (fieldEmpty) {
+        return if (fieldEmpty) {
             beats_minute_layout.error = resources.getString(R.string.error_required_field)
+            null
         } else {
             beats_minute_layout.error = null
+            beats_minute_field.text.toString().toFloat()
         }
-        return !fieldEmpty
     }
 
-    private fun validateBeatsPerMeasure(): Boolean {
+    private fun validateBeatsPerMeasure(): Int? {
         val fieldEmpty = beats_measure_field.text.isEmpty()
-        if (fieldEmpty) {
+        return if (fieldEmpty) {
             beats_measure_layout.error = resources.getString(R.string.error_required_field)
+            null
         } else {
             beats_measure_layout.error = null
+            beats_measure_field.text.toString().toInt()
         }
-        return !fieldEmpty
     }
 }
 
@@ -202,7 +221,7 @@ private class ParitionControlState : View.BaseSavedState {
 }
 
 interface PartitionControlled {
-    fun startPages(): ButtonVisibilities
+    fun startPages(beatsPerMinute: Float, beatsPerMeasure: Int): ButtonVisibilities
     fun nextPage(): ButtonVisibilities?
     fun finishPages()
     fun cancelBar()

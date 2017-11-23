@@ -39,14 +39,16 @@ class Page(
     override fun describeContents() = 0
 
     override fun writeToParcel(parcel: Parcel?, int: Int) {
-        parcel?.writeInt(pageIndex)
-        parcel?.writeFloat(scale)
-        parcel?.writeInt(if (staffSelected) 1 else 0)
-        parcel?.writeInt(selectedBarIndex)
-        parcel?.writeInt(barIndex)
-        parcel?.writeFloat(initBpm)
-        parcel?.writeInt(initBpb)
-        parcel?.writeTypedList(staves)
+        parcel?.run {
+            writeInt(pageIndex)
+            writeFloat(scale)
+            writeInt(if (staffSelected) 1 else 0)
+            writeInt(selectedBarIndex)
+            writeInt(barIndex)
+            writeFloat(initBpm)
+            writeInt(initBpb)
+            writeTypedList(staves)
+        }
     }
 
     /**
@@ -107,13 +109,15 @@ class Page(
     }
 
     companion object CREATOR : Parcelable.Creator<Page> {
-        override fun createFromParcel(parcel: Parcel?) = if (parcel != null) {
-            Page(parcel)
-        } else {
-            Page(0, 1f)
+        override fun createFromParcel(parcel: Parcel?): Page? {
+            return if (parcel != null) {
+                Page(parcel)
+            } else {
+                null
+            }
         }
 
-        override fun newArray(size: Int) = arrayOfNulls<Page>(size)
+        override fun newArray(size: Int): Array<Page?> = arrayOfNulls(size)
     }
 
 }
