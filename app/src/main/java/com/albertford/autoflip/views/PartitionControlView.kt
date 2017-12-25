@@ -78,6 +78,15 @@ class PartitionControlView(context: Context?, attrs: AttributeSet) : Coordinator
         collapse()
     }
 
+    private val applyButtonListener = View.OnClickListener {
+        partitionControlled?.applyBar(
+            beatsPerMeasure = beats_measure_field.text.toString().toIntOrNull(),
+            beatsPerMinute = beats_minute_field.text.toString().toFloatOrNull(),
+            beginRepeat = begin_repeat_checkbox.isChecked,
+            endRepeat = end_repeat_checkbox.isChecked
+        )
+    }
+
     init {
         inflate(context, R.layout.view_partition_control, this)
     }
@@ -93,6 +102,7 @@ class PartitionControlView(context: Context?, attrs: AttributeSet) : Coordinator
         next_page_button.setOnClickListener(nextButtonListener)
         finish_button.setOnClickListener(finishButtonListener)
         bottom_cancel_button.setOnClickListener(cancelButtonListener)
+        bottom_apply_button.setOnClickListener(applyButtonListener)
     }
 
     override fun onRestoreInstanceState(state: Parcelable?) {

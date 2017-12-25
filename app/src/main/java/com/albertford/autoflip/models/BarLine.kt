@@ -19,19 +19,17 @@ class BarLine(var x: Float, var bpm: Float, var bpb: Int, var beginRepeat: Boole
     override fun describeContents() = 0
 
     override fun writeToParcel(parcel: Parcel?, int: Int) {
-        parcel?.writeFloat(x)
-        parcel?.writeFloat(bpm)
-        parcel?.writeInt(bpb)
-        parcel?.writeInt(if (beginRepeat) 1 else 0)
-        parcel?.writeInt(if (endRepeat) 1 else 0)
+        parcel?.run {
+            writeFloat(x)
+            writeFloat(bpm)
+            writeInt(bpb)
+            writeInt(if (beginRepeat) 1 else 0)
+            writeInt(if (endRepeat) 1 else 0)
+        }
     }
 
     companion object CREATOR : Parcelable.Creator<BarLine> {
-        override fun createFromParcel(parcel: Parcel?) = if (parcel != null) {
-            BarLine(parcel)
-        } else {
-            BarLine(0f)
-        }
+        override fun createFromParcel(parcel: Parcel) = BarLine(parcel)
 
         override fun newArray(size: Int) = arrayOfNulls<BarLine>(size)
     }

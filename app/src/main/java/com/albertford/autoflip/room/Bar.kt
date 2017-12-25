@@ -3,9 +3,9 @@ package com.albertford.autoflip.room
 import android.arch.persistence.room.Entity
 import android.arch.persistence.room.ForeignKey
 
-@Entity(primaryKeys = arrayOf("sheetId", "barIndex"),
-        foreignKeys = arrayOf(ForeignKey(entity = Sheet::class, parentColumns = arrayOf("id"),
-                childColumns = arrayOf("sheetId"), onDelete = ForeignKey.CASCADE)))
+@Entity(primaryKeys = ["sheetId", "barIndex"],
+        foreignKeys = [(ForeignKey(entity = Sheet::class, parentColumns = arrayOf("id"),
+                childColumns = arrayOf("sheetId"), onDelete = ForeignKey.CASCADE))])
 data class Bar(
         var sheetId: Long,
         var barIndex: Int,

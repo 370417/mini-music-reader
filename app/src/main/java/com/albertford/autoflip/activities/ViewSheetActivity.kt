@@ -146,10 +146,8 @@ class ViewSheetActivity : AppCompatActivity() {
     // One continuous progress bar for the duration of one bar
     // And a discontinuous secondary progress that updates for each beat
     private val playButtonListener = View.OnClickListener {
-        val renderer = sheetRenderer
-        renderer ?: return@OnClickListener
-        val firstBar = bars?.getOrNull(0)
-        firstBar ?: return@OnClickListener
+        val renderer = sheetRenderer ?: return@OnClickListener
+        val firstBar = bars?.getOrNull(0) ?: return@OnClickListener
         play_button.setImageBitmap(null)
         val animation = ObjectAnimator.ofInt(progress_bar, "progress", 0, 600)
         animation.duration = (60000 * firstBar.beatsPerMeasure / firstBar.beatsPerMinute).toLong()

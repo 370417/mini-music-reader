@@ -8,7 +8,6 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.inputmethod.EditorInfo
-import android.widget.EditText
 import android.widget.TextView
 import com.albertford.autoflip.PdfSheetRenderer
 import com.albertford.autoflip.R
@@ -24,6 +23,9 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_partition_sheet.*
+
+const val DEFAULT_BEATS_PER_MEASURE = 4
+const val DEFAULT_BEATS_PER_MINUTE = 100f
 
 class PartitionSheetActivity : AppCompatActivity(), PartitionControlled {
 
@@ -92,10 +94,6 @@ class PartitionSheetActivity : AppCompatActivity(), PartitionControlled {
     }
 
     override fun startPages(beatsPerMinute: Float, beatsPerMeasure: Int): ButtonVisibilities {
-//        val focusedView = currentFocus
-//        if (focusedView is EditText) {
-//            focusedView.onEditorAction(EditorInfo.IME_ACTION_DONE)
-//        }
         title_field.onEditorAction(EditorInfo.IME_ACTION_DONE)
         currentFocus.clearFocus()
         sheet_image.page = Page(0, sheet_image.width.toFloat())
@@ -157,7 +155,23 @@ class PartitionSheetActivity : AppCompatActivity(), PartitionControlled {
     }
 
     override fun applyBar(beatsPerMinute: Float?, beatsPerMeasure: Int?, beginRepeat: Boolean?, endRepeat: Boolean?) {
-        sheet_image.page?.selectedBarIndex = -1
+        val page = sheet_image.page ?: return
+        val barLines = page.staves.lastOrNull()?.barLines ?: return
+        val firstBarLine = barLines[page.selectedBarIndex]
+        val secondBarLine = barLines[page.selectedBarIndex + 1]
+        if (beatsPerMeasure != null) {
+            firstBarLine.bpb = beatsPerMeasure
+        }
+        if (beatsPerMinute != null) {
+            firstBarLine.bpm = beatsPerMinute
+        }
+        if (beginRepeat != null) {
+            firstBarLine.beginRepeat = beginRepeat
+        }
+        if (endRepeat != null) {
+            secondBarLine.endRepeat = endRepeat
+        }
+        page.selectedBarIndex = -1
     }
 
     override fun setSlideOffset(slideOffset: Float) {
@@ -250,6 +264,8 @@ class PartitionSheetActivity : AppCompatActivity(), PartitionControlled {
         var pageIndex: Int
         var isTitleEditable: Boolean
         var uri: String
+        var lastBeatsPerMinute: Float
+        var lastBeatsPerMeasure: Int
 
         constructor(activity: PartitionSheetActivity) {
             sheet = Sheet(0, "Untitled", activity.intent.getIntExtra("TYPE", IMG_SHEET))
@@ -262,6 +278,8 @@ class PartitionSheetActivity : AppCompatActivity(), PartitionControlled {
                 this.uri = ""
                 activity.finish()
             }
+            lastBeatsPerMeasure = DEFAULT_BEATS_PER_MEASURE
+            lastBeatsPerMinute = DEFAULT_BEATS_PER_MINUTE
         }
 
         private constructor(parcel: Parcel) {
@@ -269,6 +287,8 @@ class PartitionSheetActivity : AppCompatActivity(), PartitionControlled {
             pageIndex = parcel.readInt()
             isTitleEditable = parcel.readInt() != 0
             uri = parcel.readString()
+            lastBeatsPerMinute = parcel.readFloat()
+            lastBeatsPerMeasure = parcel.readInt()
         }
 
         override fun writeToParcel(parcel: Parcel?, int: Int) {
@@ -279,6 +299,8 @@ class PartitionSheetActivity : AppCompatActivity(), PartitionControlled {
                 writeInt(pageIndex)
                 writeInt(if (isTitleEditable) 1 else 0)
                 writeString(uri)
+                writeFloat(lastBeatsPerMinute)
+                writeInt(lastBeatsPerMeasure)
             }
         }
 

@@ -9,7 +9,7 @@ import android.os.Parcelable
 const val PDF_SHEET = 1
 const val IMG_SHEET = 2
 
-@Entity(indices = arrayOf(Index("id")))
+@Entity(indices = [(Index("id"))])
 class Sheet(
         @PrimaryKey(autoGenerate = true)
         var id: Long,

@@ -4,21 +4,28 @@ apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
 
 android {
-  compileSdkVersion 26
-  buildToolsVersion '26.0.2'
+  compileSdkVersion 27
   defaultConfig {
     applicationId "io.github.as_f.barpager"
     minSdkVersion 21
-    targetSdkVersion 26
+    targetSdkVersion 27
     versionCode 1
     versionName "1.0"
     testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    javaCompileOptions {
+      annotationProcessorOptions {
+        arguments = ["room.schemaLocation": "$projectDir/schemas".toString()]
+      }
+    }
   }
   buildTypes {
     release {
       minifyEnabled false
       proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
     }
+  }
+  sourceSets {
+    androidTest.assets.srcDirs += files("$projectDir/schemas".toString())
   }
 }
 
@@ -29,10 +36,10 @@ dependencies {
   })
   compile "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
 
-  compile 'com.android.support:support-v4:26.1.0'
+  compile 'com.android.support:support-v4:27.0.2'
   compile 'com.android.support.constraint:constraint-layout:1.0.2'
-  compile 'com.android.support:design:26.1.0'
-  compile 'com.android.support:appcompat-v7:26.1.0'
+  compile 'com.android.support:design:27.0.2'
+  compile 'com.android.support:appcompat-v7:27.0.2'
 
   compile 'io.reactivex.rxjava2:rxandroid:2.0.1'
   compile 'io.reactivex.rxjava2:rxjava:2.1.3'
