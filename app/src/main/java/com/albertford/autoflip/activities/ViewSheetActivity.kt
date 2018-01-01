@@ -38,9 +38,14 @@ class ViewSheetActivity : AppCompatActivity() {
     private var countdownDelay = 0L
     private var countdownRunnable = object : Runnable {
         override fun run() {
-            val bars = bars
-            bars ?: return
+            val bars = bars ?: return
             beat_text.text = countdownBeat.toString()
+//            progress_bar.progress = 0
+//            val animation = ObjectAnimator.ofInt(progress_bar, "progress", 0, 600)
+//            animation.duration = countdownDelay
+//            animation.interpolator = LinearInterpolator()
+//            animation.setAutoCancel(true)
+//            animation.start()
             if (countdownBeat < bars[0].beatsPerMeasure) {
                 countdownBeat++
                 handler.postDelayed(this, countdownDelay)
@@ -81,7 +86,7 @@ class ViewSheetActivity : AppCompatActivity() {
         } else {
             State(this)
         }
-        progress_bar.rotation = 270f
+//        progress_bar.rotation = 270f
 
         val canManageDocuments = ContextCompat.checkSelfPermission(this, Manifest.permission.MANAGE_DOCUMENTS) == PackageManager.PERMISSION_GRANTED
         val canReadExternalStorage = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
@@ -146,14 +151,14 @@ class ViewSheetActivity : AppCompatActivity() {
     // One continuous progress bar for the duration of one bar
     // And a discontinuous secondary progress that updates for each beat
     private val playButtonListener = View.OnClickListener {
-        val renderer = sheetRenderer ?: return@OnClickListener
+        sheetRenderer ?: return@OnClickListener
         val firstBar = bars?.getOrNull(0) ?: return@OnClickListener
         play_button.setImageBitmap(null)
         val animation = ObjectAnimator.ofInt(progress_bar, "progress", 0, 600)
         animation.duration = (60000 * firstBar.beatsPerMeasure / firstBar.beatsPerMinute).toLong()
         animation.interpolator = LinearInterpolator()
         animation.start()
-        progress_bar.progress = 0
+//        progress_bar.progress = 0
         countdownBeat = 1
         handler.post(countdownRunnable)
     }
@@ -188,7 +193,7 @@ class ViewSheetActivity : AppCompatActivity() {
             }.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe { renderer ->
                 secondary_image.post {
                     sheetRenderer = renderer
-                    scale = renderer.findMaxBarScale(bars, play_button.width, play_button.height)
+                    scale = renderer.findMaxTwoBarScale(bars, play_button.width, play_button.height)
                     primary_image.setImageBitmap(renderer.renderBar(bars, 0, scale))
                 }
             }
@@ -202,7 +207,7 @@ class ViewSheetActivity : AppCompatActivity() {
 
         constructor(activity: ViewSheetActivity) {
             sheetId = activity.intent.getLongExtra("SHEET_ID", -1)
-            barIndex = 0
+            barIndex = activity.barIndex
         }
 
         private constructor(parcel: Parcel) {
@@ -211,8 +216,10 @@ class ViewSheetActivity : AppCompatActivity() {
         }
 
         override fun writeToParcel(parcel: Parcel?, int: Int) {
-            parcel?.writeLong(sheetId)
-            parcel?.writeInt(barIndex)
+            parcel?.run {
+                writeLong(sheetId)
+                writeInt(barIndex)
+            }
         }
 
         override fun describeContents(): Int = 0
