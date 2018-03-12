@@ -27,4 +27,8 @@ class LockableScrollView(context: Context, attrs: AttributeSet?) : NestedScrollV
             false
         }
     }
+
+    fun partialScroll(start: Int, end: Int, progress: Float) {
+        scrollTo(0, start + (progress * (end - start)).toInt())
+    }
 }

@@ -37,6 +37,9 @@ class PartitionSheetActivity : AppCompatActivity(), PartitionControlled {
 
     private var sheetSubscription: Disposable? = null
 
+    private var startScrollY = 0
+    private var endScrollY = 0
+
     private val onTitleDone = TextView.OnEditorActionListener { _, actionId: Int, _ ->
         if (actionId == EditorInfo.IME_ACTION_DONE) {
             if (state.isTitleEditable) {
@@ -176,6 +179,25 @@ class PartitionSheetActivity : AppCompatActivity(), PartitionControlled {
 
     override fun setSlideOffset(slideOffset: Float) {
         sheet_image.slideOffset = slideOffset
+        scroll_view.partialScroll(startScrollY, endScrollY, slideOffset)
+    }
+
+    override fun beginCollapse() {
+        endScrollY = scroll_view.scrollY
+    }
+
+    override fun endCollapse() {
+        image_frame.setPadding(0, 0, 0, 0)
+    }
+
+    override fun beginExpand() {
+        val mask = bottom_sheet.height
+        image_frame.setPadding(0, 0, 0, mask)
+        val page = sheet_image.page ?: return
+        val position = page.selectedStaffPosition().toInt()
+        val target = (scroll_view.height - mask) / 2
+        startScrollY = scroll_view.scrollY
+        endScrollY = position - target
     }
 
     private val onSelectBarListener = { beginRepeat: Boolean, endRepeat: Boolean ->

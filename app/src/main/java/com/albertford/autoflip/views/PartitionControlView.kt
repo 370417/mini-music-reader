@@ -41,6 +41,7 @@ class PartitionControlView(context: Context?, attrs: AttributeSet) : Coordinator
 
         override fun onStateChanged(bottomSheet: View, newState: Int) {
             if (newState == BottomSheetBehavior.STATE_COLLAPSED) {
+                partitionControlled?.endCollapse()
                 begin_repeat_checkbox.visibility = View.VISIBLE
                 end_repeat_checkbox.visibility = View.VISIBLE
                 bottom_cancel_button.visibility = View.VISIBLE
@@ -130,6 +131,7 @@ class PartitionControlView(context: Context?, attrs: AttributeSet) : Coordinator
 
     fun expand(beginRepeat: Boolean, endRepeat: Boolean) {
         bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+        partitionControlled?.beginExpand()
         next_page_button.isEnabled = false
         finish_button.isEnabled = false
         beats_minute_field.run {
@@ -150,6 +152,7 @@ class PartitionControlView(context: Context?, attrs: AttributeSet) : Coordinator
 
     private fun collapse() {
         bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+        partitionControlled?.beginCollapse()
         beats_minute_field.run {
             isFocusable = false
             isFocusableInTouchMode = false
@@ -237,6 +240,9 @@ interface PartitionControlled {
     fun cancelBar()
     fun applyBar(beatsPerMinute: Float?, beatsPerMeasure: Int?, beginRepeat: Boolean?, endRepeat: Boolean?)
     fun setSlideOffset(slideOffset: Float)
+    fun beginExpand()
+    fun beginCollapse()
+    fun endCollapse()
 }
 
 class ButtonVisibilities(val next: Int, val finish: Int)

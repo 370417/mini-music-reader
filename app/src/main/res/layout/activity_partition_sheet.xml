@@ -33,19 +33,27 @@
     </android.support.v7.widget.Toolbar>
 
     <com.albertford.autoflip.views.LockableScrollView
+        android:id="@+id/scroll_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:paddingTop="?attr/actionBarSize"
-        android:paddingBottom="48dp"
+        android:paddingBottom="@dimen/peek_height"
         android:background="@android:color/black"
         >
 
-        <com.albertford.autoflip.views.PartitionImageView
-            android:id="@+id/sheet_image"
+        <FrameLayout
+            android:id="@+id/image_frame"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@android:color/white"
-            />
+            >
+
+            <com.albertford.autoflip.views.PartitionImageView
+                android:id="@+id/sheet_image"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@android:color/white"
+                />
+        </FrameLayout>
 
     </com.albertford.autoflip.views.LockableScrollView>
 

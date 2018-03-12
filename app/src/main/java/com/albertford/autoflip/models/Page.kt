@@ -108,6 +108,14 @@ class Page(
         return bars.toTypedArray()
     }
 
+    /**
+     * @return the y-coordinate of the midpoint of the selected staff
+     */
+    fun selectedStaffPosition(): Float {
+        val staff = staves.last()
+        return (staff.start + staff.end) / 2
+    }
+
     companion object CREATOR : Parcelable.Creator<Page> {
         override fun createFromParcel(parcel: Parcel?): Page? {
             return if (parcel != null) {
