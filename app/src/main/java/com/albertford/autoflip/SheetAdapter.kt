@@ -22,7 +22,7 @@ class SheetAdapter(val sheets: MutableList<Sheet>) : RecyclerView.Adapter<Recycl
 
     class EmptyViewHolder(view: View) : RecyclerView.ViewHolder(view)
 
-    override fun onBindViewHolder(holder: RecyclerView.ViewHolder?, position: Int) {
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         if (holder is TextViewHolder) {
             val sheet = sheets[position]
             holder.primaryTextView?.text = sheet.name
@@ -44,15 +44,16 @@ class SheetAdapter(val sheets: MutableList<Sheet>) : RecyclerView.Adapter<Recycl
         }
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): RecyclerView.ViewHolder =
-            when (viewType) {
-                ITEM_EMPTY -> {
-                    EmptyViewHolder(inflate(R.layout.quarter_rest_tile, parent))
-                }
-                else -> {
-                    TextViewHolder(inflate(R.layout.sheet_list_tile, parent))
-                }
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        return when (viewType) {
+            ITEM_EMPTY -> {
+                EmptyViewHolder(inflate(R.layout.quarter_rest_tile, parent))
             }
+            else -> {
+                TextViewHolder(inflate(R.layout.sheet_list_tile, parent))
+            }
+        }
+    }
 }
 
 private fun inflate(id: Int, parent: ViewGroup?) = LayoutInflater.from(parent?.context).inflate(id, parent, false)
