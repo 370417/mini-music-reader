@@ -14,17 +14,17 @@ class LockableScrollView(context: Context, attrs: AttributeSet?) : NestedScrollV
     private var actionDownEvent: MotionEvent? = null
 
     override fun onInterceptTouchEvent(ev: MotionEvent?): Boolean {
-        if (ev != null && ev.pointerCount > 1) {
+        return if (ev != null && ev.pointerCount > 1) {
             if (ev.pointerCount == 2) {
                 super.onTouchEvent(actionDownEvent)
             }
             super.onInterceptTouchEvent(ev)
-            return true
+            true
         } else {
             if (ev?.action == MotionEvent.ACTION_DOWN) {
                 actionDownEvent = ev
             }
-            return false
+            false
         }
     }
 }
