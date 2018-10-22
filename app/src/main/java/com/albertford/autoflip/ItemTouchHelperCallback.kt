@@ -8,17 +8,15 @@ import io.reactivex.Completable
 import io.reactivex.schedulers.Schedulers
 
 class ItemTouchHelperCallback(private val sheetAdapter: SheetAdapter) : ItemTouchHelper.Callback() {
-
-    override fun getMovementFlags(recyclerView: RecyclerView?,
-            viewHolder: RecyclerView.ViewHolder?): Int =
+    override fun getMovementFlags(recyclerView: RecyclerView,
+            viewHolder: RecyclerView.ViewHolder): Int =
             makeMovementFlags(0, ItemTouchHelper.END)
 
     override fun isLongPressDragEnabled(): Boolean = false
 
     override fun isItemViewSwipeEnabled(): Boolean = sheetAdapter.sheets.isNotEmpty()
 
-    override fun onSwiped(viewHolder: RecyclerView.ViewHolder?, direction: Int) {
-        viewHolder ?: return
+    override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
         val position = viewHolder.adapterPosition
         if (position >= sheetAdapter.sheets.size) {
             return
@@ -40,8 +38,8 @@ class ItemTouchHelperCallback(private val sheetAdapter: SheetAdapter) : ItemTouc
                 .show()
     }
 
-    override fun onMove(recyclerView: RecyclerView?, viewHolder: RecyclerView.ViewHolder?,
-            target: RecyclerView.ViewHolder?): Boolean = false
+    override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder,
+            target: RecyclerView.ViewHolder): Boolean = false
 
     private fun undoDelete(position: Int, deletedSheet: Sheet) {
         sheetAdapter.sheets.add(position, deletedSheet)

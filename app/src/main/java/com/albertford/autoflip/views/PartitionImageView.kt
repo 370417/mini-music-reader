@@ -7,7 +7,6 @@ import android.os.Parcel
 import android.os.Parcelable
 import android.support.v4.content.ContextCompat
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
@@ -25,7 +24,7 @@ import java.util.concurrent.TimeUnit
 class PartitionImageView(context: Context?, attrs: AttributeSet) : ImageView (context, attrs) {
 
     companion object {
-        private val lightestOverlay = 64
+        private const val lightestOverlay = 64
         private val lightestOverlayPaint = makePaint(
                 lightestOverlay, 0, 0, 0)
     }
@@ -173,7 +172,7 @@ class PartitionImageView(context: Context?, attrs: AttributeSet) : ImageView (co
                     }
                     is StaffSelectedClick -> {
                         page.staves.last().barLines.add(BarLine(event.x))
-                        clickOrigin = BarDrag()
+                        clickOrigin = BarDrag
                         val subscription = longClickSubscription
                         if (subscription != null && !subscription.isDisposed) {
                             subscription.dispose()
@@ -216,10 +215,10 @@ class PartitionImageView(context: Context?, attrs: AttributeSet) : ImageView (co
             approxEqual(event.y, staff.start) -> StaffSelectedDrag(true)
             approxEqual(event.y, staff.end) -> StaffSelectedDrag(false)
             event.y < staff.start -> {
-                StaffDeselected()
+                StaffDeselected
             }
             event.y > staff.end -> {
-                StaffDeselected()
+                StaffDeselected
             }
             else -> {
                 longClickSubscription = Completable
@@ -254,11 +253,11 @@ private class PageSelectedClick(var y: Float) : ClickOrigin()
 
 private class StaffSelectedDrag(var isStart: Boolean) : ClickOrigin()
 
-private class StaffDeselected : ClickOrigin()
+private object StaffDeselected : ClickOrigin()
 
 private class StaffSelectedClick(var x: Float) : ClickOrigin()
 
-private class BarDrag : ClickOrigin()
+private object BarDrag : ClickOrigin()
 
 private class PartitionImageState : View.BaseSavedState {
 

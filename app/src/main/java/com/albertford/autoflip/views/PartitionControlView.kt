@@ -10,7 +10,7 @@ import android.view.View
 import com.albertford.autoflip.R
 import kotlinx.android.synthetic.main.view_partition_control.view.*
 
-class PartitionControlView(context: Context?, attrs: AttributeSet) : CoordinatorLayout(context, attrs) {
+class PartitionControlView(context: Context, attrs: AttributeSet) : CoordinatorLayout(context, attrs) {
 
     var pageIndex = 0
         set(value) {
@@ -166,8 +166,8 @@ class PartitionControlView(context: Context?, attrs: AttributeSet) : Coordinator
     }
 
     private fun validateBeatsPerMinute(): Float? {
-        val fieldEmpty = beats_minute_field.text.isEmpty()
-        return if (fieldEmpty) {
+        val fieldEmpty = beats_minute_field.text?.isEmpty()
+        return if (fieldEmpty == true) {
             beats_minute_layout.error = resources.getString(R.string.error_required_field)
             null
         } else {
@@ -177,8 +177,8 @@ class PartitionControlView(context: Context?, attrs: AttributeSet) : Coordinator
     }
 
     private fun validateBeatsPerMeasure(): Int? {
-        val fieldEmpty = beats_measure_field.text.isEmpty()
-        return if (fieldEmpty) {
+        val fieldEmpty = beats_measure_field.text?.isEmpty()
+        return if (fieldEmpty == true) {
             beats_measure_layout.error = resources.getString(R.string.error_required_field)
             null
         } else {

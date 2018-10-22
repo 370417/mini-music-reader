@@ -12,8 +12,8 @@ import android.view.View
  */
 
 class LockableBottomSheetBehavior<V : View>(context: Context?, attrs: AttributeSet?) : BottomSheetBehavior<V>(context, attrs) {
-    override fun onInterceptTouchEvent(parent: CoordinatorLayout?, child: V,
-            event: MotionEvent?) = false
+    override fun onInterceptTouchEvent(parent: CoordinatorLayout, child: V,
+            event: MotionEvent) = false
 
-    override fun onTouchEvent(parent: CoordinatorLayout?, child: V, event: MotionEvent?) = false
+    override fun onTouchEvent(parent: CoordinatorLayout, child: V, event: MotionEvent) = false
 }
