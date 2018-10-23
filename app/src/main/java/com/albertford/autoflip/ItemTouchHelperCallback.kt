@@ -24,7 +24,7 @@ class ItemTouchHelperCallback(private val sheetAdapter: SheetAdapter) : ItemTouc
         val deletedSheet = sheetAdapter.sheets.removeAt(position)
         sheetAdapter.notifyItemRemoved(position)
         Snackbar.make(viewHolder.itemView, R.string.deleted_msg, Snackbar.LENGTH_SHORT)
-                .setAction(R.string.undo, { undoDelete(position, deletedSheet) })
+                .setAction(R.string.undo) { undoDelete(position, deletedSheet) }
                 .addCallback(object : Snackbar.Callback() {
                     override fun onDismissed(transientBottomBar: Snackbar?, event: Int) {
                         super.onDismissed(transientBottomBar, event)

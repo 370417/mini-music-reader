@@ -1,9 +1,12 @@
 package com.albertford.autoflip.activities
 
+import android.content.Context
+import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Parcel
 import android.os.Parcelable
+import android.provider.OpenableColumns
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -20,6 +23,7 @@ import com.albertford.autoflip.views.PartitionControlled
 import io.reactivex.Completable
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_partition_sheet.*
@@ -28,6 +32,8 @@ const val DEFAULT_BEATS_PER_MEASURE = 4
 const val DEFAULT_BEATS_PER_MINUTE = 100f
 
 class PartitionSheetActivity : AppCompatActivity(), PartitionControlled {
+
+    private val compositeDisposable = CompositeDisposable()
 
     private lateinit var state: State
 
@@ -61,19 +67,33 @@ class PartitionSheetActivity : AppCompatActivity(), PartitionControlled {
         bottom_sheet.setOnTouchListener { _ , _ -> true }
         sheet_image.onSelectBarListener = onSelectBarListener
 
-        if (savedInstanceState == null) {
-            state = State(this)
-            insertSheet()
+        val savedState = savedInstanceState?.getParcelable<State>("STATE")
+        val savedPage = savedInstanceState?.getParcelable<Page>("PAGE")
+        if (savedState != null && savedPage != null) {
+            state = savedState
+            sheet_image.page = savedPage
         } else {
-            state = savedInstanceState.getParcelable("STATE")
-            sheet_image.page = savedInstanceState.getParcelable("PAGE")
+            val uri = intent.getStringExtra("URI")
+            if (uri == null) {
+                finish()
+                return
+            }
+            val fileName = getFileName(Uri.parse(uri), this)
+            if (fileName == null) {
+                finish()
+                return
+            }
+            state = State(uri, fileName)
+            insertSheet()
         }
+
         loadRenderer()
     }
 
+    /** Dispose of asynchronous tasks */
     override fun onDestroy() {
         super.onDestroy()
-        sheetSubscription?.dispose()
+        compositeDisposable.dispose()
     }
 
     override fun onSaveInstanceState(outState: Bundle?) {
@@ -205,33 +225,24 @@ class PartitionSheetActivity : AppCompatActivity(), PartitionControlled {
     }
 
     private fun writeBars(bars: Array<Bar>) {
-        if (state.sheet.type == IMG_SHEET) {
-            val pageUri = PageUri(state.uri, state.sheet.id, state.pageIndex)
-            database?.uriDao()?.insertUris(pageUri)
-        }
         database?.barDao()?.insertBars(*bars)
         database?.sheetDao()?.updateSheet(state.sheet)
     }
 
     private fun loadRenderer() {
-        when (state.sheet.type) {
-            PDF_SHEET -> {
-                Single.fromCallable {
-                    PdfSheetRenderer(this, state.uri)
-                }.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread())
-                        .subscribe { renderer ->
-                            sheetRenderer = renderer
-                            sheet_image.post {
-                                renderCurrentPage()
-                            }
-                            bottom_sheet.pageCount = renderer.getPageCount()
-                        }
-            }
-            IMG_SHEET -> {}
-            else -> {
-                finish()
-            }
+        val disposable = Single.fromCallable {
+            PdfSheetRenderer(this, state.sheet.uri)
         }
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe { renderer ->
+                    sheetRenderer = renderer
+                    sheet_image.post {
+                        renderCurrentPage()
+                    }
+                    bottom_sheet.pageCount = renderer.getPageCount()
+                }
+        compositeDisposable.add(disposable)
     }
 
     private fun toggleTitle() {
@@ -267,17 +278,12 @@ class PartitionSheetActivity : AppCompatActivity(), PartitionControlled {
 
     private fun insertSheet() {
         state.sheet.name = resources.getString(R.string.untitled)
-        Single.fromCallable {
+        val disposable = Single.fromCallable {
             database?.sheetDao()?.insertSheet(state.sheet)
-        }.map { sheetId ->
-            if (state.sheet.type == PDF_SHEET) {
-                val pageUri = PageUri(state.uri, sheetId, -1)
-                database?.uriDao()?.insertUris(pageUri)
-            }
-            sheetId
         }.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe { sheetId ->
             state.sheet.id = sheetId ?: 0
         }
+        compositeDisposable.add(disposable)
     }
 
     private class State : Parcelable {
@@ -285,30 +291,21 @@ class PartitionSheetActivity : AppCompatActivity(), PartitionControlled {
         val sheet: Sheet
         var pageIndex: Int
         var isTitleEditable: Boolean
-        var uri: String
         var lastBeatsPerMinute: Float
         var lastBeatsPerMeasure: Int
 
-        constructor(activity: PartitionSheetActivity) {
-            sheet = Sheet(0, "Untitled", activity.intent.getIntExtra("TYPE", IMG_SHEET))
+        constructor(uri: String, fileName: String) {
+            sheet = Sheet(0, fileName, uri)
             pageIndex = 0
             isTitleEditable = true
-            val uri = activity.intent.getStringExtra("URI")
-            if (uri != null) {
-                this.uri = uri
-            } else {
-                this.uri = ""
-                activity.finish()
-            }
             lastBeatsPerMeasure = DEFAULT_BEATS_PER_MEASURE
             lastBeatsPerMinute = DEFAULT_BEATS_PER_MINUTE
         }
 
         private constructor(parcel: Parcel) {
-            sheet = Sheet(parcel.readLong(), parcel.readString(), parcel.readInt())
+            sheet = Sheet(parcel.readLong(), parcel.readString()!!, parcel.readString()!!)
             pageIndex = parcel.readInt()
             isTitleEditable = parcel.readInt() != 0
-            uri = parcel.readString()
             lastBeatsPerMinute = parcel.readFloat()
             lastBeatsPerMeasure = parcel.readInt()
         }
@@ -317,10 +314,9 @@ class PartitionSheetActivity : AppCompatActivity(), PartitionControlled {
             parcel?.run {
                 writeLong(sheet.id)
                 writeString(sheet.name)
-                writeInt(sheet.type)
+                writeString(sheet.uri)
                 writeInt(pageIndex)
                 writeInt(if (isTitleEditable) 1 else 0)
-                writeString(uri)
                 writeFloat(lastBeatsPerMinute)
                 writeInt(lastBeatsPerMeasure)
             }
@@ -335,4 +331,20 @@ class PartitionSheetActivity : AppCompatActivity(), PartitionControlled {
         }
 
     }
+}
+
+private fun getFileName(uri: Uri, context: Context): String? {
+    var name: String? = null
+    context.contentResolver.query(
+            uri,
+            arrayOf(OpenableColumns.DISPLAY_NAME),
+            null,
+            null,
+            null
+    )?.use { cursor ->
+        if (cursor.moveToFirst()) {
+            name = cursor.getString(0)
+        }
+    }
+    return name
 }

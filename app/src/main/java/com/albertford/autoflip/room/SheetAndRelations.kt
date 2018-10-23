@@ -9,7 +9,4 @@ class SheetAndRelations {
 
     @Relation(parentColumn = "id", entityColumn = "sheetId", entity = Bar::class)
     var bars: List<Bar>? = null
-
-    @Relation(parentColumn = "id", entityColumn = "sheetId", entity = PageUri::class)
-    var pageUris: List<PageUri>? = null
 }

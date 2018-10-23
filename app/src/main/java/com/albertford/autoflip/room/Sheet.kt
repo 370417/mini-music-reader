@@ -6,13 +6,11 @@ import android.arch.persistence.room.PrimaryKey
 import android.os.Parcel
 import android.os.Parcelable
 
-const val PDF_SHEET = 1
-const val IMG_SHEET = 2
-
 @Entity(indices = [(Index("id"))])
 class Sheet(
         @PrimaryKey(autoGenerate = true)
         var id: Long,
-        var name: String?,
-        var type: Int
+        var name: String,
+        var uri: String/*,
+        var inverseAspectRatio: Float*/
 )

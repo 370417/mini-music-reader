@@ -13,6 +13,7 @@ import com.albertford.autoflip.*
 import com.albertford.autoflip.room.*
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_view_sheet.*
 import kotlinx.android.synthetic.main.view_sheet_images.*
@@ -23,11 +24,12 @@ private const val MANAGE_DOCUMENTS_AND_READ_EXTERNAL_STORAGE_REQUEST = 3
 
 class ViewSheetActivity : AppCompatActivity() {
 
+    private val compositeDisposable = CompositeDisposable()
+
     private lateinit var state: State
 
     private var sheet: Sheet? = null
     private var bars: List<Bar>? = null
-    private var pageUris: List<PageUri>? = null
     private var sheetRenderer: SheetRenderer? = null
     private var scale = 1f
 
@@ -80,11 +82,7 @@ class ViewSheetActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_view_sheet)
 
-        state = if (savedInstanceState != null) {
-            savedInstanceState.getParcelable("STATE")
-        } else {
-            State(this)
-        }
+        state = savedInstanceState?.getParcelable("STATE") ?: State(this)
 //        progress_bar.rotation = 270f
 
         val canManageDocuments = ContextCompat.checkSelfPermission(this, Manifest.permission.MANAGE_DOCUMENTS) == PackageManager.PERMISSION_GRANTED
@@ -106,6 +104,12 @@ class ViewSheetActivity : AppCompatActivity() {
         }*/
         loadSheet()
         play_button.setOnClickListener(playButtonListener)
+    }
+
+    /** Dispose of asynchronous tasks */
+    override fun onDestroy() {
+        super.onDestroy()
+        compositeDisposable.dispose()
     }
 
     override fun onSaveInstanceState(outState: Bundle?) {
@@ -163,40 +167,37 @@ class ViewSheetActivity : AppCompatActivity() {
     }
 
     private fun loadSheet() {
-        database?.sheetDao()?.selectSheetById(state.sheetId)
+        val disposable = database?.sheetDao()?.selectSheetById(state.sheetId)
                 ?.subscribeOn(Schedulers.io())
                 ?.observeOn(AndroidSchedulers.mainThread())
                 ?.subscribe { result ->
                     sheet = result.sheet
                     bars = result.bars
-                    pageUris = result.pageUris
                     val firstBar = bars?.get(0)
                     if (firstBar != null) {
                         countdownDelay = (60000 / firstBar.beatsPerMinute).toLong()
                     }
                     loadRenderer()
                 }
+        if (disposable != null) {
+            compositeDisposable.add(disposable)
+        }
     }
 
     private fun loadRenderer() {
-        val sheet = sheet
-        val pageUris = pageUris
-        val bars = bars
-        if (sheet == null || pageUris == null || bars == null) {
-            return
-        }
-        if (sheet.type == PDF_SHEET) {
-            val pageUri = pageUris[0].uri
-            Single.fromCallable {
-                PdfSheetRenderer(this, pageUri)
-            }.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe { renderer ->
-                secondary_image.post {
-                    sheetRenderer = renderer
-                    scale = renderer.findMaxTwoBarScale(bars, play_button.width, play_button.height)
-                    primary_image.setImageBitmap(renderer.renderBar(bars, 0, scale))
-                }
+        val sheet = sheet ?: return
+        val bars = bars ?: return
+
+        val disposable = Single.fromCallable {
+            PdfSheetRenderer(this, sheet.uri)
+        }.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe { renderer ->
+            secondary_image.post {
+                sheetRenderer = renderer
+                scale = renderer.findMaxTwoBarScale(bars, play_button.width, play_button.height)
+                primary_image.setImageBitmap(renderer.renderBar(bars, 0, scale))
             }
         }
+        compositeDisposable.add(disposable)
     }
 
     private class State : Parcelable {
