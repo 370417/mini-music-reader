@@ -24,7 +24,6 @@ import io.reactivex.Completable
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_partition_sheet.*
 
@@ -40,8 +39,6 @@ class PartitionSheetActivity : AppCompatActivity(), PartitionControlled {
     private var changeTitleButton: MenuItem? = null
 
     private var sheetRenderer: SheetRenderer? = null
-
-    private var sheetSubscription: Disposable? = null
 
     private var startScrollY = 0
     private var endScrollY = 0
@@ -86,6 +83,8 @@ class PartitionSheetActivity : AppCompatActivity(), PartitionControlled {
             state = State(uri, fileName)
             insertSheet()
         }
+        toolbar.title = state.sheet.name
+        title_field.setText(state.sheet.name)
 
         loadRenderer()
     }
@@ -105,6 +104,7 @@ class PartitionSheetActivity : AppCompatActivity(), PartitionControlled {
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_partition, menu)
         changeTitleButton = menu?.findItem(R.id.action_title)
+        title_field.setText(state.sheet.name)
         toggleTitle()
         return super.onCreateOptionsMenu(menu)
     }
@@ -277,7 +277,6 @@ class PartitionSheetActivity : AppCompatActivity(), PartitionControlled {
     }
 
     private fun insertSheet() {
-        state.sheet.name = resources.getString(R.string.untitled)
         val disposable = Single.fromCallable {
             database?.sheetDao()?.insertSheet(state.sheet)
         }.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe { sheetId ->
@@ -334,6 +333,9 @@ class PartitionSheetActivity : AppCompatActivity(), PartitionControlled {
 }
 
 private fun getFileName(uri: Uri, context: Context): String? {
+    if (uri.scheme == "file") {
+        return trimExtension(uri.lastPathSegment)
+    }
     var name: String? = null
     context.contentResolver.query(
             uri,
@@ -346,5 +348,14 @@ private fun getFileName(uri: Uri, context: Context): String? {
             name = cursor.getString(0)
         }
     }
-    return name
+    return trimExtension(name)
+}
+
+private fun trimExtension(fileName: String?): String? {
+    fileName ?: return null
+    return if (fileName.endsWith(".pdf")) {
+        fileName.dropLast(4)
+    } else {
+        fileName
+    }
 }

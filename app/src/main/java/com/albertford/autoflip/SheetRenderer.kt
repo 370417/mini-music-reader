@@ -14,7 +14,7 @@ interface SheetRenderer {
     fun renderFullPage(i: Int, width: Int): Bitmap?
 
     /**
-     * Render a page with a set width, cut off at a maximmum height, top justified.
+     * Render a page with a set width, cut off at a maximum height, top justified.
      */
     fun renderPagePreview(i: Int, width: Int, height: Int): Bitmap?
 
