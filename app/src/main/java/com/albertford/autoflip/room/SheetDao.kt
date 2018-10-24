@@ -9,8 +9,8 @@ import org.intellij.lang.annotations.Language
 interface SheetDao {
 
     @Language("RoomSql")
-    @Query("SELECT * FROM sheet ORDER BY name")
-    fun selectAllSheets(): Single<Array<Sheet>>
+    @Query("SELECT * FROM sheet LEFT JOIN bar ON sheet.id = bar.sheetId AND bar.barIndex = 1 ORDER BY name")
+    fun selectAllSheetsWithThumb(): Single<Array<SheetAndFirstBar>>
 
     @Language("RoomSql")
     @Transaction @Query("SELECT * FROM sheet WHERE id = :id")

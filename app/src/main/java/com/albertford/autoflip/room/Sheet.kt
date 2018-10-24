@@ -1,5 +1,6 @@
 package com.albertford.autoflip.room
 
+import android.arch.persistence.room.Embedded
 import android.arch.persistence.room.Entity
 import android.arch.persistence.room.Index
 import android.arch.persistence.room.PrimaryKey
@@ -14,3 +15,11 @@ class Sheet(
         var uri: String/*,
         var inverseAspectRatio: Float*/
 )
+
+class SheetAndFirstBar {
+    @Embedded
+    var sheet: Sheet? = null
+
+    @Embedded
+    var bar: Bar? = null
+}

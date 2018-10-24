@@ -1,13 +1,16 @@
 package com.albertford.autoflip
 
+import android.graphics.Canvas
 import android.support.design.widget.Snackbar
 import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.helper.ItemTouchHelper
 import com.albertford.autoflip.room.Sheet
+import com.albertford.autoflip.room.SheetAndFirstBar
 import io.reactivex.Completable
 import io.reactivex.schedulers.Schedulers
 
 class ItemTouchHelperCallback(private val sheetAdapter: SheetAdapter) : ItemTouchHelper.Callback() {
+
     override fun getMovementFlags(recyclerView: RecyclerView,
             viewHolder: RecyclerView.ViewHolder): Int =
             makeMovementFlags(0, ItemTouchHelper.END)
@@ -28,9 +31,10 @@ class ItemTouchHelperCallback(private val sheetAdapter: SheetAdapter) : ItemTouc
                 .addCallback(object : Snackbar.Callback() {
                     override fun onDismissed(transientBottomBar: Snackbar?, event: Int) {
                         super.onDismissed(transientBottomBar, event)
-                        if (event != Snackbar.Callback.DISMISS_EVENT_ACTION) {
+                        val sheet = deletedSheet.sheet
+                        if (event != Snackbar.Callback.DISMISS_EVENT_ACTION && sheet != null) {
                             Completable.fromAction {
-                                database?.sheetDao()?.deleteSheets(deletedSheet)
+                                database?.sheetDao()?.deleteSheets(sheet)
                             }.subscribeOn(Schedulers.io()).subscribe()
                         }
                     }
@@ -38,10 +42,18 @@ class ItemTouchHelperCallback(private val sheetAdapter: SheetAdapter) : ItemTouc
                 .show()
     }
 
+    override fun onChildDraw(c: Canvas, recyclerView: RecyclerView,
+            viewHolder: RecyclerView.ViewHolder, dX: Float, dY: Float, actionState: Int,
+            isCurrentlyActive: Boolean) {
+        super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
+
+        viewHolder.itemView.elevation = Math.min(8f, 1f + dX / 48)
+    }
+
     override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder,
             target: RecyclerView.ViewHolder): Boolean = false
 
-    private fun undoDelete(position: Int, deletedSheet: Sheet) {
+    private fun undoDelete(position: Int, deletedSheet: SheetAndFirstBar) {
         sheetAdapter.sheets.add(position, deletedSheet)
         if (sheetAdapter.sheets.size == 1) {
             sheetAdapter.notifyItemChanged(position)

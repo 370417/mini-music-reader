@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 2,
-    "identityHash": "7fc4820da23ab8569c2fe30721b7424a",
+    "identityHash": "057275b0650f66350816d791bd659c6e",
     "entities": [
       {
         "tableName": "Sheet",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT, `type` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `uri` TEXT NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -18,12 +18,12 @@
             "fieldPath": "name",
             "columnName": "name",
             "affinity": "TEXT",
-            "notNull": false
+            "notNull": true
           },
           {
-            "fieldPath": "type",
-            "columnName": "type",
-            "affinity": "INTEGER",
+            "fieldPath": "uri",
+            "columnName": "uri",
+            "affinity": "TEXT",
             "notNull": true
           }
         ],
@@ -44,59 +44,6 @@
           }
         ],
         "foreignKeys": []
-      },
-      {
-        "tableName": "PageUri",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`uri` TEXT NOT NULL, `sheetId` INTEGER NOT NULL, `pageNumber` INTEGER NOT NULL, PRIMARY KEY(`uri`), FOREIGN KEY(`sheetId`) REFERENCES `Sheet`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
-        "fields": [
-          {
-            "fieldPath": "uri",
-            "columnName": "uri",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "sheetId",
-            "columnName": "sheetId",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "pageNumber",
-            "columnName": "pageNumber",
-            "affinity": "INTEGER",
-            "notNull": true
-          }
-        ],
-        "primaryKey": {
-          "columnNames": [
-            "uri"
-          ],
-          "autoGenerate": false
-        },
-        "indices": [
-          {
-            "name": "index_PageUri_sheetId",
-            "unique": false,
-            "columnNames": [
-              "sheetId"
-            ],
-            "createSql": "CREATE  INDEX `index_PageUri_sheetId` ON `${TABLE_NAME}` (`sheetId`)"
-          }
-        ],
-        "foreignKeys": [
-          {
-            "table": "Sheet",
-            "onDelete": "CASCADE",
-            "onUpdate": "NO ACTION",
-            "columns": [
-              "sheetId"
-            ],
-            "referencedColumns": [
-              "id"
-            ]
-          }
-        ]
       },
       {
         "tableName": "Bar",
@@ -194,7 +141,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"7fc4820da23ab8569c2fe30721b7424a\")"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"057275b0650f66350816d791bd659c6e\")"
     ]
   }
 }

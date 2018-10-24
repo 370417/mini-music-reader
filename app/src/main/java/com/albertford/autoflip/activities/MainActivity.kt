@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.support.v7.widget.StaggeredGridLayoutManager
 import android.support.v7.widget.helper.ItemTouchHelper
 import android.widget.Toast
 import com.albertford.autoflip.*
@@ -24,7 +25,7 @@ class MainActivity : AppCompatActivity() {
 
         setSupportActionBar(toolbar)
 
-        val adapter = SheetAdapter()
+        val adapter = SheetAdapter(this)
         recycler_view.adapter = adapter
         val callback = ItemTouchHelperCallback(adapter)
         val touchHelper = ItemTouchHelper(callback)
@@ -65,14 +66,14 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        val dispoable = database?.sheetDao()?.selectAllSheets()
+        val dispoable = database?.sheetDao()?.selectAllSheetsWithThumb()
                 ?.subscribeOn(Schedulers.io())
                 ?.observeOn(AndroidSchedulers.mainThread())
-                ?.subscribe { sheets ->
+                ?.subscribe { sheetsWithThumb ->
                     val adapter = recycler_view.adapter
                     if (adapter is SheetAdapter) {
                         adapter.sheets.clear()
-                        adapter.sheets.addAll(sheets)
+                        adapter.sheets.addAll(sheetsWithThumb)
                         adapter.notifyDataSetChanged()
                     }
                 }

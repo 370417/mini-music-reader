@@ -23,6 +23,11 @@ interface SheetRenderer {
      */
     fun renderBar(barList: List<Bar>, index: Int, scale: Float): Bitmap?
 
+    /**
+     * Render the staff containing the input bar.
+     */
+    fun renderStaff(bar: Bar, width: Int): Bitmap?
+
     fun close()
 
     fun getPageWidth(i: Int): Int
@@ -90,8 +95,7 @@ class PdfSheetRenderer(context: Context, uri: Uri) : SheetRenderer {
     fun getPageCount(): Int = renderer.pageCount
 
     override fun renderFullPage(i: Int, width: Int): Bitmap? {
-        val pageRenderer = getPage(i)
-        pageRenderer ?: return null
+        val pageRenderer = getPage(i) ?: return null
         val height = pageRenderer.height * width / pageRenderer.width
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         pageRenderer.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
@@ -99,8 +103,7 @@ class PdfSheetRenderer(context: Context, uri: Uri) : SheetRenderer {
     }
 
     override fun renderPagePreview(i: Int, width: Int, height: Int): Bitmap? {
-        val pageRenderer = getPage(i)
-        pageRenderer ?: return null
+        val pageRenderer = getPage(i) ?: return null
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val scale = width.toFloat() / pageRenderer.width
         val matrix = Matrix()
@@ -110,15 +113,25 @@ class PdfSheetRenderer(context: Context, uri: Uri) : SheetRenderer {
     }
 
     override fun renderBar(barList: List<Bar>, index: Int, scale: Float): Bitmap? {
-        val bar = barList.getOrNull(index)
-        bar ?: return null
-        val pageRenderer = getPage(bar.pageIndex)
-        pageRenderer ?: return null
+        val bar = barList.getOrNull(index) ?: return null
+        val pageRenderer = getPage(bar.pageIndex) ?: return null
         val imageWidth = Math.round(scale * bar.width)
         val imageHeight = Math.round(scale * bar.height)
         val bitmap = Bitmap.createBitmap(imageWidth, imageHeight, Bitmap.Config.ARGB_8888)
         val matrix = Matrix()
         matrix.postTranslate(-bar.left, -bar.top)
+        matrix.postScale(scale, scale)
+        pageRenderer.render(bitmap, null, matrix, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+        return bitmap
+    }
+
+    override fun renderStaff(bar: Bar, width: Int): Bitmap? {
+        val pageRenderer = getPage(bar.pageIndex) ?: return null
+        val scale = width.toFloat() / pageRenderer.width
+        val height = bar.height * scale
+        val bitmap = Bitmap.createBitmap(width, height.toInt(), Bitmap.Config.ARGB_8888)
+        val matrix = Matrix()
+        matrix.postTranslate(0f, -bar.top)
         matrix.postScale(scale, scale)
         pageRenderer.render(bitmap, null, matrix, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
         return bitmap
