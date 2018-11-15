@@ -9,7 +9,6 @@
     <!--<string name="save_bar">SAVE BAR</string>-->
     <string name="cancel">Cancel</string>
     <string name="apply">Apply</string>
-    <string name="undo">Undo</string>
 
     <string name="new_sheet_label">Create Sheet</string>
     <!--<string name="choose_file">CHOOSE FILE</string>-->
@@ -35,9 +34,16 @@
     <string name="page">Page\u0020</string>
     <string name="page_of">\u0020of\u0020</string>
     <string name="default_page_number">1/</string>
+    <string name="page_count">Page %1$d of %2$d</string>
+    <string name="default_page_count">Page 0 of 0</string>
     <string name="beats_per_minute">Beats per minute</string>
     <string name="beats_per_measure">Beats per measure</string>
     <string name="begin_repeat">Begin repeat</string>
     <string name="end_repeat">End repeat</string>
     <string name="one">1</string>
+
+    <!-- Menu Actions -->
+    <string name="rename">Rename</string>
+    <string name="undo">Undo</string>
+    <string name="redo">Redo</string>
 </resources>

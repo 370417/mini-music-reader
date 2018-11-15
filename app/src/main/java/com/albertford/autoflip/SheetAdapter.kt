@@ -75,4 +75,4 @@ class SheetAdapter(val sheets: MutableList<SheetAndFirstBar>, val parent: Activi
     }
 }
 
-private fun inflate(id: Int, parent: ViewGroup?) = LayoutInflater.from(parent?.context).inflate(id, parent, false)
+private fun inflate(id: Int, parent: ViewGroup) = LayoutInflater.from(parent.context).inflate(id, parent, false)

@@ -106,7 +106,7 @@ class PartitionSheetActivity : AppCompatActivity(), PartitionControlled {
         changeTitleButton = menu?.findItem(R.id.action_title)
         title_field.setText(state.sheet.name)
         toggleTitle()
-        return super.onCreateOptionsMenu(menu)
+        return true
     }
 
     override fun onOptionsItemSelected(item: MenuItem?): Boolean {
@@ -351,6 +351,7 @@ private fun getFileName(uri: Uri, context: Context): String? {
     return trimExtension(name)
 }
 
+/** Remove the .pdf at the end of a string if it exists */
 private fun trimExtension(fileName: String?): String? {
     fileName ?: return null
     return if (fileName.endsWith(".pdf")) {

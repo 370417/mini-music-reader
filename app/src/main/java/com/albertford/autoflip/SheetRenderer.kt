@@ -160,3 +160,6 @@ class PdfSheetRenderer(context: Context, uri: Uri) : SheetRenderer {
         }
     }
 }
+
+// drag rectangles like on desktop
+// popup button above the selection like on medium for adding a staff/bar

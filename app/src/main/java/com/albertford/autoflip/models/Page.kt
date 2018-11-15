@@ -17,7 +17,7 @@ class Page(
         private val initBpb: Int
 ) : Parcelable {
 
-    val staves: MutableList<Staff> = ArrayList()
+    val staves: MutableList<Staff> = mutableListOf()
 
     constructor(pageIndex: Int, scale: Float) : this(pageIndex, scale, false, -1, 0, DEFAULT_BPM, DEFAULT_BPB)
 

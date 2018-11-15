@@ -264,7 +264,7 @@ private class PartitionImageState : View.BaseSavedState {
     var slideOffSet: Float
     var page: Page?
 
-    constructor(savedState: Parcelable, view: PartitionImageView) : super(savedState) {
+    constructor(savedState: Parcelable?, view: PartitionImageView) : super(savedState) {
         slideOffSet = view.slideOffset
         page = view.page
     }

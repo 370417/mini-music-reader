@@ -59,7 +59,7 @@ class MainActivity : AppCompatActivity() {
         }
         val uri = data?.data ?: return
         contentResolver.takePersistableUriPermission(uri, data.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        val intent = Intent(this, PartitionSheetActivity::class.java)
+        val intent = Intent(this, EditSheetActivity::class.java)
         intent.putExtra("URI", uri.toString())
         startActivity(intent)
     }

@@ -16,48 +16,14 @@
         />
 
     <TextView
-        android:id="@+id/page_text"
-        android:text="@string/page"
+        android:id="@+id/page_count_text"
+        android:text="@string/default_page_count"
         android:layout_width="wrap_content"
         android:layout_height="@dimen/peek_height"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         android:textAppearance="@style/TextAppearance.AppCompat.Medium"
         android:gravity="center_vertical"
-        />
-
-    <TextView
-        android:id="@+id/page_number_text"
-        android:text="@string/one"
-        android:layout_width="wrap_content"
-        android:layout_height="@dimen/peek_height"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintLeft_toRightOf="@id/page_text"
-        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-        android:gravity="center_vertical"
-        />
-
-    <TextView
-        android:id="@+id/of_text"
-        android:text="@string/page_of"
-        android:layout_width="wrap_content"
-        android:layout_height="@dimen/peek_height"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintLeft_toRightOf="@id/page_number_text"
-        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-        android:gravity="center_vertical"
-        android:visibility="gone"
-        />
-
-    <TextView
-        android:id="@+id/page_count_text"
-        android:layout_width="wrap_content"
-        android:layout_height="@dimen/peek_height"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintLeft_toRightOf="@id/of_text"
-        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-        android:gravity="center_vertical"
-        android:visibility="gone"
         />
 
     <Button
@@ -96,7 +62,7 @@
         android:id="@+id/beats_minute_layout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/page_text"
+        app:layout_constraintTop_toBottomOf="@id/page_count_text"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="@id/middle_guide"
         app:errorEnabled="true"

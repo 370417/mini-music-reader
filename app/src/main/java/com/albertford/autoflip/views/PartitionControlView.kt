@@ -14,19 +14,12 @@ class PartitionControlView(context: Context, attrs: AttributeSet) : CoordinatorL
 
     var pageIndex = 0
         set(value) {
-            page_number_text.text = (value + 1).toString()
+            page_count_text.text = resources.getString(R.string.page_count, value + 1, pageCount)
         }
 
     var pageCount = 0
         set(value) {
-            if (value > 0) {
-                page_count_text.text = value.toString()
-                of_text.visibility = View.VISIBLE
-                page_count_text.visibility = View.VISIBLE
-            } else {
-                of_text.visibility = View.GONE
-                page_count_text.visibility = View.GONE
-            }
+            page_count_text.text = resources.getString(R.string.page_count, pageIndex + 1, value)
         }
 
     var partitionControlled: PartitionControlled? = null
