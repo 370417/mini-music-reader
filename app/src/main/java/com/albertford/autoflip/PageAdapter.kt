@@ -8,6 +8,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.ImageView
+import com.albertford.autoflip.views.EditPageView
 import com.albertford.autoflip.views.LazyAdapter
 import java.util.*
 
@@ -48,7 +49,7 @@ class PageAdapter(descriptor: ParcelFileDescriptor, private val callback: PageAd
         val inflater = LayoutInflater.from(parent.context)
         val view = inflater.inflate(R.layout.page_tile, parent, false)
         val imageWidth = parent.width - parent.paddingStart - parent.paddingEnd
-        return PageViewHolder(view as ImageView, imageWidth)
+        return PageViewHolder(view as EditPageView, imageWidth)
     }
 
     // deselect a viewholder if it is being recycled
@@ -57,7 +58,7 @@ class PageAdapter(descriptor: ParcelFileDescriptor, private val callback: PageAd
             selectionPosition = -1
             callback.onSelectionChange(selectionPosition)
         }
-        holder.view.setImageDrawable(null)
+        holder.view.bitmap = null
         super.onViewRecycled(holder)
     }
 
@@ -72,7 +73,7 @@ class PageAdapter(descriptor: ParcelFileDescriptor, private val callback: PageAd
     }
 }
 
-class PageViewHolder(val view: ImageView, private val width: Int) : RecyclerView.ViewHolder(view) {
+class PageViewHolder(val view: EditPageView, private val width: Int) : RecyclerView.ViewHolder(view) {
     fun bindSize(size: Size) {
         view.layoutParams.width = width
         view.layoutParams.height = width * size.height / size.width
@@ -84,7 +85,7 @@ class PageViewHolder(val view: ImageView, private val width: Int) : RecyclerView
             renderer.openPage(adapterPosition)?.use { page ->
                 val bitmap = Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)
                 page.render(bitmap, null, null,  PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-                view.setImageBitmap(bitmap)
+                view.bitmap = bitmap
             }
         }
     }
