@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="?android:windowBackground"
+    app:layout_behavior="android.support.design.widget.BottomSheetBehavior"
+    app:behavior_peekHeight="@dimen/peek_height"
+    app:behavior_hideable="true"
+    android:elevation="8dp"
+    >
+
+    <android.support.constraint.Guideline
+        android:id="@+id/middle_guide"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.5"
+        />
+
+    <Button
+        android:id="@+id/left_button"
+        android:text="@string/cancel"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/peek_height"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toLeftOf="@id/middle_guide"
+        style="@style/Widget.AppCompat.Button.Borderless"
+        />
+
+    <Button
+        android:id="@+id/right_button"
+        android:text="@string/action_continue"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/peek_height"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintLeft_toRightOf="@id/middle_guide"
+        style="@style/Widget.AppCompat.Button.Borderless"
+        />
+
+    <TextView
+        android:text="Hello World"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/left_button"
+        />
+
+</android.support.constraint.ConstraintLayout>

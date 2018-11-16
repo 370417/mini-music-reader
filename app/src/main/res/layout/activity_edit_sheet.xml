@@ -23,6 +23,13 @@
         app:layoutManager="android.support.v7.widget.LinearLayoutManager"
         android:layout_marginTop="?attr/actionBarSize"
         android:background="@android:color/black"
+        android:clipToPadding="false"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
         />
+
+    <include layout="@layout/edit_bottom_sheet"/>
 
 </android.support.design.widget.CoordinatorLayout>

@@ -32,7 +32,8 @@
         </activity>
         <activity
             android:name=".activities.EditSheetActivity"
-            android:parentActivityName=".activities.MainActivity">
+            android:parentActivityName=".activities.MainActivity"
+            android:theme="@style/AppTheme.Dark2">
         </activity>
     </application>
 

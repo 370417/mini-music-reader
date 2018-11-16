@@ -1,8 +1,6 @@
 package com.albertford.autoflip
 
 import android.graphics.Bitmap
-import android.graphics.Color
-import android.graphics.drawable.ShapeDrawable
 import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
 import android.support.v7.widget.RecyclerView
@@ -49,7 +47,8 @@ class PageAdapter(descriptor: ParcelFileDescriptor, private val callback: PageAd
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PageViewHolder {
         val inflater = LayoutInflater.from(parent.context)
         val view = inflater.inflate(R.layout.page_tile, parent, false)
-        return PageViewHolder(view as ImageView, parent.measuredWidth)
+        val imageWidth = parent.width - parent.paddingStart - parent.paddingEnd
+        return PageViewHolder(view as ImageView, imageWidth)
     }
 
     // deselect a viewholder if it is being recycled
@@ -58,7 +57,7 @@ class PageAdapter(descriptor: ParcelFileDescriptor, private val callback: PageAd
             selectionPosition = -1
             callback.onSelectionChange(selectionPosition)
         }
-
+        holder.view.setImageDrawable(null)
         super.onViewRecycled(holder)
     }
 
@@ -73,12 +72,11 @@ class PageAdapter(descriptor: ParcelFileDescriptor, private val callback: PageAd
     }
 }
 
-class PageViewHolder(val view: ImageView, private val parentWidth: Int) : RecyclerView.ViewHolder(view) {
+class PageViewHolder(val view: ImageView, private val width: Int) : RecyclerView.ViewHolder(view) {
     fun bindSize(size: Size) {
-        val placeholder = ShapeDrawable()
-        placeholder.intrinsicWidth = parentWidth
-        placeholder.intrinsicHeight = parentWidth * size.height / size.width
-        view.setImageDrawable(placeholder)
+        view.layoutParams.width = width
+        view.layoutParams.height = width * size.height / size.width
+        view.requestLayout()
     }
 
     fun bindImage(renderer: PdfRenderer) {
