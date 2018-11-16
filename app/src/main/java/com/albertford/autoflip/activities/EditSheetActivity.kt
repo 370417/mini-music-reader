@@ -6,15 +6,13 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import com.albertford.autoflip.PageAdapter
-import com.albertford.autoflip.PageAdapterCallback
 import com.albertford.autoflip.R
+import com.albertford.autoflip.calcSizes
 import kotlinx.android.synthetic.main.activity_edit_sheet.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
 import kotlin.coroutines.CoroutineContext
 
-class EditSheetActivity : AppCompatActivity(), PageAdapterCallback, CoroutineScope {
+class EditSheetActivity : AppCompatActivity(), CoroutineScope {
     lateinit var job: Job
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.Main + job
@@ -26,13 +24,21 @@ class EditSheetActivity : AppCompatActivity(), PageAdapterCallback, CoroutineSco
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        val uriString = intent.getStringExtra("URI")
-        if (uriString != null) {
-            val uri = Uri.parse(uriString)
-            val adapter = PageAdapter(uri, this, this, this)
-            page_recycler.adapter = adapter
-        } else {
-            finish()
+        val context = this
+        launch(Dispatchers.Main) {
+            val uriString = intent.getStringExtra("URI")
+            if (uriString != null) {
+                val uri = Uri.parse(uriString)
+                val sizes = withContext(Dispatchers.Default) {
+                    calcSizes(uri, context)
+                }
+                if (sizes != null) {
+                    val adapter = PageAdapter(sizes, uri, context, context)
+                    page_recycler.adapter = adapter
+                }
+            } else {
+                finish()
+            }
         }
     }
 
@@ -67,9 +73,5 @@ class EditSheetActivity : AppCompatActivity(), PageAdapterCallback, CoroutineSco
         menu?.findItem(R.id.action_undo)?.isEnabled = false
         menu?.findItem(R.id.action_redo)?.isEnabled = false
         return true
-    }
-
-    override fun onSelectionChange(newSelectionPosition: Int) {
-
     }
 }
