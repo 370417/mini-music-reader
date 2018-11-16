@@ -1,25 +1,27 @@
 package com.albertford.autoflip
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.pdf.PdfRenderer
+import android.net.Uri
 import android.os.ParcelFileDescriptor
 import android.support.v7.widget.RecyclerView
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import android.widget.ImageView
 import com.albertford.autoflip.views.EditPageView
 import com.albertford.autoflip.views.LazyAdapter
+import kotlinx.coroutines.*
 import java.util.*
+import kotlin.coroutines.CoroutineContext
 
-class PageAdapter(descriptor: ParcelFileDescriptor, private val callback: PageAdapterCallback)
-    : RecyclerView.Adapter<PageViewHolder>(), LazyAdapter {
-    private val renderer: PdfRenderer = PdfRenderer(descriptor)
-    private val sizes: Array<Size> = Array(renderer.pageCount) { i ->
-        renderer.openPage(i).use { page ->
-            Size(page.width, page.height)
-        }
-    }
+class PageAdapter(
+        private val uri: Uri,
+        private val context: Context,
+        private val callback: PageAdapterCallback,
+        private val coroutineScope: CoroutineScope
+) : RecyclerView.Adapter<PageViewHolder>(), LazyAdapter {
+    private val sizes: Array<Size>
+    private val pageCount: Int
 
     private var selectionPosition: Int = -1
 
@@ -27,10 +29,26 @@ class PageAdapter(descriptor: ParcelFileDescriptor, private val callback: PageAd
 
     private val unboundHolders: Deque<PageViewHolder> = ArrayDeque()
 
+    init {
+        val descriptor = context.contentResolver.openFileDescriptor(uri, "r")
+        if (descriptor != null) {
+            val renderer = PdfRenderer(descriptor)
+            pageCount = renderer.pageCount
+            sizes = Array(pageCount) { i ->
+                renderer.openPage(i).use { page ->
+                    Size(page.width, page.height)
+                }
+            }
+        } else {
+            sizes = arrayOf()
+            pageCount = 0
+        }
+    }
+
     override fun onBindViewHolder(holder: PageViewHolder, position: Int) {
         holder.bindSize(sizes[position])
         if (scrollState == RecyclerView.SCROLL_STATE_IDLE) {
-            holder.bindImage(renderer)
+            holder.bindImage(uri, context, coroutineScope)
         } else {
             unboundHolders.push(holder)
         }
@@ -43,7 +61,7 @@ class PageAdapter(descriptor: ParcelFileDescriptor, private val callback: PageAd
         }
     }
 
-    override fun getItemCount() = renderer.pageCount
+    override fun getItemCount() = pageCount
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PageViewHolder {
         val inflater = LayoutInflater.from(parent.context)
@@ -66,7 +84,7 @@ class PageAdapter(descriptor: ParcelFileDescriptor, private val callback: PageAd
         scrollState = state
         if (state == RecyclerView.SCROLL_STATE_IDLE) {
             for (holder in unboundHolders) {
-                holder.bindImage(renderer)
+                holder.bindImage(uri, context, coroutineScope)
             }
             unboundHolders.clear()
         }
@@ -80,14 +98,27 @@ class PageViewHolder(val view: EditPageView, private val width: Int) : RecyclerV
         view.requestLayout()
     }
 
-    fun bindImage(renderer: PdfRenderer) {
+    fun bindImage(uri: Uri, context: Context, coroutineScope: CoroutineScope) {
         view.post {
-            renderer.openPage(adapterPosition)?.use { page ->
-                val bitmap = Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)
-                page.render(bitmap, null, null,  PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+            val position = adapterPosition
+            val width = view.width
+            val height = view.height
+            coroutineScope.launch(Dispatchers.Main) {
+                val bitmap = withContext(Dispatchers.Default) {
+                    renderPage(uri, context, position, width, height)
+                }
                 view.bitmap = bitmap
             }
         }
+    }
+}
+
+fun renderPage(uri: Uri, context: Context, position: Int, width: Int, height: Int): Bitmap? {
+    val descriptor = context.contentResolver.openFileDescriptor(uri, "r") ?: return null
+    return PdfRenderer(descriptor).openPage(position)?.use { page ->
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+        bitmap
     }
 }
 

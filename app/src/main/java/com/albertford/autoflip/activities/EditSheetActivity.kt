@@ -9,11 +9,19 @@ import com.albertford.autoflip.PageAdapter
 import com.albertford.autoflip.PageAdapterCallback
 import com.albertford.autoflip.R
 import kotlinx.android.synthetic.main.activity_edit_sheet.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlin.coroutines.CoroutineContext
 
-class EditSheetActivity : AppCompatActivity(), PageAdapterCallback {
+class EditSheetActivity : AppCompatActivity(), PageAdapterCallback, CoroutineScope {
+    lateinit var job: Job
+    override val coroutineContext: CoroutineContext
+        get() = Dispatchers.Main + job
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        job = Job()
         setContentView(R.layout.activity_edit_sheet)
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
@@ -21,14 +29,16 @@ class EditSheetActivity : AppCompatActivity(), PageAdapterCallback {
         val uriString = intent.getStringExtra("URI")
         if (uriString != null) {
             val uri = Uri.parse(uriString)
-            val pdfDescriptor = contentResolver.openFileDescriptor(uri, "r")
-            if (pdfDescriptor != null) {
-                val adapter = PageAdapter(pdfDescriptor, this)
-                page_recycler.adapter = adapter
-            }
+            val adapter = PageAdapter(uri, this, this, this)
+            page_recycler.adapter = adapter
         } else {
             finish()
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        job.cancel()
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {

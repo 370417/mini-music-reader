@@ -4,7 +4,6 @@ import android.graphics.Canvas
 import android.support.design.widget.Snackbar
 import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.helper.ItemTouchHelper
-import com.albertford.autoflip.room.Sheet
 import com.albertford.autoflip.room.SheetAndFirstBar
 import io.reactivex.Completable
 import io.reactivex.schedulers.Schedulers
