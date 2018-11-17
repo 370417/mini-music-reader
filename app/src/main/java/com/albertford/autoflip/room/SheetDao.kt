@@ -24,4 +24,10 @@ interface SheetDao {
 
     @Delete
     fun deleteSheets(vararg sheet: Sheet)
+
+//    @Transaction
+//    fun test() {
+//        // selectSheetById
+//        // selectBarsById
+//    }
 }

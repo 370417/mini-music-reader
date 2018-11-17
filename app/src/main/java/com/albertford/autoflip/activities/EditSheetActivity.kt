@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import com.albertford.autoflip.PageAdapter
+import com.albertford.autoflip.PlaceholderPageAdapter
 import com.albertford.autoflip.R
 import com.albertford.autoflip.calcSizes
 import kotlinx.android.synthetic.main.activity_edit_sheet.*
@@ -23,6 +24,8 @@ class EditSheetActivity : AppCompatActivity(), CoroutineScope {
         setContentView(R.layout.activity_edit_sheet)
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
+        page_recycler.adapter = PlaceholderPageAdapter()
 
         val context = this
         launch(Dispatchers.Main) {
