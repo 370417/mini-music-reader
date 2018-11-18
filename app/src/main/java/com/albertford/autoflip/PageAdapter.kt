@@ -7,22 +7,26 @@ import android.net.Uri
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import com.albertford.autoflip.room.Page
+import com.albertford.autoflip.room.Sheet
 import com.albertford.autoflip.views.EditPageView
 import kotlinx.coroutines.*
 
 class PageAdapter(
-        private val sizes: Array<Size>,
+        private val sheet: Sheet,
+        private val pages: Array<Page>,
         private val uri: Uri,
         private val context: Context,
         private val coroutineScope: CoroutineScope
 ) : RecyclerView.Adapter<PageViewHolder>() {
 
     override fun onBindViewHolder(holder: PageViewHolder, position: Int) {
-        holder.bindSize(sizes[position])
+        holder.view.page = pages[position]
+        holder.bindSize(pages[position])
         holder.bindImage(uri, context, coroutineScope)
     }
 
-    override fun getItemCount() = sizes.size
+    override fun getItemCount() = pages.size
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PageViewHolder {
         val inflater = LayoutInflater.from(parent.context)
@@ -38,9 +42,9 @@ class PageAdapter(
 }
 
 class PageViewHolder(val view: EditPageView, private val width: Int) : RecyclerView.ViewHolder(view) {
-    fun bindSize(size: Size) {
+    fun bindSize(page: Page) {
         view.layoutParams.width = width
-        view.layoutParams.height = width * size.height / size.width
+        view.layoutParams.height = width * page.height / page.width
         view.requestLayout()
     }
 

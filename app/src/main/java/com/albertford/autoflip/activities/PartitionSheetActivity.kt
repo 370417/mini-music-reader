@@ -294,7 +294,7 @@ class PartitionSheetActivity : AppCompatActivity(), PartitionControlled {
         var lastBeatsPerMeasure: Int
 
         constructor(uri: String, fileName: String) {
-            sheet = Sheet(0, fileName, uri)
+            sheet = Sheet(fileName, uri, 0)
             pageIndex = 0
             isTitleEditable = true
             lastBeatsPerMeasure = DEFAULT_BEATS_PER_MEASURE
@@ -302,7 +302,7 @@ class PartitionSheetActivity : AppCompatActivity(), PartitionControlled {
         }
 
         private constructor(parcel: Parcel) {
-            sheet = Sheet(parcel.readLong(), parcel.readString()!!, parcel.readString()!!)
+            sheet = Sheet(parcel.readString(), parcel.readString()!!, parcel.readInt())
             pageIndex = parcel.readInt()
             isTitleEditable = parcel.readInt() != 0
             lastBeatsPerMinute = parcel.readFloat()

@@ -6,6 +6,7 @@ import android.graphics.*
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import com.albertford.autoflip.room.Page
 
 private val identityMatrix = Matrix()
 
@@ -15,6 +16,8 @@ class EditPageView(context: Context?, attrs: AttributeSet) : View(context, attrs
             field = value
             invalidate()
         }
+
+    var page: Page? = null
 
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas) // draws the background

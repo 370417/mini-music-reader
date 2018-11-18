@@ -9,12 +9,13 @@ import android.os.Parcelable
 
 @Entity(indices = [(Index("id"))])
 class Sheet(
-        @PrimaryKey(autoGenerate = true)
-        var id: Long,
         var name: String,
-        var uri: String/*,
-        var inverseAspectRatio: Float*/
-)
+        var uri: String,
+        val pageCount: Int
+) {
+    @PrimaryKey(autoGenerate = true)
+    var id: Long = 0L
+}
 
 class SheetAndFirstBar {
     @Embedded
