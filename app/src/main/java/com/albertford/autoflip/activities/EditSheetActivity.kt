@@ -5,12 +5,14 @@ import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.OpenableColumns
+import android.support.design.widget.BottomSheetBehavior
 import android.view.Menu
 import android.view.MenuItem
 import com.albertford.autoflip.*
 import com.albertford.autoflip.room.Page
 import com.albertford.autoflip.room.Sheet
 import kotlinx.android.synthetic.main.activity_edit_sheet.*
+import kotlinx.android.synthetic.main.edit_bottom_sheet.*
 import kotlinx.coroutines.*
 import kotlin.coroutines.CoroutineContext
 
@@ -27,6 +29,8 @@ class EditSheetActivity : AppCompatActivity(), CoroutineScope {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         page_recycler.adapter = PlaceholderPageAdapter()
+        val behavior = BottomSheetBehavior.from(bottom_sheet)
+        behavior.state = BottomSheetBehavior.STATE_HIDDEN
 
         val context = this
         val uriString = intent.getStringExtra("URI")
@@ -36,6 +40,7 @@ class EditSheetActivity : AppCompatActivity(), CoroutineScope {
                 val sheetAndPages = initSheet(uri, uriString)
                 if (sheetAndPages != null) {
                     val (sheet, pages) = sheetAndPages
+                    supportActionBar?.title = sheet.name
                     val adapter = PageAdapter(sheet, pages, uri, context, context)
                     page_recycler.adapter = adapter
                 } else {

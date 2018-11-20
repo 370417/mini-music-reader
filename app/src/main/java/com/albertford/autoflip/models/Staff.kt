@@ -3,6 +3,7 @@ package com.albertford.autoflip.models
 import android.os.Parcel
 import android.os.Parcelable
 
+@Deprecated("")
 class Staff(var start: Float, var end: Float) : Comparable<Staff>, Parcelable {
 
     val barLines: MutableList<BarLine> = ArrayList()

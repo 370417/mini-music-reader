@@ -3,6 +3,7 @@ package com.albertford.autoflip.room
 import android.arch.persistence.room.Entity
 import android.arch.persistence.room.ForeignKey
 
+@Deprecated("")
 @Entity(primaryKeys = ["sheetId", "barIndex"],
         foreignKeys = [(ForeignKey(entity = Sheet::class, parentColumns = arrayOf("id"),
                 childColumns = arrayOf("sheetId"), onDelete = ForeignKey.CASCADE))])

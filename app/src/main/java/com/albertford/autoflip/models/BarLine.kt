@@ -3,6 +3,7 @@ package com.albertford.autoflip.models
 import android.os.Parcel
 import android.os.Parcelable
 
+@Deprecated("")
 class BarLine(var x: Float, var bpm: Float, var bpb: Int, var beginRepeat: Boolean, var endRepeat: Boolean) : Comparable<BarLine>, Parcelable {
 
     constructor(x: Float) : this(x, -1f, -1, false, false)

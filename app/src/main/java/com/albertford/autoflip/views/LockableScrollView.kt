@@ -9,6 +9,7 @@ import android.view.MotionEvent
  * A scroll view that requires two or more fingers to scroll.
  */
 
+@Deprecated("")
 class LockableScrollView(context: Context, attrs: AttributeSet?) : NestedScrollView(context,
         attrs) {
     private var actionDownEvent: MotionEvent? = null

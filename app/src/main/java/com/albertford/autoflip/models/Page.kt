@@ -7,6 +7,7 @@ import com.albertford.autoflip.room.Bar
 private const val DEFAULT_BPM = 60f
 private const val DEFAULT_BPB = 4
 
+@Deprecated("")
 class Page(
         private val pageIndex: Int,
         private var scale: Float,
