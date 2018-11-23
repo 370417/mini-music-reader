@@ -139,7 +139,8 @@ class EditPageView(context: Context, attrs: AttributeSet) : View(context, attrs)
         val motion = motion
         return when (motion) {
             is FirstBarDrag -> {
-                this.motion = motion.release()
+                this.motion = motion.release(slop)
+                invalidate()
                 true
             }
             is FirstBarSelection -> {
@@ -151,6 +152,9 @@ class EditPageView(context: Context, attrs: AttributeSet) : View(context, attrs)
     }
 
     private fun touchHandle(touch: PointF, rect: RectF): Motion? {
+        if (!inBounds(touch, rect)) {
+            return null
+        }
         val vertical = touchHandlePair(touch.y, rect.top, rect.bottom)
         val horizontal = touchHandlePair(touch.x, rect.left, rect.right)
         return when {
@@ -159,6 +163,14 @@ class EditPageView(context: Context, attrs: AttributeSet) : View(context, attrs)
             horizontal != null -> FirstBarHorizontal(rect, horizontal)
             else -> null
         }
+    }
+
+    private fun inBounds(touch: PointF, rect: RectF): Boolean {
+        return inBounds(touch.x, rect.left, rect.right) && inBounds(touch.y, rect.top, rect.bottom)
+    }
+
+    private fun inBounds(touch: Float, low: Float, high: Float): Boolean {
+        return touch >= low - slop && touch <= high + slop
     }
 
     private fun touchHandlePair(touch: Float, low: Float, high: Float): HandlePair? {
@@ -203,8 +215,8 @@ private class FirstBarDrag(val origin: PointF, var drag: PointF) : Motion(), Fir
         return RectF(left, top, right, bottom)
     }
 
-    fun release(): FirstBar? {
-        return if (origin == drag) {
+    fun release(slop: Float): FirstBar? {
+        return if (Math.abs(origin.x - drag.x) < slop || Math.abs(origin.y - drag.y) < slop) {
             null
         } else {
             FirstBar(rect())

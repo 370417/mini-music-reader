@@ -83,3 +83,10 @@ fun calcSizes(uri: Uri, context: Context): Array<Size>? {
         }
     }
 }
+
+interface PageListener {
+    fun initalSelection()
+    fun confirmSelection()
+    fun changeSelection()
+    fun recycleSelection()
+}
