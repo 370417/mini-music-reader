@@ -3,6 +3,7 @@ package com.albertford.autoflip.room
 import android.arch.persistence.room.Embedded
 import android.arch.persistence.room.Relation
 
+@Deprecated("")
 class SheetAndRelations {
     @Embedded
     var sheet: Sheet? = null

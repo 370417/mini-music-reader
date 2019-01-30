@@ -9,7 +9,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import com.albertford.autoflip.activities.ViewSheetActivity
-import com.albertford.autoflip.room.Sheet
+import com.albertford.autoflip.deprecated.PdfSheetRenderer
 import com.albertford.autoflip.room.SheetAndFirstBar
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -41,7 +41,8 @@ class SheetAdapter(val sheets: MutableList<SheetAndFirstBar>, val parent: Activi
             }
             if (bar != null) {
                 val disposable = Single.fromCallable {
-                    val renderer = PdfSheetRenderer(parent, sheet.uri)
+                    val renderer = PdfSheetRenderer(parent,
+                            sheet.uri)
                     renderer.renderStaff(bar, holder.view.width)
                 }
                         .subscribeOn(Schedulers.io())

@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.albertford.autoflip.activities.PartitionSheetActivity"
+    tools:context="com.albertford.autoflip.deprecated.PartitionSheetActivity"
     >
 
     <android.support.v7.widget.Toolbar
@@ -29,7 +29,7 @@
 
     </android.support.v7.widget.Toolbar>
 
-    <com.albertford.autoflip.views.LockableScrollView
+    <com.albertford.autoflip.deprecated.LockableScrollView
         android:id="@+id/scroll_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -44,7 +44,7 @@
             android:layout_height="wrap_content"
             >
 
-            <com.albertford.autoflip.views.PartitionImageView
+            <com.albertford.autoflip.deprecated.PartitionImageView
                 android:id="@+id/sheet_image"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -52,9 +52,9 @@
                 />
         </FrameLayout>
 
-    </com.albertford.autoflip.views.LockableScrollView>
+    </com.albertford.autoflip.deprecated.LockableScrollView>
 
-    <com.albertford.autoflip.views.PartitionControlView
+    <com.albertford.autoflip.deprecated.PartitionControlView
         android:id="@+id/bottom_sheet"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

@@ -10,6 +10,8 @@ import android.support.v4.content.ContextCompat
 import android.view.View
 import android.view.animation.LinearInterpolator
 import com.albertford.autoflip.*
+import com.albertford.autoflip.deprecated.PdfSheetRenderer
+import com.albertford.autoflip.deprecated.SheetRenderer
 import com.albertford.autoflip.room.*
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
