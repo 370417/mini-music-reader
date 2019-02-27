@@ -8,7 +8,7 @@ import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import com.albertford.autoflip.R
-import com.albertford.autoflip.editsheetactivity.EditPageListener
+//import com.albertford.autoflip.editsheetactivity.EditPageListener
 import com.albertford.autoflip.room.Page
 import com.albertford.autoflip.room.Sheet
 import com.albertford.autoflip.editsheetactivity.EditPageView
@@ -19,15 +19,16 @@ class PageAdapter(
         private val pages: Array<Page>,
         private val uri: Uri,
         private val context: Context,
-        private val coroutineScope: CoroutineScope,
-        private val editPageListener: EditPageListener
-) : RecyclerView.Adapter<PageViewHolder>(), EditPageListener {
+        private val coroutineScope: CoroutineScope//,
+//        private val editPageListener: EditPageListener
+) : RecyclerView.Adapter<PageViewHolder>()/*, EditPageListener*/ {
 
     private var selectedPageIndex: Int = -1
 
     override fun onBindViewHolder(holder: PageViewHolder, position: Int) {
-        holder.view.page = pages[position]
-        holder.view.listener = editPageListener
+        holder.view.setPage(pages[position])
+        holder.view.invalidate()
+//        holder.view.listener = editPageListener
         holder.bindSize(pages[position])
         holder.bindImage(uri, context, coroutineScope)
     }
@@ -46,23 +47,23 @@ class PageAdapter(
         super.onViewRecycled(holder)
     }
 
-    override fun cancelSelection() {
-        selectedPageIndex = -1
-        editPageListener.cancelSelection()
-    }
+//    override fun cancelSelection() {
+//        selectedPageIndex = -1
+//        editPageListener.cancelSelection()
+//    }
 
-    override fun changeSelection() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
+//    override fun changeSelection() {
+//        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+//    }
 
-    override fun confirmSelection() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
+//    override fun confirmSelection() {
+//        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+//    }
 
-    override fun initalSelection(pageIndex: Int) {
-        selectedPageIndex = pageIndex
-        editPageListener.initalSelection(pageIndex)
-    }
+//    override fun initalSelection(pageIndex: Int) {
+//        selectedPageIndex = pageIndex
+//        editPageListener.initalSelection(pageIndex)
+//    }
 }
 
 class PageViewHolder(val view: EditPageView, private val width: Int) : RecyclerView.ViewHolder(view) {

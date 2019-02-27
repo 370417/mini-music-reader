@@ -2,5 +2,6 @@
 <resources>
 
     <dimen name="peek_height">48dp</dimen>
+    <dimen name="chevron_size">24dp</dimen>
 
 </resources>

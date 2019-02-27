@@ -37,22 +37,29 @@ interface SheetDao {
     fun findBarLinesBySheet(id: Long): Array<BarLine>
 
     @Transaction
-    fun findFullPagesBySheet(id: Long) : Array<Page>? {
+    fun findFullPagesBySheet(id: Long) : Array<Page> {
         val pages = findPagesBySheet(id)
         val staves = findStavesBySheet(id)
         val barLines = findBarLinesBySheet(id)
+        // Add staves to the pages they belong to
         for (staff in staves) {
-            val page = pages[staff.pageIndex]
-            page.staves.add(staff)
+            val page = pages.getOrNull(staff.pageIndex)
+            page?.staves?.add(staff)
         }
+        // Sort each page's staves
+        // We sort staves after grouping them by page instead of doing it in the SQL query
+        // so that we sort smaller lists instead of one big list.
         for (page in pages) {
             page.staves.sort()
         }
+        // Add barlines to the pages/staves they belong to
         for (barLine in barLines) {
-            val page = pages[barLine.pageIndex]
-            val staff = page.staves[barLine.staffIndex]
-            staff.barLines.add(barLine)
+            val page = pages.getOrNull(barLine.pageIndex)
+            val staff = page?.staves?.getOrNull(barLine.staffIndex)
+            staff?.barLines?.add(barLine)
         }
+        // Sort each staff's barlines
+        // Again, we do this here instead of in SQL for the same reason as
         for (page in pages) {
             for (staff in page.staves) {
                 staff.barLines.sort()

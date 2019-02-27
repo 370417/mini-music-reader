@@ -18,13 +18,13 @@ import kotlinx.android.synthetic.main.edit_bottom_sheet.*
 import kotlinx.coroutines.*
 import kotlin.coroutines.CoroutineContext
 
-class EditSheetActivity : AppCompatActivity(), CoroutineScope, EditPageListener {
+class EditSheetActivity : AppCompatActivity(), CoroutineScope {
 
-    lateinit var job: Job
+    private lateinit var job: Job
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.Main + job
 
-    lateinit var bottomSheetBehavior: BottomSheetBehavior<ConstraintLayout>
+    private lateinit var bottomSheetBehavior: BottomSheetBehavior<ConstraintLayout>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,7 +49,7 @@ class EditSheetActivity : AppCompatActivity(), CoroutineScope, EditPageListener 
                     val (sheet, pages) = sheetAndPages
                     supportActionBar?.title = sheet.name
                     val adapter = PageAdapter(
-                            sheet, pages, uri, context, context, context)
+                            sheet, pages, uri, context, context)
                     page_recycler.adapter = adapter
                 } else {
                     finish()
@@ -118,21 +118,21 @@ class EditSheetActivity : AppCompatActivity(), CoroutineScope, EditPageListener 
         return true
     }
 
-    override fun initalSelection(pageIndex: Int) {
-        bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
-    }
-
-    override fun confirmSelection() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override fun changeSelection() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override fun cancelSelection() {
-        bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
-    }
+//    override fun initalSelection(pageIndex: Int) {
+//        bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+//    }
+//
+//    override fun confirmSelection() {
+//        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+//    }
+//
+//    override fun changeSelection() {
+//        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+//    }
+//
+//    override fun cancelSelection() {
+//        bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+//    }
 
     private fun getAdapter(): PageAdapter? {
         val adapter = page_recycler.adapter
