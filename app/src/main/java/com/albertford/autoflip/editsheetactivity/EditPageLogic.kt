@@ -34,7 +34,7 @@ class EditPageLogic(val page: Page, private val slop: Float, private val chevron
     fun onActionMove(touch: PointF) {
         verifySelection()
         motion?.touch = touch
-        motion?.onActionMove(page, selection)
+        motion?.onActionMove(page, selection, slop)
         motion?.moved = true // make sure to set moved to true after calling onActionMove
     }
 
@@ -120,20 +120,20 @@ class EditPageLogic(val page: Page, private val slop: Float, private val chevron
         val staff = page.staves.getOrNull(selection.staffIndex)
         if (staff == null) {
             this.selection = null
-        } else if (selection.barIndex >= staff.barLines.size) {
+        } else if (selection.barIndex > staff.barLines.size - 2) {
             this.selection = null
         }
     }
 
     private fun calcSelectionRect(selection: Selection): RectF {
-        val staff = page.staves[selection.staffIndex]
+        val staff = page.getStaff(selection)
         val leftBarLine = staff.barLines[selection.barIndex]
         val rightBarLine = staff.barLines[selection.barIndex + 1]
         return RectF(leftBarLine.x, staff.top, rightBarLine.x, staff.bottom)
     }
 
     private fun calcNewBarRect(selection: Selection): RectF? {
-        val staff = page.staves[selection.staffIndex]
+        val staff = page.getStaff(selection)
         if (selection.barIndex != staff.barLines.size - 2) {
             return null
         }
@@ -154,13 +154,13 @@ class EditPageLogic(val page: Page, private val slop: Float, private val chevron
     }
 
     private fun createNewBarMotion(touch: PointF, selection: Selection): Motion {
-        val staff = page.staves[selection.staffIndex]
+        val staff = page.getStaff(selection)
         val rightBar = staff.barLines[selection.barIndex + 1]
         return NewBar(touch, touch.x - rightBar.x)
     }
 
     private fun createNewStaffMotion(touch: PointF, selection: Selection): Motion {
-        val staff = page.staves[selection.staffIndex]
+        val staff = page.getStaff(selection)
         return NewStaff(touch, touch.y - staff.bottom)
     }
 

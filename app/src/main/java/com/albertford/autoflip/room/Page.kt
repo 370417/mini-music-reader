@@ -3,6 +3,7 @@ package com.albertford.autoflip.room
 import android.arch.persistence.room.Entity
 import android.arch.persistence.room.ForeignKey
 import android.arch.persistence.room.Ignore
+import com.albertford.autoflip.editsheetactivity.Selection
 
 @Entity(primaryKeys = ["sheetId", "pageIndex"],
         foreignKeys = [ForeignKey(
@@ -19,4 +20,8 @@ class Page(
 ) {
     @Ignore
     val staves: MutableList<Staff> = mutableListOf()
+
+    fun getStaff(selection: Selection): Staff {
+        return staves[selection.staffIndex]
+    }
 }
