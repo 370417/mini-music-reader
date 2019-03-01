@@ -19,10 +19,6 @@ class EditPageView(context: Context, attrs: AttributeSet) : View(context, attrs)
         private set
 
     var bitmap: Bitmap? = null
-        set(value) {
-            field = value
-            invalidate()
-        }
 
 //    var listener: EditPageListener? = null
 
@@ -60,6 +56,9 @@ class EditPageView(context: Context, attrs: AttributeSet) : View(context, attrs)
 
         canvas.save()
         canvas.scale(width.toFloat(), width.toFloat())
+
+        val motion = logic?.motion
+        val selection = logic?.selection
 
 //        val motion = motion
 //        if (page.staves.isEmpty()) {

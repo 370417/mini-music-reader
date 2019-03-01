@@ -9,54 +9,40 @@ import com.albertford.autoflip.room.Page
 
 class EditPageLogic(val page: Page, private val slop: Float, private val chevronSize: Float) {
     var selection: Selection? = null
-    var initialTouch: InitialTouch? = null
     var motion: Motion? = null
 
     fun onActionDown(touch: PointF) {
-        initialTouch = if (page.staves.isEmpty()) {
-            InitialTouch.FIRST_SELECTION
+        motion = if (page.staves.isEmpty()) {
+            ResizeCorner(touch, touch)
         } else {
             verifySelection()
             val selection = selection
             if (selection == null) {
-                InitialTouch.CHANGE_OR_CANCEL_SELECTION
+                createOtherMotion(touch)
             } else {
                 val touchLocation = calcTouchLocation(touch, calcSelectionRect(selection))
                 when {
                     touchLocation != null -> touchLocation
-                    calcNewBarRect(selection).contains(touch.x, touch.y) -> InitialTouch.NEW_BAR
-                    calcNewStaffRect(selection).contains(touch.x, touch.y) -> InitialTouch.NEW_STAFF
-                    else -> InitialTouch.CHANGE_OR_CANCEL_SELECTION
+                    calcNewBarRect(selection)?.contains(touch.x, touch.y) == true -> createNewBarMotion(touch, selection)
+                    calcNewStaffRect(selection)?.contains(touch.x, touch.y) == true -> createNewStaffMotion(touch, selection)
+                    else -> createOtherMotion(touch)
                 }
             }
         }
     }
 
     fun onActionMove(touch: PointF) {
-        when (initialTouch) {
-            InitialTouch.FIRST_SELECTION -> TODO()
-            InitialTouch.CURRENT_SELECTION -> TODO()
-            InitialTouch.RESIZE_NW -> TODO()
-            InitialTouch.RESIZE_NE -> TODO()
-            InitialTouch.RESIZE_SW -> TODO()
-            InitialTouch.RESIZE_SE -> TODO()
-            InitialTouch.RESIZE_LEFT -> TODO()
-            InitialTouch.RESIZE_RIGHT -> TODO()
-            InitialTouch.RESIZE_TOP -> TODO()
-            InitialTouch.RESIZE_BOTTOM -> TODO()
-            InitialTouch.NEW_BAR -> TODO()
-            InitialTouch.NEW_STAFF -> TODO()
-            InitialTouch.CHANGE_OR_CANCEL_SELECTION -> TODO()
-            null -> TODO()
-        }
-        initialTouch = null
-        TODO()
+        verifySelection()
+        motion?.touch = touch
+        motion?.onActionMove(page, selection)
+        motion?.moved = true // make sure to set moved to true after calling onActionMove
     }
 
     fun onActionUp(touch: PointF) {
+        onActionMove(touch) // keep this or not?
+        selection = motion?.onActionUp(page, selection)
+        verifySelection()
         motion = null
-        initialTouch = null
-        TODO()
     }
 
     /**
@@ -64,28 +50,28 @@ class EditPageLogic(val page: Page, private val slop: Float, private val chevron
      * the rectangle, null is returned. Otherwise it returns an enum for the inside of the rectangle
      * or one of the four corners or four edges.
      */
-    fun calcTouchLocation(touch: PointF, rect: RectF): InitialTouch? {
+    fun calcTouchLocation(touch: PointF, rect: RectF): Motion? {
         val horizTouchLocation = calcTouchLocation(touch.x, rect.left, rect.right)
         val vertTouchLocation = calcTouchLocation(touch.y, rect.top, rect.bottom)
         return when (horizTouchLocation) {
             TouchLocation.OUTSIDE -> null
             TouchLocation.INSIDE -> when (vertTouchLocation) {
                 TouchLocation.OUTSIDE -> null
-                TouchLocation.INSIDE -> InitialTouch.CURRENT_SELECTION
-                TouchLocation.LOW_HANDLE -> InitialTouch.RESIZE_TOP
-                TouchLocation.HIGH_HANDLE -> InitialTouch.RESIZE_BOTTOM
+                TouchLocation.INSIDE -> ClickSelection(touch)
+                TouchLocation.LOW_HANDLE -> ResizeVertical(touch, rect.bottom)
+                TouchLocation.HIGH_HANDLE -> ResizeVertical(touch, rect.top)
             }
             TouchLocation.LOW_HANDLE -> when (vertTouchLocation) {
                 TouchLocation.OUTSIDE -> null
-                TouchLocation.INSIDE -> InitialTouch.RESIZE_LEFT
-                TouchLocation.LOW_HANDLE -> InitialTouch.RESIZE_NW
-                TouchLocation.HIGH_HANDLE -> InitialTouch.RESIZE_SW
+                TouchLocation.INSIDE -> ResizeHorizontal(touch, rect.right)
+                TouchLocation.LOW_HANDLE -> ResizeCorner(touch, PointF(rect.right, rect.bottom))
+                TouchLocation.HIGH_HANDLE -> ResizeCorner(touch, PointF(rect.right, rect.top))
             }
             TouchLocation.HIGH_HANDLE -> when (vertTouchLocation) {
                 TouchLocation.OUTSIDE -> null
-                TouchLocation.INSIDE -> InitialTouch.RESIZE_RIGHT
-                TouchLocation.LOW_HANDLE -> InitialTouch.RESIZE_NE
-                TouchLocation.HIGH_HANDLE -> InitialTouch.RESIZE_SE
+                TouchLocation.INSIDE -> ResizeHorizontal(touch, rect.left)
+                TouchLocation.LOW_HANDLE -> ResizeCorner(touch, PointF(rect.left, rect.bottom))
+                TouchLocation.HIGH_HANDLE -> ResizeCorner(touch, PointF(rect.left, rect.top))
             }
         }
     }
@@ -119,18 +105,6 @@ class EditPageLogic(val page: Page, private val slop: Float, private val chevron
         }
     }
 
-    fun barRects(): ArrayList<RectF> {
-        val rects = ArrayList<RectF>()
-        for (staff in page.staves) {
-            for (i in 1 until staff.barLines.size) {
-                val left = staff.barLines[i - 1].x
-                val right = staff.barLines[i].x
-                rects.add(RectF(left, staff.top, right, staff.bottom))
-            }
-        }
-        return rects
-    }
-
     /**
      * Make sure the selection is consistent with the page bounds. If the selection is out of the
      * page, set the selection to null.
@@ -152,19 +126,51 @@ class EditPageLogic(val page: Page, private val slop: Float, private val chevron
         return RectF(leftBarLine.x, staff.top, rightBarLine.x, staff.bottom)
     }
 
-    private fun calcNewBarRect(selection: Selection): RectF {
+    private fun calcNewBarRect(selection: Selection): RectF? {
         val staff = page.staves[selection.staffIndex]
+        if (selection.barIndex != staff.barLines.size - 2) {
+            return null
+        }
         val lastBarLine = staff.barLines.last()
         val top = (staff.top + staff.bottom - chevronSize) / 2
         val bottom = (staff.top + staff.bottom + chevronSize) / 2
         return RectF(lastBarLine.x, top, lastBarLine.x + chevronSize, bottom)
     }
 
-    private fun calcNewStaffRect(selection: Selection): RectF {
-        val staff = page.staves[selection.staffIndex]
+    private fun calcNewStaffRect(selection: Selection): RectF? {
+        if (selection.staffIndex != page.staves.size - 1) {
+            return null
+        }
+        val staff = page.staves.last()
         val left = (staff.barLines[0].x + staff.barLines[1].x - chevronSize) / 2
         val right = (staff.barLines[0].x + staff.barLines[1].x + chevronSize) / 2
         return RectF(left, staff.bottom, right, staff.bottom + chevronSize)
+    }
+
+    private fun createNewBarMotion(touch: PointF, selection: Selection): Motion {
+        val staff = page.staves[selection.staffIndex]
+        val rightBar = staff.barLines[selection.barIndex + 1]
+        return NewBar(touch, touch.x - rightBar.x)
+    }
+
+    private fun createNewStaffMotion(touch: PointF, selection: Selection): Motion {
+        val staff = page.staves[selection.staffIndex]
+        return NewStaff(touch, touch.y - staff.bottom)
+    }
+
+    private fun createOtherMotion(touch: PointF): Motion {
+        for (staffIndex in page.staves.indices) {
+            val staff = page.staves[staffIndex]
+            for (barIndex in 0..staff.barLines.size - 2) {
+                val left = staff.barLines[barIndex].x
+                val right = staff.barLines[barIndex + 1].x
+                val rect = RectF(left, staff.top, right, staff.bottom)
+                if (rect.contains(touch.x, touch.y)) {
+                    return ChangeSelection(touch, Selection(staffIndex, barIndex))
+                }
+            }
+        }
+        return CancelSelection(touch)
     }
 }
 
@@ -176,34 +182,3 @@ enum class TouchLocation {
     INSIDE,
     HIGH_HANDLE
 }
-
-enum class InitialTouch {
-    FIRST_SELECTION,
-    CURRENT_SELECTION,
-    RESIZE_NW,
-    RESIZE_NE,
-    RESIZE_SW,
-    RESIZE_SE,
-    RESIZE_LEFT,
-    RESIZE_RIGHT,
-    RESIZE_TOP,
-    RESIZE_BOTTOM,
-    NEW_BAR,
-    NEW_STAFF,
-    CHANGE_OR_CANCEL_SELECTION
-}
-
-sealed class Motion
-
-class ResizeCorner(fixedCorner: PointF, touch: PointF) : Motion()
-
-class ResizeHorizontal(fixedX: Float, top: Float, bottom: Float, touch: Float) : Motion()
-
-class ResizeVertical(fixedY: Float, left: Float, right: Float, touch: Float) : Motion()
-
-// In the following two classes, touchOffset refers to the distance between the inital touch (on
-// the chevron) and the boundary of the previously selected bar.
-
-class NewBar(left: Float, top: Float, bottom: Float, touch: Float, touchOffset: Float) : Motion()
-
-class NewStaff(left: Float, top: Float, right: Float, touch: Float, touchOffset: Float) : Motion()

@@ -84,6 +84,7 @@ class PageViewHolder(val view: EditPageView, private val width: Int) : RecyclerV
                             position, width, height)
                 }
                 view.bitmap = bitmap
+                view.invalidate()
             }
         }
     }
