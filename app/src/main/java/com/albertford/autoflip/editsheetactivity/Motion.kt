@@ -11,32 +11,56 @@ import com.albertford.autoflip.room.Staff
 sealed class Motion(var touch: PointF) {
     var moved: Boolean = false
 
-    abstract fun onActionMove(page: Page, selection: Selection?)
+    abstract fun onActionMove(page: Page, selection: Selection?, slop: Float)
 
     /**
-     * If the selection needs to be changed, returns the new selection
-     * If the selection has been clicked, returns the current selection
-     * Else, returns null
+     * Returns the new selection if it needs to be changed. The new selection can be invalid to
+     * indicate the selection should be canceled.
+     * Returns the current selection if it has been clicked.
+     * Returns null if no changes to selection need to be made
      */
-    abstract fun onActionUp(page: Page, selection: Selection?): Selection?
+    abstract fun onActionUp(page: Page, selection: Selection?, slop: Float): MotionResult?
 }
 
 class ClickSelection(touch: PointF) : Motion(touch) {
-    override fun onActionMove(page: Page, selection: Selection?) {
+    override fun onActionMove(page: Page, selection: Selection?, slop: Float) {
         // intentionally does nothing
     }
 
-    override fun onActionUp(page: Page, selection: Selection?): Selection? {
+    override fun onActionUp(page: Page, selection: Selection?, slop: Float): MotionResult? {
         return if (!moved) {
-            selection
+            ClickSelectionResult
         } else {
             null
         }
     }
 }
 
+fun destroyBarIfTooSmall(staff: Staff, barIndex: Int, slop: Float, fixedX: Float): Boolean {
+    val prevBarLine = staff.barLines.getOrNull(barIndex - 1)
+    val leftBarLine = staff.barLines[barIndex]
+    val rightBarLine = staff.barLines[barIndex + 1]
+    val nextBarLine = staff.barLines.getOrNull(barIndex + 2)
+    if (prevBarLine != null && leftBarLine.x - prevBarLine.x < slop) {
+        staff.barLines.removeAt(barIndex)
+        return true
+    } else if (rightBarLine.x - leftBarLine.x < slop) {
+        // delete the barline that was just moved, not the fixed one
+        if (rightBarLine.x == fixedX) {
+            staff.barLines.removeAt(barIndex)
+        } else {
+            staff.barLines.removeAt(barIndex + 1)
+        }
+        return true
+    } else if (nextBarLine != null && nextBarLine.x - rightBarLine.x < slop) {
+        staff.barLines.removeAt(barIndex + 1)
+        return true
+    }
+    return false
+}
+
 class ResizeCorner(touch: PointF, private val fixedCorner: PointF) : Motion(touch) {
-    override fun onActionMove(page: Page, selection: Selection?) {
+    override fun onActionMove(page: Page, selection: Selection?, slop: Float) {
         val selection = selection ?: return
         val staff = page.staves[selection.staffIndex]
         val left = Math.min(touch.x, fixedCorner.x)
@@ -53,13 +77,24 @@ class ResizeCorner(touch: PointF, private val fixedCorner: PointF) : Motion(touc
         rightBar.x = clamped.right
     }
 
-    override fun onActionUp(page: Page, selection: Selection?): Selection? {
-        TODO("destroy staff/bar if too small")
+    override fun onActionUp(page: Page, selection: Selection?, slop: Float): MotionResult? {
+        val selection = selection ?: return null
+        val staff = page.staves[selection.staffIndex]
+        if (staff.bottom - staff.top < slop) {
+            page.staves.removeAt(selection.staffIndex)
+            return CancelSelectionResult
+        } else {
+            val tooSmall = destroyBarIfTooSmall(staff, selection.barIndex, slop, fixedCorner.x)
+            if (tooSmall) {
+                return CancelSelectionResult
+            }
+        }
+        return null
     }
 }
 
 class ResizeHorizontal(touch: PointF, private val fixedX: Float) : Motion(touch) {
-    override fun onActionMove(page: Page, selection: Selection?) {
+    override fun onActionMove(page: Page, selection: Selection?, slop: Float) {
         val selection = selection ?: return
         val staff = page.staves[selection.staffIndex]
         val left = Math.min(touch.x, fixedX)
@@ -72,13 +107,13 @@ class ResizeHorizontal(touch: PointF, private val fixedX: Float) : Motion(touch)
         rightBar.x = clamped.right
     }
 
-    override fun onActionUp(page: Page, selection: Selection?): Selection? {
+    override fun onActionUp(page: Page, selection: Selection?, slop: Float): MotionResult? {
         TODO("destroy bar if too small")
     }
 }
 
 class ResizeVertical(touch: PointF, private val fixedY: Float) : Motion(touch) {
-    override fun onActionMove(page: Page, selection: Selection?) {
+    override fun onActionMove(page: Page, selection: Selection?, slop: Float) {
         val selection = selection ?: return
         val staff = page.staves[selection.staffIndex]
         val leftBar = staff.barLines[selection.barIndex]
@@ -91,7 +126,7 @@ class ResizeVertical(touch: PointF, private val fixedY: Float) : Motion(touch) {
         staff.bottom = clamped.bottom
     }
 
-    override fun onActionUp(page: Page, selection: Selection?): Selection? {
+    override fun onActionUp(page: Page, selection: Selection?, slop: Float): MotionResult? {
         TODO("destroy staff if too small")
     }
 }
@@ -100,7 +135,7 @@ class ResizeVertical(touch: PointF, private val fixedY: Float) : Motion(touch) {
 // the chevron) and the boundary of the previously selected bar.
 
 class NewBar(touch: PointF, private val touchOffset: Float) : Motion(touch) {
-    override fun onActionMove(page: Page, selection: Selection?) {
+    override fun onActionMove(page: Page, selection: Selection?, slop: Float) {
         val selection = selection ?: return
         val staff = page.staves[selection.staffIndex]
         if (!moved) {
@@ -112,13 +147,13 @@ class NewBar(touch: PointF, private val touchOffset: Float) : Motion(touch) {
         lastBar.x = Math.max(secondLastBar.x, touch.x - touchOffset)
     }
 
-    override fun onActionUp(page: Page, selection: Selection?): Selection? {
+    override fun onActionUp(page: Page, selection: Selection?, slop: Float): MotionResult? {
         TODO("1. create new bar and change selection/2. create new bar if not moved")
     }
 }
 
 class NewStaff(touch: PointF, private val touchOffset: Float) : Motion(touch) {
-    override fun onActionMove(page: Page, selection: Selection?) {
+    override fun onActionMove(page: Page, selection: Selection?, slop: Float) {
         if (!moved) {
             val staff = page.staves.last()
             page.staves.add(Staff(staff.bottom, staff.bottom, staff.sheetId, staff.pageIndex))
@@ -127,19 +162,19 @@ class NewStaff(touch: PointF, private val touchOffset: Float) : Motion(touch) {
         staff.bottom = Math.max(staff.top, touch.y - touchOffset)
     }
 
-    override fun onActionUp(page: Page, selection: Selection?): Selection? {
+    override fun onActionUp(page: Page, selection: Selection?, slop: Float): MotionResult? {
         TODO("1. create new staff and change selection/2. create new staff if not moved")
     }
 }
 
 class ChangeSelection(touch: PointF, private val newSelection: Selection) : Motion(touch) {
-    override fun onActionMove(page: Page, selection: Selection?) {
+    override fun onActionMove(page: Page, selection: Selection?, slop: Float) {
         // intentionally does nothing
     }
 
-    override fun onActionUp(page: Page, selection: Selection?): Selection? {
+    override fun onActionUp(page: Page, selection: Selection?, slop: Float): MotionResult? {
         return if (!moved) {
-            newSelection
+            ChangeSelectionResult(newSelection)
         } else {
             null
         }
@@ -147,11 +182,19 @@ class ChangeSelection(touch: PointF, private val newSelection: Selection) : Moti
 }
 
 class CancelSelection(touch: PointF) : Motion(touch) {
-    override fun onActionMove(page: Page, selection: Selection?) {
+    override fun onActionMove(page: Page, selection: Selection?, slop: Float) {
         // intentionally does nothing
     }
 
-    override fun onActionUp(page: Page, selection: Selection?): Selection? {
-        return Selection(-1, -1)
+    override fun onActionUp(page: Page, selection: Selection?, slop: Float): MotionResult? {
+        return CancelSelectionResult
     }
 }
+
+sealed class MotionResult
+
+class ChangeSelectionResult(val newSelection: Selection) : MotionResult()
+
+object ClickSelectionResult : MotionResult()
+
+object CancelSelectionResult : MotionResult()

@@ -40,7 +40,13 @@ class EditPageLogic(val page: Page, private val slop: Float, private val chevron
 
     fun onActionUp(touch: PointF) {
         onActionMove(touch) // keep this or not?
-        selection = motion?.onActionUp(page, selection)
+        val result = motion?.onActionUp(page, selection, slop)
+        when (result) {
+            is ChangeSelectionResult -> selection = result.newSelection
+            ClickSelectionResult -> TODO()
+            CancelSelectionResult -> selection = null
+            null -> {}
+        }
         verifySelection()
         motion = null
     }
