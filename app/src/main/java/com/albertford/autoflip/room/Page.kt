@@ -24,4 +24,8 @@ class Page(
     fun getStaff(selection: Selection): Staff {
         return staves[selection.staffIndex]
     }
+
+    override fun toString(): String {
+        return "Page $pageIndex: $staves"
+    }
 }

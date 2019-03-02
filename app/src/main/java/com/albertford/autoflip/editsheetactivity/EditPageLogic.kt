@@ -2,7 +2,9 @@ package com.albertford.autoflip.editsheetactivity
 
 import android.graphics.PointF
 import android.graphics.RectF
+import com.albertford.autoflip.room.BarLine
 import com.albertford.autoflip.room.Page
+import com.albertford.autoflip.room.Staff
 
 // All dimensions and locations in this class are given relative to the width of document
 // This way the same normalized slop value can be used in the x and y axes
@@ -13,6 +15,11 @@ class EditPageLogic(val page: Page, private val slop: Float, private val chevron
 
     fun onActionDown(touch: PointF) {
         motion = if (page.staves.isEmpty()) {
+            val staff = Staff(touch.y, touch.y, page.sheetId, page.pageIndex)
+            staff.barLines.add(BarLine(touch.x, page.sheetId, page.pageIndex, 0))
+            staff.barLines.add(BarLine(touch.x, page.sheetId, page.pageIndex, 0))
+            page.staves.add(staff)
+            selection = Selection(0, 0)
             ResizeCorner(touch, touch)
         } else {
             verifySelection()
@@ -23,8 +30,8 @@ class EditPageLogic(val page: Page, private val slop: Float, private val chevron
                 val touchLocation = calcTouchLocation(touch, calcSelectionRect(selection))
                 when {
                     touchLocation != null -> touchLocation
-                    calcNewBarRect(selection)?.contains(touch.x, touch.y) == true -> createNewBarMotion(touch, selection)
-                    calcNewStaffRect(selection)?.contains(touch.x, touch.y) == true -> createNewStaffMotion(touch, selection)
+                    calcNewBarRect()?.contains(touch.x, touch.y) == true -> createNewBarMotion(touch, selection)
+                    calcNewStaffRect()?.contains(touch.x, touch.y) == true -> createNewStaffMotion(touch, selection)
                     else -> createOtherMotion(touch)
                 }
             }
@@ -39,7 +46,6 @@ class EditPageLogic(val page: Page, private val slop: Float, private val chevron
     }
 
     fun onActionUp(touch: PointF) {
-        onActionMove(touch) // keep this or not?
         val result = motion?.onActionUp(page, selection, slop)
         when (result) {
             is ChangeSelectionResult -> selection = result.newSelection
@@ -132,25 +138,59 @@ class EditPageLogic(val page: Page, private val slop: Float, private val chevron
         return RectF(leftBarLine.x, staff.top, rightBarLine.x, staff.bottom)
     }
 
-    private fun calcNewBarRect(selection: Selection): RectF? {
-        val staff = page.getStaff(selection)
-        if (selection.barIndex != staff.barLines.size - 2) {
-            return null
+    // version of calcnewbarrect that does not allocate a new rect.
+    // instead, it returns true if the rect exists and false if it should be treated as null
+    fun calcNewBarRect(rect: RectF): Boolean {
+        when (motion) {
+            is ResizeCorner, is ResizeHorizontal, is ResizeVertical -> return false
         }
-        val lastBarLine = staff.barLines.last()
-        val top = (staff.top + staff.bottom - chevronSize) / 2
-        val bottom = (staff.top + staff.bottom + chevronSize) / 2
-        return RectF(lastBarLine.x, top, lastBarLine.x + chevronSize, bottom)
+        val selection = selection ?: return false
+        val staff = page.getStaff(selection)
+        return if (motion is NewBar || selection.barIndex == staff.barIndices().last) {
+            val lastBarLine = staff.barLines.last()
+            rect.left = lastBarLine.x
+            rect.top = (staff.top + staff.bottom - chevronSize) / 2
+            rect.right = lastBarLine.x + chevronSize
+            rect.bottom = (staff.top + staff.bottom + chevronSize) / 2
+            true
+        } else {
+            false
+        }
     }
 
-    private fun calcNewStaffRect(selection: Selection): RectF? {
-        if (selection.staffIndex != page.staves.size - 1) {
-            return null
+    private fun calcNewBarRect(): RectF? {
+        val rect = RectF()
+        return if (calcNewBarRect(rect)) {
+            rect
+        } else {
+            null
         }
-        val staff = page.staves.last()
-        val left = (staff.barLines[0].x + staff.barLines[1].x - chevronSize) / 2
-        val right = (staff.barLines[0].x + staff.barLines[1].x + chevronSize) / 2
-        return RectF(left, staff.bottom, right, staff.bottom + chevronSize)
+    }
+
+    fun calcNewStaffRect(rect: RectF): Boolean {
+        when (motion) {
+            is ResizeCorner, is ResizeHorizontal, is ResizeVertical -> return false
+        }
+        val selection = selection ?: return false
+        return if (motion is NewStaff || selection.staffIndex == page.staves.indices.last) {
+            val staff = page.staves.last()
+            rect.left = (staff.barLines[0].x + staff.barLines[1].x - chevronSize) / 2
+            rect.top = staff.bottom
+            rect.right = (staff.barLines[0].x + staff.barLines[1].x + chevronSize) / 2
+            rect.bottom = staff.bottom + chevronSize
+            true
+        } else {
+            false
+        }
+    }
+
+    private fun calcNewStaffRect(): RectF? {
+        val rect = RectF()
+        return if (calcNewStaffRect(rect)) {
+            rect
+        } else {
+            null
+        }
     }
 
     private fun createNewBarMotion(touch: PointF, selection: Selection): Motion {
@@ -167,7 +207,7 @@ class EditPageLogic(val page: Page, private val slop: Float, private val chevron
     private fun createOtherMotion(touch: PointF): Motion {
         for (staffIndex in page.staves.indices) {
             val staff = page.staves[staffIndex]
-            for (barIndex in 0..staff.barLines.size - 2) {
+            for (barIndex in staff.barIndices()) {
                 val left = staff.barLines[barIndex].x
                 val right = staff.barLines[barIndex + 1].x
                 val rect = RectF(left, staff.top, right, staff.bottom)
@@ -180,7 +220,7 @@ class EditPageLogic(val page: Page, private val slop: Float, private val chevron
     }
 }
 
-class Selection(val staffIndex: Int, val barIndex: Int)
+data class Selection(val staffIndex: Int, val barIndex: Int)
 
 enum class TouchLocation {
     OUTSIDE,

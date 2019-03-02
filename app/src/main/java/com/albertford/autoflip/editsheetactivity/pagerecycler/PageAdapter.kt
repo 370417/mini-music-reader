@@ -26,10 +26,9 @@ class PageAdapter(
     private var selectedPageIndex: Int = -1
 
     override fun onBindViewHolder(holder: PageViewHolder, position: Int) {
-        holder.view.setPage(pages[position])
-        holder.view.invalidate()
-//        holder.view.listener = editPageListener
         holder.bindSize(pages[position])
+        holder.view.setPage(pages[position])
+//        holder.view.listener = editPageListener
         holder.bindImage(uri, context, coroutineScope)
     }
 
@@ -71,6 +70,7 @@ class PageViewHolder(val view: EditPageView, private val width: Int) : RecyclerV
         view.layoutParams.width = width
         view.layoutParams.height = width * page.height / page.width
         view.requestLayout()
+        view.bindWidth(width)
     }
 
     fun bindImage(uri: Uri, context: Context, coroutineScope: CoroutineScope) {

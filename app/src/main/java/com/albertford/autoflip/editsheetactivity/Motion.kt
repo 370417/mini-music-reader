@@ -1,3 +1,5 @@
+@file:Suppress("NAME_SHADOWING")
+
 package com.albertford.autoflip.editsheetactivity
 
 import android.graphics.PointF
@@ -135,10 +137,10 @@ class NewBar(touch: PointF, private val touchOffset: Float) : Motion(touch) {
             staff.barLines.add(BarLine(x, lastBarLine.sheetId, lastBarLine.pageIndex, lastBarLine.staffIndex))
             ChangeSelectionResult(Selection(selection.staffIndex, staff.barLines.size - 2))
         } else if (lastBarLine.x - secondLastBarLine.x < slop) {
-            staff.barLines.removeAt(staff.barLines.size - 1)
+            staff.barLines.removeAt(staff.barLines.indices.last)
             null
         } else {
-            ChangeSelectionResult(Selection(selection.staffIndex, staff.barLines.size - 2))
+            ChangeSelectionResult(Selection(selection.staffIndex, staff.barIndices().last))
         }
     }
 }
@@ -147,7 +149,13 @@ class NewStaff(touch: PointF, private val touchOffset: Float) : Motion(touch) {
     override fun onActionMove(page: Page, selection: Selection?, slop: Float) {
         if (!moved) {
             val staff = page.staves.last()
-            page.staves.add(Staff(staff.bottom, staff.bottom, staff.sheetId, staff.pageIndex))
+            val newStaffIndex = page.staves.size
+            val firstBarLine = staff.barLines[0]
+            val secondBarLine = staff.barLines[1]
+            val newStaff = Staff(staff.bottom, staff.bottom, staff.sheetId, staff.pageIndex)
+            newStaff.barLines.add(BarLine(firstBarLine.x, page.sheetId, page.pageIndex, newStaffIndex))
+            newStaff.barLines.add(BarLine(secondBarLine.x, page.sheetId, page.pageIndex, newStaffIndex))
+            page.staves.add(newStaff)
         }
         val staff = page.staves.last()
         staff.bottom = Math.max(staff.top, touch.y - touchOffset)
@@ -155,10 +163,16 @@ class NewStaff(touch: PointF, private val touchOffset: Float) : Motion(touch) {
 
     override fun onActionUp(page: Page, selection: Selection?, slop: Float): MotionResult? {
         val lastStaff = page.staves.last()
+        val firstBarLine = lastStaff.barLines[0]
+        val secondBarLine = lastStaff.barLines[1]
         return if (!moved) {
             val top = lastStaff.bottom
             val bottom = Math.min(page.height.toFloat() / page.width, 2 * lastStaff.bottom - lastStaff.top)
-            page.staves.add(Staff(top, bottom, lastStaff.sheetId, lastStaff.pageIndex))
+            val newStaff = Staff(top, bottom, page.sheetId, page.pageIndex)
+            val newStaffIndex = page.staves.size
+            newStaff.barLines.add(BarLine(firstBarLine.x, page.sheetId, page.pageIndex, newStaffIndex))
+            newStaff.barLines.add(BarLine(secondBarLine.x, page.sheetId, page.pageIndex, newStaffIndex))
+            page.staves.add(newStaff)
             ChangeSelectionResult(Selection(page.staves.size - 1, 0))
         } else if (lastStaff.bottom - lastStaff.top < slop) {
             page.staves.removeAt(page.staves.size - 1)

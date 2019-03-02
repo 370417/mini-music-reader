@@ -22,4 +22,12 @@ class Staff(
     val barLines: MutableList<BarLine> = mutableListOf()
 
     override fun compareTo(other: Staff) = top.compareTo(other.top)
+
+    fun barIndices(): IntRange {
+        return 0..barLines.size - 2
+    }
+
+    override fun toString(): String {
+        return "\n\ttop: $top, bottom: $bottom, bars: $barLines"
+    }
 }

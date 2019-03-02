@@ -15,8 +15,7 @@ private val identityMatrix = Matrix()
 
 class EditPageView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
-    var logic: EditPageLogic? = null
-        private set
+    private var logic: EditPageLogic? = null
 
     var bitmap: Bitmap? = null
 
@@ -28,8 +27,19 @@ class EditPageView(context: Context, attrs: AttributeSet) : View(context, attrs)
     private val selectionFill = initSelectionFill()
     private val selectionStroke = initSelectionStroke()
 
+    private val chevronRight = BitmapFactory.decodeResource(resources, R.drawable.chevron_right)
+    private var chevronDown = BitmapFactory.decodeResource(resources, R.drawable.chevron_down)
+
+    // preallocated rect used for drawing
+    private val rect = RectF()
+
     fun setPage(page: Page) {
-        logic = EditPageLogic(page, slop, resources.getDimension(R.dimen.chevron_size))
+        logic = EditPageLogic(page, slop, 0.05f)//resources.getDimension(R.dimen.chevron_size) / width)
+    }
+
+    fun bindWidth(width: Int) {
+        slop = pixelSlop.toFloat() / width
+        selectionStroke.strokeWidth /= width
     }
 
     private fun initSelectionFill(): Paint {
@@ -51,34 +61,52 @@ class EditPageView(context: Context, attrs: AttributeSet) : View(context, attrs)
         super.onDraw(canvas) // draws the background
         canvas ?: return
 
-        val bitmap = bitmap ?: return
-        canvas.drawBitmap(bitmap, identityMatrix, null)
+        bitmap?.also { bitmap ->
+            canvas.drawBitmap(bitmap, identityMatrix, null)
+        }
+
+        val logic = logic ?: return
 
         canvas.save()
         canvas.scale(width.toFloat(), width.toFloat())
 
-        val motion = logic?.motion
-        val selection = logic?.selection
-
-//        val motion = motion
-//        if (page.staves.isEmpty()) {
-//            if (motion is FirstBarSelection) {
-//                val rect = motion.rect()
-//                canvas.drawRect(rect, selectionFill)
-//                canvas.drawRect(rect, selectionStroke)
-//            }
-//        } else {
-//
-//        }
+        val selection = logic.selection
+        val page = logic.page
+        for (staffIndex in page.staves.indices) {
+            val staff = page.staves[staffIndex]
+            for (barIndex in staff.barIndices()) {
+                val leftBarLine = staff.barLines[barIndex]
+                val rightBarLine = staff.barLines[barIndex + 1]
+                if (selection != null && staffIndex == selection.staffIndex && barIndex == selection.barIndex) {
+                    rect.left = leftBarLine.x
+                    rect.top = staff.top
+                    rect.right = rightBarLine.x
+                    rect.bottom = staff.bottom
+                    canvas.drawRect(rect, selectionFill)
+                    canvas.drawRect(rect, selectionStroke)
+                } else {
+                    rect.left = leftBarLine.x + selectionStroke.strokeWidth
+                    rect.top = staff.top + selectionStroke.strokeWidth
+                    rect.right = rightBarLine.x - selectionStroke.strokeWidth
+                    rect.bottom = staff.bottom - selectionStroke.strokeWidth
+                    canvas.drawRect(rect, selectionFill)
+                }
+            }
+        }
+        if (chevronRight != null && logic.calcNewBarRect(rect)) {
+            canvas.drawBitmap(chevronRight, null, rect, null)
+        }
+        if (logic.calcNewBarRect(rect)) {
+            canvas.drawRect(rect, selectionFill)
+        }
+        if (chevronDown != null && logic.calcNewStaffRect(rect)) {
+            canvas.drawBitmap(chevronDown, null, rect, null)
+        }
+        if (logic.calcNewStaffRect(rect)) {
+            canvas.drawRect(rect, selectionFill)
+        }
 
         canvas.restore()
-    }
-
-    // Make sure pixel values are scaled relative to view width so that they are drawn correctly
-    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-        super.onSizeChanged(w, h, oldw, oldh)
-        slop = pixelSlop.toFloat() / w
-        selectionStroke.strokeWidth /= w
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -91,8 +119,9 @@ class EditPageView(context: Context, attrs: AttributeSet) : View(context, attrs)
             MotionEvent.ACTION_MOVE -> logic.onActionMove(touch)
             MotionEvent.ACTION_UP -> logic.onActionUp(touch)
             MotionEvent.ACTION_CANCEL -> logic.onActionUp(touch)
-            else -> super.onTouchEvent(event)
+            else -> return super.onTouchEvent(event)
         }
+        invalidate()
         return true
     }
 }

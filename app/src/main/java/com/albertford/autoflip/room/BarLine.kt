@@ -22,4 +22,8 @@ class BarLine(
     var id: Long = 0L
 
     override fun compareTo(other: BarLine) = x.compareTo(other.x)
+
+    override fun toString(): String {
+        return "$x"
+    }
 }
