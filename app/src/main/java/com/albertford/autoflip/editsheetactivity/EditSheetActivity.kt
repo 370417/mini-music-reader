@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.provider.OpenableColumns
 import android.support.constraint.ConstraintLayout
 import android.support.design.widget.BottomSheetBehavior
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
@@ -14,6 +15,7 @@ import com.albertford.autoflip.*
 import com.albertford.autoflip.editsheetactivity.pagerecycler.*
 import com.albertford.autoflip.room.Page
 import com.albertford.autoflip.room.Sheet
+import com.albertford.autoflip.room.Staff
 import kotlinx.android.synthetic.main.activity_edit_sheet.*
 import kotlinx.android.synthetic.main.edit_bottom_sheet.*
 import kotlinx.coroutines.*
@@ -42,6 +44,8 @@ class EditSheetActivity : AppCompatActivity(), CoroutineScope {
 
         val context = this
         val uriString = intent.getStringExtra("URI")
+        val existingSheet = intent.getParcelableExtra<Sheet>("SHEET")
+        // TODO: Possible race condition where app would crash if database access happens faster than the ui is inflated?
         if (uriString != null) {
             val uri = Uri.parse(uriString)
             launch {
@@ -55,6 +59,17 @@ class EditSheetActivity : AppCompatActivity(), CoroutineScope {
                 } else {
                     finish()
                 }
+            }
+        } else if (existingSheet != null) {
+            launch {
+                var pages: Array<Page> = arrayOf()
+                withContext(Dispatchers.Default) {
+                    pages = database?.sheetDao()?.findFullPagesBySheet(existingSheet.id) ?: arrayOf()
+                }
+                supportActionBar?.title = existingSheet.name
+                val uri = Uri.parse(existingSheet.uri)
+                val adapter = PageAdapter(existingSheet, pages, uri, context, context)
+                page_recycler.adapter = adapter
             }
         } else {
             finish()
@@ -88,10 +103,21 @@ class EditSheetActivity : AppCompatActivity(), CoroutineScope {
 
     private fun saveSheet() {
         val adapter = getAdapter() ?: return
+        val sheet = adapter.sheet
         val pages = adapter.pages
         launch {
             withContext(Dispatchers.Default) {
-                database?.sheetDao()?.upatePages(pages)
+                var firstStaff: Staff? = null
+                for (page in pages) {
+                    if (page.staves.size > 0) {
+                        firstStaff = page.staves.first()
+                        break
+                    }
+                }
+                sheet.firstStaffTop = firstStaff?.top
+                sheet.firstStaffBottom = firstStaff?.bottom
+                sheet.firstStaffPageIndex = firstStaff?.pageIndex
+                database?.sheetDao()?.upateSheetAndPages(sheet, pages)
             }
         }
         Toast.makeText(this, R.string.action_save, Toast.LENGTH_SHORT).show()

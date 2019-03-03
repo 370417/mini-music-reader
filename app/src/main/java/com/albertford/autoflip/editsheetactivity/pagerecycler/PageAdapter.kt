@@ -15,7 +15,7 @@ import com.albertford.autoflip.editsheetactivity.EditPageView
 import kotlinx.coroutines.*
 
 class PageAdapter(
-        private val sheet: Sheet,
+        val sheet: Sheet,
         val pages: Array<Page>,
         private val uri: Uri,
         private val context: Context,
@@ -90,7 +90,7 @@ class PageViewHolder(val view: EditPageView, private val width: Int) : RecyclerV
     }
 }
 
-fun renderPage(uri: Uri, context: Context, position: Int, width: Int, height: Int): Bitmap? {
+private fun renderPage(uri: Uri, context: Context, position: Int, width: Int, height: Int): Bitmap? {
     val descriptor = context.contentResolver.openFileDescriptor(uri, "r") ?: return null
     return PdfRenderer(descriptor).openPage(position)?.use { page ->
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)

@@ -2,15 +2,21 @@
   "formatVersion": 1,
   "database": {
     "version": 2,
-    "identityHash": "057275b0650f66350816d791bd659c6e",
+    "identityHash": "b26dc4f59c068f69d76280aac9c85586",
     "entities": [
       {
         "tableName": "Sheet",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `uri` TEXT NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `firstStaffId` INTEGER NOT NULL, `name` TEXT NOT NULL, `uri` TEXT NOT NULL, `pageCount` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
             "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "firstStaffId",
+            "columnName": "firstStaffId",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -24,6 +30,12 @@
             "fieldPath": "uri",
             "columnName": "uri",
             "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pageCount",
+            "columnName": "pageCount",
+            "affinity": "INTEGER",
             "notNull": true
           }
         ],
@@ -44,6 +56,190 @@
           }
         ],
         "foreignKeys": []
+      },
+      {
+        "tableName": "Page",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`width` INTEGER NOT NULL, `height` INTEGER NOT NULL, `sheetId` INTEGER NOT NULL, `pageIndex` INTEGER NOT NULL, PRIMARY KEY(`sheetId`, `pageIndex`), FOREIGN KEY(`sheetId`) REFERENCES `Sheet`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "width",
+            "columnName": "width",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "height",
+            "columnName": "height",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sheetId",
+            "columnName": "sheetId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pageIndex",
+            "columnName": "pageIndex",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "sheetId",
+            "pageIndex"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [],
+        "foreignKeys": [
+          {
+            "table": "Sheet",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "sheetId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "Staff",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `top` REAL NOT NULL, `bottom` REAL NOT NULL, `sheetId` INTEGER NOT NULL, `pageIndex` INTEGER NOT NULL, FOREIGN KEY(`sheetId`) REFERENCES `Sheet`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "top",
+            "columnName": "top",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bottom",
+            "columnName": "bottom",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sheetId",
+            "columnName": "sheetId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pageIndex",
+            "columnName": "pageIndex",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [
+          {
+            "name": "index_Staff_sheetId_pageIndex",
+            "unique": false,
+            "columnNames": [
+              "sheetId",
+              "pageIndex"
+            ],
+            "createSql": "CREATE  INDEX `index_Staff_sheetId_pageIndex` ON `${TABLE_NAME}` (`sheetId`, `pageIndex`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "Sheet",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "sheetId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "BarLine",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `x` REAL NOT NULL, `sheetId` INTEGER NOT NULL, `pageIndex` INTEGER NOT NULL, `staffIndex` INTEGER NOT NULL, FOREIGN KEY(`sheetId`) REFERENCES `Sheet`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "x",
+            "columnName": "x",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sheetId",
+            "columnName": "sheetId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pageIndex",
+            "columnName": "pageIndex",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "staffIndex",
+            "columnName": "staffIndex",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [
+          {
+            "name": "index_BarLine_sheetId_pageIndex_staffIndex",
+            "unique": false,
+            "columnNames": [
+              "sheetId",
+              "pageIndex",
+              "staffIndex"
+            ],
+            "createSql": "CREATE  INDEX `index_BarLine_sheetId_pageIndex_staffIndex` ON `${TABLE_NAME}` (`sheetId`, `pageIndex`, `staffIndex`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "Sheet",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "sheetId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
       },
       {
         "tableName": "Bar",
@@ -141,7 +337,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"057275b0650f66350816d791bd659c6e\")"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"b26dc4f59c068f69d76280aac9c85586\")"
     ]
   }
 }

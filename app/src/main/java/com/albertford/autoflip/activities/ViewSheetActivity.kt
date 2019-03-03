@@ -169,21 +169,21 @@ class ViewSheetActivity : AppCompatActivity() {
     }
 
     private fun loadSheet() {
-        val disposable = database?.sheetDao()?.selectSheetById(state.sheetId)
-                ?.subscribeOn(Schedulers.io())
-                ?.observeOn(AndroidSchedulers.mainThread())
-                ?.subscribe { result ->
-                    sheet = result.sheet
-                    bars = result.bars
-                    val firstBar = bars?.get(0)
-                    if (firstBar != null) {
-                        countdownDelay = (60000 / firstBar.beatsPerMinute).toLong()
-                    }
-                    loadRenderer()
-                }
-        if (disposable != null) {
-            compositeDisposable.add(disposable)
-        }
+//        val disposable = database?.sheetDao()?.selectSheetById(state.sheetId)
+//                ?.subscribeOn(Schedulers.io())
+//                ?.observeOn(AndroidSchedulers.mainThread())
+//                ?.subscribe { result ->
+//                    sheet = result.sheet
+//                    bars = result.bars
+//                    val firstBar = bars?.get(0)
+//                    if (firstBar != null) {
+//                        countdownDelay = (60000 / firstBar.beatsPerMinute).toLong()
+//                    }
+//                    loadRenderer()
+//                }
+//        if (disposable != null) {
+//            compositeDisposable.add(disposable)
+//        }
     }
 
     private fun loadRenderer() {

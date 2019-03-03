@@ -1,4 +1,4 @@
-package com.albertford.autoflip.activities
+package com.albertford.autoflip.mainactivity
 
 import android.app.Activity
 import android.content.Intent
@@ -8,24 +8,29 @@ import android.support.v7.widget.helper.ItemTouchHelper
 import android.widget.Toast
 import com.albertford.autoflip.*
 import com.albertford.autoflip.editsheetactivity.EditSheetActivity
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.schedulers.Schedulers
+import com.albertford.autoflip.room.Sheet
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.coroutines.*
+import kotlin.coroutines.CoroutineContext
 
 const val PDF_REQUEST = 1
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), CoroutineScope {
 
-    private val compositeDisposable = CompositeDisposable()
+    // TODO: Why is this lateinit?
+    private lateinit var job: Job
+    override val coroutineContext: CoroutineContext
+        get() = Dispatchers.Main + job
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        job = Job()
 
         setSupportActionBar(toolbar)
 
-        val adapter = SheetAdapter(this)
+        // we initialize an adapter with no data to show the user the placeholder right away
+        val adapter = SheetAdapter(this, this)
         recycler_view.adapter = adapter
         val callback = ItemTouchHelperCallback(adapter)
         val touchHelper = ItemTouchHelper(callback)
@@ -49,7 +54,7 @@ class MainActivity : AppCompatActivity() {
     /** Dispose of asynchronous tasks */
     override fun onDestroy() {
         super.onDestroy()
-        compositeDisposable.dispose()
+        job.cancel()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -66,19 +71,17 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        val dispoable = database?.sheetDao()?.selectAllSheetsWithThumb()
-                ?.subscribeOn(Schedulers.io())
-                ?.observeOn(AndroidSchedulers.mainThread())
-                ?.subscribe { sheetsWithThumb ->
-                    val adapter = recycler_view.adapter
-                    if (adapter is SheetAdapter) {
-                        adapter.sheets.clear()
-                        adapter.sheets.addAll(sheetsWithThumb)
-                        adapter.notifyDataSetChanged()
-                    }
-                }
-        if (dispoable != null) {
-            compositeDisposable.add(dispoable)
+        launch {
+            var sheets: Array<Sheet> = arrayOf()
+            withContext(Dispatchers.Default) {
+                sheets = database?.sheetDao()?.findAllSheets() ?: arrayOf()
+            }
+            val adapter = recycler_view.adapter
+            if (adapter is SheetAdapter) {
+                adapter.sheets.clear()
+                adapter.sheets.addAll(sheets)
+                adapter.notifyDataSetChanged()
+            }
         }
     }
 }

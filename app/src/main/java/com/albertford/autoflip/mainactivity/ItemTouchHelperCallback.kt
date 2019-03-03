@@ -1,10 +1,12 @@
-package com.albertford.autoflip
+package com.albertford.autoflip.mainactivity
 
 import android.graphics.Canvas
 import android.support.design.widget.Snackbar
 import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.helper.ItemTouchHelper
-import com.albertford.autoflip.room.SheetAndFirstBar
+import com.albertford.autoflip.R
+import com.albertford.autoflip.database
+import com.albertford.autoflip.room.Sheet
 import io.reactivex.Completable
 import io.reactivex.schedulers.Schedulers
 
@@ -30,10 +32,9 @@ class ItemTouchHelperCallback(private val sheetAdapter: SheetAdapter) : ItemTouc
                 .addCallback(object : Snackbar.Callback() {
                     override fun onDismissed(transientBottomBar: Snackbar?, event: Int) {
                         super.onDismissed(transientBottomBar, event)
-                        val sheet = deletedSheet.sheet
-                        if (event != Snackbar.Callback.DISMISS_EVENT_ACTION && sheet != null) {
+                        if (event != Snackbar.Callback.DISMISS_EVENT_ACTION) {
                             Completable.fromAction {
-                                database?.sheetDao()?.deleteSheets(sheet)
+                                database?.sheetDao()?.deleteSheets(deletedSheet)
                             }.subscribeOn(Schedulers.io()).subscribe()
                         }
                     }
@@ -52,7 +53,7 @@ class ItemTouchHelperCallback(private val sheetAdapter: SheetAdapter) : ItemTouc
     override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder,
             target: RecyclerView.ViewHolder): Boolean = false
 
-    private fun undoDelete(position: Int, deletedSheet: SheetAndFirstBar) {
+    private fun undoDelete(position: Int, deletedSheet: Sheet) {
         sheetAdapter.sheets.add(position, deletedSheet)
         if (sheetAdapter.sheets.size == 1) {
             sheetAdapter.notifyItemChanged(position)

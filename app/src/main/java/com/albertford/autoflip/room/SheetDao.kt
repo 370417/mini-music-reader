@@ -6,12 +6,8 @@ import io.reactivex.Single
 
 @Dao
 interface SheetDao {
-
-    @Query("SELECT * FROM sheet LEFT JOIN bar ON sheet.id = bar.sheetId AND bar.barIndex = 1 ORDER BY name")
-    fun selectAllSheetsWithThumb(): Single<Array<SheetAndFirstBar>>
-
-    @Transaction @Query("SELECT * FROM sheet WHERE id = :id")
-    fun selectSheetById(id: Long): Maybe<SheetAndRelations>
+    @Query("SELECT * FROM sheet ORDER BY name")
+    fun findAllSheets(): Array<Sheet>
 
     @Insert
     fun insertSheet(sheet: Sheet): Long
@@ -84,12 +80,10 @@ interface SheetDao {
     fun deleteBarLinesBySheetId(id: Long)
 
     @Transaction
-    fun upatePages(pages: Array<Page>) {
-        if (pages.isEmpty()) {
-            return
-        }
-        deleteBarLinesBySheetId(pages[0].sheetId)
-        deleteStavesBySheetId(pages[0].sheetId)
+    fun upateSheetAndPages(sheet: Sheet, pages: Array<Page>) {
+        updateSheet(sheet)
+        deleteBarLinesBySheetId(sheet.id)
+        deleteStavesBySheetId(sheet.id)
         for (page in pages) {
             insertStaves(page.staves)
             for (staff in page.staves) {

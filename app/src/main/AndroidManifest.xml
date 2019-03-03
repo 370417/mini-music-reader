@@ -14,7 +14,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".activities.MainActivity"
+            android:name=".mainactivity.MainActivity"
             android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -28,11 +28,11 @@
         </activity>
         <activity
             android:name=".deprecated.PartitionSheetActivity"
-            android:parentActivityName=".activities.MainActivity">
+            android:parentActivityName=".mainactivity.MainActivity">
         </activity>
         <activity
             android:name=".editsheetactivity.EditSheetActivity"
-            android:parentActivityName=".activities.MainActivity"
+            android:parentActivityName=".mainactivity.MainActivity"
             android:theme="@style/AppTheme.Dark2">
         </activity>
     </application>
