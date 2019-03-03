@@ -49,7 +49,9 @@ class SheetAdapter(val sheets: MutableList<Sheet>, val parent: Activity, private
             val bottom = sheet.firstStaffBottom
             val pageIndex = sheet.firstStaffPageIndex
             if (top != null && bottom != null && pageIndex != null) {
-                holder.view.requestLayout() // make sure width/height aren't 0
+                val height = (bottom - top) * holder.view.layoutParams.width
+                holder.thumbnail?.layoutParams?.height = height.toInt()
+                holder.thumbnail?.requestLayout()
                 coroutineScope.launch {
                     var bitmap: Bitmap? = null
                     withContext(Dispatchers.Default) {
@@ -77,7 +79,10 @@ class SheetAdapter(val sheets: MutableList<Sheet>, val parent: Activity, private
                 EmptyViewHolder(inflate(R.layout.quarter_rest_tile, parent))
             }
             else -> {
-                TextViewHolder(inflate(R.layout.sheet_list_tile, parent))
+                val view = inflate(R.layout.sheet_list_tile, parent)
+                view.layoutParams.width = parent.width - parent.paddingStart - parent.paddingEnd
+                // don't requestLayout here because it will be called later in onBindViewHolder
+                TextViewHolder(view)
             }
         }
     }
