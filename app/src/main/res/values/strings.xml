@@ -23,6 +23,8 @@
     <!--<string name="error_no_uri">Please choose a file.</string>-->
     <!--<string name="error_non_unique_uri">This file has already been added.</string>-->
 
+    <string name="scroll_helper">You can use two fingers to scroll</string>
+
     <string name="play_button">Play button</string>
 
     <string name="deleted_msg">Deleted</string>

@@ -70,4 +70,31 @@ interface SheetDao {
 
     @Insert
     fun insertPages(pages: Array<Page>)
+
+    @Insert
+    fun insertStaves(staves: List<Staff>)
+
+    @Insert
+    fun insertBarLines(barLines: List<BarLine>)
+
+    @Query("DELETE FROM staff WHERE sheetId = :id")
+    fun deleteStavesBySheetId(id: Long)
+
+    @Query("DELETE FROM barline WHERE sheetId = :id")
+    fun deleteBarLinesBySheetId(id: Long)
+
+    @Transaction
+    fun upatePages(pages: Array<Page>) {
+        if (pages.isEmpty()) {
+            return
+        }
+        deleteBarLinesBySheetId(pages[0].sheetId)
+        deleteStavesBySheetId(pages[0].sheetId)
+        for (page in pages) {
+            insertStaves(page.staves)
+            for (staff in page.staves) {
+                insertBarLines(staff.barLines)
+            }
+        }
+    }
 }

@@ -45,16 +45,15 @@ class EditPageLogic(val page: Page, private val slop: Float, private val chevron
         motion?.moved = true // make sure to set moved to true after calling onActionMove
     }
 
-    fun onActionUp(touch: PointF) {
+    fun onActionUp(): MotionResult? {
         val result = motion?.onActionUp(page, selection, slop)
         when (result) {
             is ChangeSelectionResult -> selection = result.newSelection
-            ClickSelectionResult -> TODO()
             CancelSelectionResult -> selection = null
-            null -> {}
         }
         verifySelection()
         motion = null
+        return result
     }
 
     /**

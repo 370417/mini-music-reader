@@ -29,7 +29,7 @@ class ClickSelection(touch: PointF) : Motion(touch) {
         return if (!moved) {
             ClickSelectionResult
         } else {
-            null
+            AttemptedScrollResult
         }
     }
 }
@@ -192,7 +192,7 @@ class ChangeSelection(touch: PointF, private val newSelection: Selection) : Moti
         return if (!moved) {
             ChangeSelectionResult(newSelection)
         } else {
-            null
+            AttemptedScrollResult
         }
     }
 }
@@ -203,7 +203,11 @@ class CancelSelection(touch: PointF) : Motion(touch) {
     }
 
     override fun onActionUp(page: Page, selection: Selection?, slop: Float): MotionResult? {
-        return CancelSelectionResult
+        return if (!moved) {
+            CancelSelectionResult
+        } else {
+            AttemptedScrollResult
+        }
     }
 }
 
@@ -214,6 +218,8 @@ class ChangeSelectionResult(val newSelection: Selection) : MotionResult()
 object ClickSelectionResult : MotionResult()
 
 object CancelSelectionResult : MotionResult()
+
+object AttemptedScrollResult : MotionResult()
 
 fun destroyBarIfTooSmall(staff: Staff, barIndex: Int, slop: Float, fixedX: Float): MotionResult? {
     val prevBarLine = staff.barLines.getOrNull(barIndex - 1)

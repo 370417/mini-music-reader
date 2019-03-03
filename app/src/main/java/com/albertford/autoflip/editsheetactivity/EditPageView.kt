@@ -8,6 +8,7 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
+import android.widget.Toast
 import com.albertford.autoflip.R
 import com.albertford.autoflip.room.Page
 
@@ -117,12 +118,22 @@ class EditPageView(context: Context, attrs: AttributeSet) : View(context, attrs)
         when (event.action) {
             MotionEvent.ACTION_DOWN -> logic.onActionDown(touch)
             MotionEvent.ACTION_MOVE -> logic.onActionMove(touch)
-            MotionEvent.ACTION_UP -> logic.onActionUp(touch)
-            MotionEvent.ACTION_CANCEL -> logic.onActionUp(touch)
+            MotionEvent.ACTION_UP -> {
+                val result = logic.onActionUp()
+                when (result) {
+                    is ClickSelectionResult -> {}
+                    is AttemptedScrollResult -> scrollHelpToast()
+                }
+            }
+            MotionEvent.ACTION_CANCEL -> logic.onActionUp() // don't respond to clicks if they were canceled
             else -> return super.onTouchEvent(event)
         }
         invalidate()
         return true
+    }
+
+    private fun scrollHelpToast() {
+        Toast.makeText(context, R.string.scroll_helper, Toast.LENGTH_SHORT).show()
     }
 }
 

@@ -9,6 +9,7 @@ import android.support.constraint.ConstraintLayout
 import android.support.design.widget.BottomSheetBehavior
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.Toast
 import com.albertford.autoflip.*
 import com.albertford.autoflip.editsheetactivity.pagerecycler.*
 import com.albertford.autoflip.room.Page
@@ -85,6 +86,17 @@ class EditSheetActivity : AppCompatActivity(), CoroutineScope {
         return Pair(sheet, pages)
     }
 
+    private fun saveSheet() {
+        val adapter = getAdapter() ?: return
+        val pages = adapter.pages
+        launch {
+            withContext(Dispatchers.Default) {
+                database?.sheetDao()?.upatePages(pages)
+            }
+        }
+        Toast.makeText(this, R.string.action_save, Toast.LENGTH_SHORT).show()
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         job.cancel()
@@ -96,13 +108,11 @@ class EditSheetActivity : AppCompatActivity(), CoroutineScope {
     }
 
     override fun onOptionsItemSelected(item: MenuItem?) = when (item?.itemId) {
+        R.id.action_save -> {
+            saveSheet()
+            true
+        }
         R.id.action_rename -> {
-            true
-        }
-        R.id.action_undo -> {
-            true
-        }
-        R.id.action_redo -> {
             true
         }
         else -> {
@@ -111,12 +121,12 @@ class EditSheetActivity : AppCompatActivity(), CoroutineScope {
     }
 
     // enable/disable menu actions
-    override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
-        super.onPrepareOptionsMenu(menu)
-        menu?.findItem(R.id.action_undo)?.isEnabled = false
-        menu?.findItem(R.id.action_redo)?.isEnabled = false
-        return true
-    }
+//    override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
+//        super.onPrepareOptionsMenu(menu)
+//        menu?.findItem(R.id.action_undo)?.isEnabled = false
+//        menu?.findItem(R.id.action_redo)?.isEnabled = false
+//        return true
+//    }
 
 //    override fun initalSelection(pageIndex: Int) {
 //        bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED

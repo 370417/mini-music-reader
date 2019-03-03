@@ -16,7 +16,7 @@ import kotlinx.coroutines.*
 
 class PageAdapter(
         private val sheet: Sheet,
-        private val pages: Array<Page>,
+        val pages: Array<Page>,
         private val uri: Uri,
         private val context: Context,
         private val coroutineScope: CoroutineScope//,
