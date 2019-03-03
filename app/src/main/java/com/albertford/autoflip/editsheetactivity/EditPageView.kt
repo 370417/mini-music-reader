@@ -14,11 +14,13 @@ import com.albertford.autoflip.room.Page
 
 private val identityMatrix = Matrix()
 
-class EditPageView(context: Context, attrs: AttributeSet) : View(context, attrs) {
+class EditPageView(context: Context, attrs: AttributeSet) : View(context, attrs), EditSheetListener {
 
     private var logic: EditPageLogic? = null
 
     var bitmap: Bitmap? = null
+
+    var editable: Boolean = false
 
 //    var listener: EditPageListener? = null
 
@@ -56,6 +58,10 @@ class EditPageView(context: Context, attrs: AttributeSet) : View(context, attrs)
         paint.style = Paint.Style.STROKE
         paint.strokeWidth = 2f
         return paint
+    }
+
+    override fun setEditEnabled(enabled: Boolean) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
     override fun onDraw(canvas: Canvas?) {
@@ -112,6 +118,9 @@ class EditPageView(context: Context, attrs: AttributeSet) : View(context, attrs)
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent?): Boolean {
+        if (!editable) {
+            return false
+        }
         val logic = logic ?: return super.onTouchEvent(event)
         event ?: return false
         val touch = PointF(event.x / width, event.y / width)

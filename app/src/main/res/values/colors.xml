@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Colors picked using https://material.io/tools/color/ -->
 <resources>
     <!--<color name="colorPrimary">#009688</color>-->
     <!--<color name="colorPrimaryDark">#00796b</color>-->
     <!--<color name="colorAccent">#FF5252</color>-->
+    <!-- Brown 700 -->
     <color name="colorPrimary">#5d4037</color>
     <color name="colorPrimaryLight">#8b6b61</color>
     <color name="colorPrimaryDark">#321911</color>
+    <!-- Orange A100 -->
     <color name="colorAccent">#ffd180</color>
     <color name="colorAccentLight">#ffffb1</color>
     <color name="colorAccentDark">#caa052</color>

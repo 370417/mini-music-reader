@@ -42,11 +42,4 @@
         style="@style/Widget.AppCompat.Button.Borderless"
         />
 
-    <TextView
-        android:text="Hello World"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/left_button"
-        />
-
 </android.support.constraint.ConstraintLayout>

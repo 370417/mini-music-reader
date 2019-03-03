@@ -7,7 +7,6 @@ import android.os.Bundle
 import android.provider.OpenableColumns
 import android.support.constraint.ConstraintLayout
 import android.support.design.widget.BottomSheetBehavior
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
@@ -46,33 +45,33 @@ class EditSheetActivity : AppCompatActivity(), CoroutineScope {
         val uriString = intent.getStringExtra("URI")
         val existingSheet = intent.getParcelableExtra<Sheet>("SHEET")
         // TODO: Possible race condition where app would crash if database access happens faster than the ui is inflated?
-        if (uriString != null) {
-            val uri = Uri.parse(uriString)
-            launch {
-                val sheetAndPages = initSheet(uri, uriString)
-                if (sheetAndPages != null) {
-                    val (sheet, pages) = sheetAndPages
-                    supportActionBar?.title = sheet.name
-                    val adapter = PageAdapter(
-                            sheet, pages, uri, context, context)
-                    page_recycler.adapter = adapter
-                } else {
-                    finish()
+        when {
+            uriString != null -> {
+                val uri = Uri.parse(uriString)
+                launch {
+                    val sheetAndPages = initSheet(uri, uriString)
+                    if (sheetAndPages != null) {
+                        val (sheet, pages) = sheetAndPages
+                        supportActionBar?.title = sheet.name
+                        val adapter = PageAdapter(
+                                sheet, pages, true, uri, context, context)
+                        page_recycler.adapter = adapter
+                    } else {
+                        finish()
+                    }
                 }
             }
-        } else if (existingSheet != null) {
-            launch {
+            existingSheet != null -> launch {
                 var pages: Array<Page> = arrayOf()
                 withContext(Dispatchers.Default) {
                     pages = database?.sheetDao()?.findFullPagesBySheet(existingSheet.id) ?: arrayOf()
                 }
                 supportActionBar?.title = existingSheet.name
                 val uri = Uri.parse(existingSheet.uri)
-                val adapter = PageAdapter(existingSheet, pages, uri, context, context)
+                val adapter = PageAdapter(existingSheet, pages, false, uri, context, context)
                 page_recycler.adapter = adapter
             }
-        } else {
-            finish()
+            else -> finish()
         }
     }
 
@@ -178,6 +177,10 @@ class EditSheetActivity : AppCompatActivity(), CoroutineScope {
             null
         }
     }
+}
+
+interface EditSheetListener {
+    fun setEditEnabled(enabled: Boolean)
 }
 
 private fun getFileName(uri: Uri, context: Context): String? {

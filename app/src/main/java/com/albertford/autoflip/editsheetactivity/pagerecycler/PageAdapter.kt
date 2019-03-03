@@ -12,22 +12,27 @@ import com.albertford.autoflip.R
 import com.albertford.autoflip.room.Page
 import com.albertford.autoflip.room.Sheet
 import com.albertford.autoflip.editsheetactivity.EditPageView
+import com.albertford.autoflip.editsheetactivity.EditSheetListener
 import kotlinx.coroutines.*
 
 class PageAdapter(
         val sheet: Sheet,
         val pages: Array<Page>,
+        var editable: Boolean,
         private val uri: Uri,
         private val context: Context,
         private val coroutineScope: CoroutineScope//,
 //        private val editPageListener: EditPageListener
-) : RecyclerView.Adapter<PageViewHolder>()/*, EditPageListener*/ {
+) : RecyclerView.Adapter<PageViewHolder>(), EditSheetListener/*, EditPageListener*/ {
 
     private var selectedPageIndex: Int = -1
+    private val viewHolderCache: MutableSet<PageViewHolder> = mutableSetOf()
 
     override fun onBindViewHolder(holder: PageViewHolder, position: Int) {
+        viewHolderCache.add(holder)
         holder.bindSize(pages[position])
         holder.view.setPage(pages[position])
+        holder.view.editable = editable
 //        holder.view.listener = editPageListener
         holder.bindImage(uri, context, coroutineScope)
     }
@@ -42,6 +47,7 @@ class PageAdapter(
     }
 
     override fun onViewRecycled(holder: PageViewHolder) {
+        viewHolderCache.remove(holder)
         holder.view.bitmap = null
         super.onViewRecycled(holder)
     }
@@ -63,6 +69,12 @@ class PageAdapter(
 //        selectedPageIndex = pageIndex
 //        editPageListener.initalSelection(pageIndex)
 //    }
+    override fun setEditEnabled(enabled: Boolean) {
+        editable = enabled
+        for (holder in viewHolderCache) {
+            holder.view.setEditEnabled(enabled)
+        }
+    }
 }
 
 class PageViewHolder(val view: EditPageView, private val width: Int) : RecyclerView.ViewHolder(view) {
