@@ -3,6 +3,7 @@ package com.albertford.autoflip.editsheetactivity
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.*
+import android.support.graphics.drawable.VectorDrawableCompat
 import android.support.v4.content.ContextCompat
 import android.util.AttributeSet
 import android.view.MotionEvent
@@ -11,6 +12,7 @@ import android.view.ViewConfiguration
 import android.widget.Toast
 import com.albertford.autoflip.R
 import com.albertford.autoflip.room.Page
+import kotlin.math.roundToInt
 
 private val identityMatrix = Matrix()
 
@@ -30,19 +32,22 @@ class EditPageView(context: Context, attrs: AttributeSet) : View(context, attrs)
     private val selectionFill = initSelectionFill()
     private val selectionStroke = initSelectionStroke()
 
-    private val chevronRight = BitmapFactory.decodeResource(resources, R.drawable.chevron_right)
-    private var chevronDown = BitmapFactory.decodeResource(resources, R.drawable.chevron_down)
+//    private val chevronRight = BitmapFactory.decodeResource(resources, R.drawable.chevron_right)
+    private val chevronRight = VectorDrawableCompat.create(resources, R.drawable.chevron_right, null)
+    private val chevronDown = VectorDrawableCompat.create(resources, R.drawable.chevron_down, null)
+    private var chevronSize = 0f
 
     // preallocated rect used for drawing
     private val rect = RectF()
 
     fun setPage(page: Page) {
-        logic = EditPageLogic(page, slop, 0.05f)//resources.getDimension(R.dimen.chevron_size) / width)
+        logic = EditPageLogic(page, slop, chevronSize)
     }
 
     fun bindWidth(width: Int) {
         slop = pixelSlop.toFloat() / width
-        selectionStroke.strokeWidth /= width
+        selectionStroke.strokeWidth = 2f / width
+        chevronSize = resources.getDimension(R.dimen.chevron_size) / width
     }
 
     private fun initSelectionFill(): Paint {
@@ -100,20 +105,32 @@ class EditPageView(context: Context, attrs: AttributeSet) : View(context, attrs)
                 }
             }
         }
-        if (chevronRight != null && logic.calcNewBarRect(rect)) {
-            canvas.drawBitmap(chevronRight, null, rect, null)
-        }
-        if (logic.calcNewBarRect(rect)) {
-            canvas.drawRect(rect, selectionFill)
-        }
-        if (chevronDown != null && logic.calcNewStaffRect(rect)) {
-            canvas.drawBitmap(chevronDown, null, rect, null)
-        }
-        if (logic.calcNewStaffRect(rect)) {
-            canvas.drawRect(rect, selectionFill)
-        }
+//        if (logic.calcNewBarRect(rect) && chevronRight != null) {
+//            canvas.drawRect(rect, selectionFill)
+//        }
+//        if (logic.calcNewStaffRect(rect)) {
+//            canvas.drawRect(rect, selectionFill)
+//        }
 
         canvas.restore()
+
+        if (logic.calcNewBarRect(rect)) {
+            chevronRight?.let {
+                val left = (rect.left * width).roundToInt()
+                val top = (rect.top * width).roundToInt()
+                it.setBounds(left, top, left + it.intrinsicWidth, top + it.intrinsicHeight)
+                it.draw(canvas)
+            }
+        }
+
+        if (logic.calcNewStaffRect(rect)) {
+            chevronDown?.let {
+                val left = (rect.left * width).roundToInt()
+                val top = (rect.top * width).roundToInt()
+                it.setBounds(left, top, left + it.intrinsicWidth, top + it.intrinsicHeight)
+                it.draw(canvas)
+            }
+        }
     }
 
     @SuppressLint("ClickableViewAccessibility")
