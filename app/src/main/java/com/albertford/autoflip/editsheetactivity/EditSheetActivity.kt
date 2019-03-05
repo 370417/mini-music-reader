@@ -1,5 +1,6 @@
 package com.albertford.autoflip.editsheetactivity
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import android.support.v7.app.AppCompatActivity
@@ -32,6 +33,8 @@ class EditSheetActivity : AppCompatActivity(), CoroutineScope {
 
     private lateinit var bottomSheetBehavior: BottomSheetBehavior<ConstraintLayout>
 
+    private var toggleEditButton: MenuItem? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         job = Job()
@@ -51,6 +54,8 @@ class EditSheetActivity : AppCompatActivity(), CoroutineScope {
         // TODO: Possible race condition where app would crash if database access happens faster than the ui is inflated?
         when {
             uriString != null -> {
+                toggleEditButton?.setIcon(R.drawable.done)
+                toggleEditButton?.setTitle(R.string.done)
                 val uri = Uri.parse(uriString)
                 launch {
                     val sheetAndPages = initSheet(uri, uriString)
@@ -133,12 +138,13 @@ class EditSheetActivity : AppCompatActivity(), CoroutineScope {
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.edit_sheet_menu, menu)
+        toggleEditButton = menu?.findItem(R.id.action_toggle_edit)
         return super.onCreateOptionsMenu(menu)
     }
 
     override fun onOptionsItemSelected(item: MenuItem?): Boolean {
         when (item?.itemId) {
-            R.id.action_toggle_edit -> {}
+            R.id.action_toggle_edit -> toggleEditEnabled()
             R.id.action_save -> saveSheet()
             R.id.action_rename -> rename()
             else -> {
@@ -181,6 +187,23 @@ class EditSheetActivity : AppCompatActivity(), CoroutineScope {
         }
     }
 
+    private fun toggleEditEnabled() {
+        val adapter = getAdapter() ?: return
+        if (adapter.editable) {
+            adapter.setEditEnabled(false)
+            saveSheet()
+            toggleEditButton?.setIcon(R.drawable.edit)
+            toggleEditButton?.setTitle(R.string.edit)
+        } else {
+            adapter.setEditEnabled(true)
+            toggleEditButton?.setIcon(R.drawable.done)
+            toggleEditButton?.setTitle(R.string.done)
+        }
+    }
+
+    // It is safe to pass null is the parent view here because AlertDialog neither provies nor
+    // expects a parent view.
+    @SuppressLint("InflateParams")
     private fun rename() {
         val builder  = AlertDialog.Builder(this)
         builder.setTitle(R.string.rename)

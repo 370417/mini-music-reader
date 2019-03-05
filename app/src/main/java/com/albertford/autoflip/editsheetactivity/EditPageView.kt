@@ -31,6 +31,7 @@ class EditPageView(context: Context, attrs: AttributeSet) : View(context, attrs)
 
     private val selectionFill = initSelectionFill()
     private val selectionStroke = initSelectionStroke()
+    private val nonSelectionFill = initNonSelectinFill()
 
     private val chevronRight = VectorDrawableCompat.create(resources, R.drawable.chevron_right, null)
     private val chevronDown = VectorDrawableCompat.create(resources, R.drawable.chevron_down, null)
@@ -56,21 +57,29 @@ class EditPageView(context: Context, attrs: AttributeSet) : View(context, attrs)
 
     private fun initSelectionFill(): Paint {
         val paint = Paint()
-        paint.color = ContextCompat.getColor(context, R.color.colorAccent)
-        paint.alpha = 100
+        paint.color = ContextCompat.getColor(context, R.color.selectionFill)
         return paint
     }
 
     private fun initSelectionStroke(): Paint {
         val paint = Paint()
-        paint.color = ContextCompat.getColor(context, R.color.colorPrimary)
+        paint.color = ContextCompat.getColor(context, R.color.selectionStroke)
         paint.style = Paint.Style.STROKE
-        paint.strokeWidth = 2f
+        return paint
+    }
+
+    private fun initNonSelectinFill(): Paint {
+        val paint = Paint()
+        paint.color = ContextCompat.getColor(context, R.color.nonselectionFill)
         return paint
     }
 
     override fun setEditEnabled(enabled: Boolean) {
         logic?.editable = enabled
+        if (!enabled) {
+            logic?.selection = null
+        }
+        invalidate()
     }
 
     override fun onDraw(canvas: Canvas?) {
@@ -105,13 +114,15 @@ class EditPageView(context: Context, attrs: AttributeSet) : View(context, attrs)
                     rect.top = staff.top + selectionStroke.strokeWidth
                     rect.right = rightBarLine.x - selectionStroke.strokeWidth
                     rect.bottom = staff.bottom - selectionStroke.strokeWidth
-                    canvas.drawRect(rect, selectionFill)
+                    canvas.drawRect(rect, nonSelectionFill)
                 }
             }
         }
 
         canvas.restore()
 
+        // the chevrons are drawables, so they can can only work with integer bounds
+        // for this reason they have to be drawn outside the canvas transformation
         if (logic.calcNewBarRect(rect)) {
             chevronRight?.let {
                 val left = (rect.left * width).roundToInt()
