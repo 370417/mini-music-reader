@@ -32,7 +32,7 @@ class PageAdapter(
         viewHolderCache.add(holder)
         holder.bindSize(pages[position])
         holder.view.setPage(pages[position])
-        holder.view.editable = editable
+        holder.view.setEditEnabled(editable)
 //        holder.view.listener = editPageListener
         holder.bindImage(uri, context, coroutineScope)
     }

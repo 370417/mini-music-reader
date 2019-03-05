@@ -45,7 +45,11 @@
     <string name="one">1</string>
 
     <!-- Menu Actions -->
+    <string name="save">Save</string>
+    <string name="done">Done</string>
+    <string name="edit">Edit</string>
     <string name="rename">Rename</string>
+
+    <!-- Snackbar Actions -->
     <string name="undo">Undo</string>
-    <string name="redo">Redo</string>
 </resources>

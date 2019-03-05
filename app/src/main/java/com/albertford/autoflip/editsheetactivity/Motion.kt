@@ -8,10 +8,17 @@ import com.albertford.autoflip.room.BarLine
 import com.albertford.autoflip.room.Page
 import com.albertford.autoflip.room.Staff
 
+// Maximum overlap between two adjacent staves
+// This is a fraction of the page width, so the logic works the same in both portait and landscape
 const val STAFF_OVERLAP = 0.05f
 
 // touch is always a PointF and never just a Float. This is because, even when we are only resizing
 // in one dimension, the other dimension is useful for knowing when to snap to other lines
+/**
+ * Represents the user's current touch
+ *
+ * Each subclass represents a different initial touch target
+ */
 sealed class Motion(var touch: PointF) {
     var moved: Boolean = false
 
@@ -211,6 +218,7 @@ class CancelSelection(touch: PointF) : Motion(touch) {
     }
 }
 
+/** Represents the possible results after the user finishes a motion */
 sealed class MotionResult
 
 class ChangeSelectionResult(val newSelection: Selection) : MotionResult()
@@ -221,6 +229,7 @@ object CancelSelectionResult : MotionResult()
 
 object AttemptedScrollResult : MotionResult()
 
+/** Destroy bar lines if they are too close to each other after being resized */
 fun destroyBarIfTooSmall(staff: Staff, barIndex: Int, slop: Float, fixedX: Float): MotionResult? {
     val prevBarLine = staff.barLines.getOrNull(barIndex - 1)
     val leftBarLine = staff.barLines[barIndex]
@@ -244,11 +253,13 @@ fun destroyBarIfTooSmall(staff: Staff, barIndex: Int, slop: Float, fixedX: Float
     return null
 }
 
+/** Modifies a rect (representing current selection) to make sure it is not too large */
 fun clampBar(rect: RectF, page: Page, selection: Selection) {
     clampBarVertical(rect, page, selection)
     clampBarHorizontal(rect, page, selection)
 }
 
+/** Modifies a rect (representing current selection) to make sure it is not too large vertically */
 fun clampBarVertical(rect: RectF, page: Page, selection: Selection) {
     val prevStaff = page.staves.getOrNull(selection.staffIndex - 1)
     val nextStaff = page.staves.getOrNull(selection.staffIndex + 1)
@@ -260,6 +271,7 @@ fun clampBarVertical(rect: RectF, page: Page, selection: Selection) {
     }
 }
 
+/** Modifies a rect (representing current selection) to make sure it is not too large horizontally */
 fun clampBarHorizontal(rect: RectF, page: Page, selection: Selection) {
     val staff = page.getStaff(selection)
     val prevBarLine = staff.barLines.getOrNull(selection.barIndex - 1)

@@ -22,7 +22,7 @@ class EditPageView(context: Context, attrs: AttributeSet) : View(context, attrs)
 
     var bitmap: Bitmap? = null
 
-    var editable: Boolean = false
+//    var editable: Boolean = false
 
 //    var listener: EditPageListener? = null
 
@@ -32,7 +32,6 @@ class EditPageView(context: Context, attrs: AttributeSet) : View(context, attrs)
     private val selectionFill = initSelectionFill()
     private val selectionStroke = initSelectionStroke()
 
-//    private val chevronRight = BitmapFactory.decodeResource(resources, R.drawable.chevron_right)
     private val chevronRight = VectorDrawableCompat.create(resources, R.drawable.chevron_right, null)
     private val chevronDown = VectorDrawableCompat.create(resources, R.drawable.chevron_down, null)
     private var chevronSize = 0f
@@ -44,6 +43,11 @@ class EditPageView(context: Context, attrs: AttributeSet) : View(context, attrs)
         logic = EditPageLogic(page, slop, chevronSize)
     }
 
+    /**
+     * Set width-dependent variables.
+     *
+     * When this view is first inflated, it may have width/height of 0.
+     */
     fun bindWidth(width: Int) {
         slop = pixelSlop.toFloat() / width
         selectionStroke.strokeWidth = 2f / width
@@ -66,7 +70,7 @@ class EditPageView(context: Context, attrs: AttributeSet) : View(context, attrs)
     }
 
     override fun setEditEnabled(enabled: Boolean) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        logic?.editable = enabled
     }
 
     override fun onDraw(canvas: Canvas?) {
@@ -105,12 +109,6 @@ class EditPageView(context: Context, attrs: AttributeSet) : View(context, attrs)
                 }
             }
         }
-//        if (logic.calcNewBarRect(rect) && chevronRight != null) {
-//            canvas.drawRect(rect, selectionFill)
-//        }
-//        if (logic.calcNewStaffRect(rect)) {
-//            canvas.drawRect(rect, selectionFill)
-//        }
 
         canvas.restore()
 
@@ -135,10 +133,10 @@ class EditPageView(context: Context, attrs: AttributeSet) : View(context, attrs)
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent?): Boolean {
-        if (!editable) {
+        val logic = logic ?: return super.onTouchEvent(event)
+        if (!logic.editable) {
             return false
         }
-        val logic = logic ?: return super.onTouchEvent(event)
         event ?: return false
         val touch = PointF(event.x / width, event.y / width)
         when (event.action) {

@@ -7,6 +7,10 @@ import android.os.Bundle
 import android.provider.OpenableColumns
 import android.support.constraint.ConstraintLayout
 import android.support.design.widget.BottomSheetBehavior
+import android.support.design.widget.TextInputEditText
+import android.support.design.widget.TextInputLayout
+import android.support.v7.app.AlertDialog
+import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
@@ -132,17 +136,16 @@ class EditSheetActivity : AppCompatActivity(), CoroutineScope {
         return super.onCreateOptionsMenu(menu)
     }
 
-    override fun onOptionsItemSelected(item: MenuItem?) = when (item?.itemId) {
-        R.id.action_save -> {
-            saveSheet()
-            true
+    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
+        when (item?.itemId) {
+            R.id.action_toggle_edit -> {}
+            R.id.action_save -> saveSheet()
+            R.id.action_rename -> rename()
+            else -> {
+                return super.onOptionsItemSelected(item)
+            }
         }
-        R.id.action_rename -> {
-            true
-        }
-        else -> {
-            super.onOptionsItemSelected(item)
-        }
+        return true
     }
 
     // enable/disable menu actions
@@ -175,6 +178,43 @@ class EditSheetActivity : AppCompatActivity(), CoroutineScope {
             adapter
         } else {
             null
+        }
+    }
+
+    private fun rename() {
+        val builder  = AlertDialog.Builder(this)
+        builder.setTitle(R.string.rename)
+        val view = LayoutInflater.from(this).inflate(R.layout.dialog_edit_text, null)
+        // AlertDialog.Builder has a method to set the view by a resource id directly
+        // We inflate the view manually instead so that we have a reference to it that we can use in
+        // the onclick listener
+        builder.setView(view)
+        builder.setPositiveButton(android.R.string.ok, null)
+        builder.setNegativeButton(android.R.string.cancel) { dialog, _ ->
+            dialog.cancel()
+        }
+        val alertDialog = builder.show()
+        alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            val editText: TextInputEditText? = view.findViewById(R.id.edit_text)
+            val textInputLayout: TextInputLayout? = view.findViewById(R.id.text_input_layout)
+            if (editText == null || textInputLayout == null) {
+                alertDialog.cancel()
+            } else if (editText.text.isNullOrBlank()) {
+                textInputLayout.error = "Name cannot be blank"
+            } else {
+                alertDialog.dismiss()
+                rename(editText.text.toString())
+            }
+        }
+    }
+
+    private fun rename(name: String) {
+        supportActionBar?.title = name
+        val adapter = getAdapter() ?: return
+        val sheet = adapter.sheet
+        launch(Dispatchers.Default) {
+            sheet.name = name
+            database?.sheetDao()?.updateSheet(sheet)
         }
     }
 }

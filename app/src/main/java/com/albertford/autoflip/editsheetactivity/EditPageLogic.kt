@@ -12,9 +12,11 @@ import com.albertford.autoflip.room.Staff
 class EditPageLogic(val page: Page, private val slop: Float, private val chevronSize: Float) {
     var selection: Selection? = null
     var motion: Motion? = null
+    var editable = false
 
     fun onActionDown(touch: PointF) {
         motion = if (page.staves.isEmpty()) {
+            // create the first bar
             val staff = Staff(touch.y, touch.y, page.sheetId, page.pageIndex)
             staff.barLines.add(BarLine(touch.x, page.sheetId, page.pageIndex, 0))
             staff.barLines.add(BarLine(touch.x, page.sheetId, page.pageIndex, 0))
@@ -25,14 +27,14 @@ class EditPageLogic(val page: Page, private val slop: Float, private val chevron
             verifySelection()
             val selection = selection
             if (selection == null) {
-                createOtherMotion(touch)
+                createNonSelectionMotion(touch)
             } else {
                 val touchLocation = calcTouchLocation(touch, calcSelectionRect(selection))
                 when {
                     touchLocation != null -> touchLocation
                     calcNewBarRect()?.contains(touch.x, touch.y) == true -> createNewBarMotion(touch, selection)
                     calcNewStaffRect()?.contains(touch.x, touch.y) == true -> createNewStaffMotion(touch, selection)
-                    else -> createOtherMotion(touch)
+                    else -> createNonSelectionMotion(touch)
                 }
             }
         }
@@ -130,6 +132,11 @@ class EditPageLogic(val page: Page, private val slop: Float, private val chevron
         }
     }
 
+    /**
+     * Calculate the bounds of the current selection.
+     *
+     * This assumes the selection is valid
+     */
     private fun calcSelectionRect(selection: Selection): RectF {
         val staff = page.getStaff(selection)
         val leftBarLine = staff.barLines[selection.barIndex]
@@ -139,6 +146,12 @@ class EditPageLogic(val page: Page, private val slop: Float, private val chevron
 
     // version of calcnewbarrect that does not allocate a new rect.
     // instead, it returns true if the rect exists and false if it should be treated as null
+    /**
+     * Calculates the dimensions of the button for creating a new bar.
+     *
+     * This modifies a rect instead of creating one to avoid allocation.
+     * Returns true if the button should exist, false otherwise
+     */
     fun calcNewBarRect(rect: RectF): Boolean {
         when (motion) {
             is ResizeCorner, is ResizeHorizontal, is ResizeVertical -> return false
@@ -157,6 +170,7 @@ class EditPageLogic(val page: Page, private val slop: Float, private val chevron
         }
     }
 
+    /** Wrapper around calcNewBarRect(rect) that allocates its own rect for convenience */
     private fun calcNewBarRect(): RectF? {
         val rect = RectF()
         return if (calcNewBarRect(rect)) {
@@ -166,6 +180,12 @@ class EditPageLogic(val page: Page, private val slop: Float, private val chevron
         }
     }
 
+    /**
+     * Calculates the dimensions of the button for creating a new staff.
+     *
+     * This modifies a rect instead of creating one to avoid allocation.
+     * Returns true if the button should exist, false otherwise
+     */
     fun calcNewStaffRect(rect: RectF): Boolean {
         when (motion) {
             is ResizeCorner, is ResizeHorizontal, is ResizeVertical -> return false
@@ -183,6 +203,7 @@ class EditPageLogic(val page: Page, private val slop: Float, private val chevron
         }
     }
 
+    /** Wrapper around calcNewStaff(rect) that allocates its own rect for convenience */
     private fun calcNewStaffRect(): RectF? {
         val rect = RectF()
         return if (calcNewStaffRect(rect)) {
@@ -203,7 +224,13 @@ class EditPageLogic(val page: Page, private val slop: Float, private val chevron
         return NewStaff(touch, touch.y - staff.bottom)
     }
 
-    private fun createOtherMotion(touch: PointF): Motion {
+    /**
+     * Create a motion from a touch location that ignores the current selection.
+     *
+     * If a previously-defined bar was touched, returns ChangeSelection
+     * Otherwise, returns CancelSelection
+     */
+    private fun createNonSelectionMotion(touch: PointF): Motion {
         for (staffIndex in page.staves.indices) {
             val staff = page.staves[staffIndex]
             for (barIndex in staff.barIndices()) {
@@ -219,6 +246,7 @@ class EditPageLogic(val page: Page, private val slop: Float, private val chevron
     }
 }
 
+/** Represents the index of the current selection */
 data class Selection(val staffIndex: Int, val barIndex: Int)
 
 enum class TouchLocation {
