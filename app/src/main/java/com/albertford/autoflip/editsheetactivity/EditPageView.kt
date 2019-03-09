@@ -16,7 +16,7 @@ import kotlin.math.roundToInt
 
 private val identityMatrix = Matrix()
 
-class EditPageView(context: Context, attrs: AttributeSet) : View(context, attrs), EditSheetListener {
+class EditPageView(context: Context, attrs: AttributeSet) : View(context, attrs), EditSheetObserver {
 
     private var logic: EditPageLogic? = null
 
@@ -40,8 +40,10 @@ class EditPageView(context: Context, attrs: AttributeSet) : View(context, attrs)
     // preallocated rect used for drawing
     private val rect = RectF()
 
-    fun setPage(page: Page) {
-        logic = EditPageLogic(page, slop, chevronSize)
+    fun setPage(page: Page, editPageObserver: EditPageObserver) {
+        val logic = EditPageLogic(page, slop, chevronSize)
+        logic.observers.add(editPageObserver)
+        this.logic = logic
     }
 
     /**
@@ -74,9 +76,9 @@ class EditPageView(context: Context, attrs: AttributeSet) : View(context, attrs)
         return paint
     }
 
-    override fun setEditEnabled(enabled: Boolean) {
-        logic?.editable = enabled
-        if (!enabled) {
+    override fun onEditEnabledChanged(editEnabled: Boolean) {
+        logic?.editable = editEnabled
+        if (!editEnabled) {
             logic?.selection = null
         }
         invalidate()
@@ -153,28 +155,11 @@ class EditPageView(context: Context, attrs: AttributeSet) : View(context, attrs)
         when (event.action) {
             MotionEvent.ACTION_DOWN -> logic.onActionDown(touch)
             MotionEvent.ACTION_MOVE -> logic.onActionMove(touch)
-            MotionEvent.ACTION_UP -> {
-                val result = logic.onActionUp()
-                when (result) {
-                    is ClickSelectionResult -> {}
-                    is AttemptedScrollResult -> scrollHelpToast()
-                }
-            }
+            MotionEvent.ACTION_UP -> logic.onActionUp()
             MotionEvent.ACTION_CANCEL -> logic.onActionUp() // don't respond to clicks if they were canceled
             else -> return super.onTouchEvent(event)
         }
         invalidate()
         return true
     }
-
-    private fun scrollHelpToast() {
-        Toast.makeText(context, R.string.scroll_helper, Toast.LENGTH_SHORT).show()
-    }
 }
-
-//interface EditPageListener {
-//    fun initalSelection(pageIndex: Int)
-//    fun confirmSelection()
-//    fun changeSelection()
-//    fun cancelSelection()
-//}

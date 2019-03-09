@@ -27,7 +27,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".activities.ViewSheetActivity"
+            android:name=".viewsheetactivity.ViewSheetActivity"
             android:theme="@style/AppTheme.NoActionBar">
         </activity>
         <activity

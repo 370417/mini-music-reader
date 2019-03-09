@@ -1,4 +1,4 @@
-package com.albertford.autoflip.activities
+package com.albertford.autoflip.viewsheetactivity
 
 import android.Manifest
 import android.animation.ObjectAnimator
@@ -19,12 +19,20 @@ import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_view_sheet.*
 import kotlinx.android.synthetic.main.view_sheet_images.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlin.coroutines.CoroutineContext
 
 private const val MANAGE_DOCUMENTS_REQUEST = 1
 private const val READ_EXTERNAL_STORAGE_REQUEST = 2
 private const val MANAGE_DOCUMENTS_AND_READ_EXTERNAL_STORAGE_REQUEST = 3
 
-class ViewSheetActivity : AppCompatActivity() {
+class ViewSheetActivity : AppCompatActivity(), CoroutineScope {
+
+    private lateinit var job: Job
+    override val coroutineContext: CoroutineContext
+        get() = Dispatchers.Main + job
 
     private val compositeDisposable = CompositeDisposable()
 
@@ -84,7 +92,8 @@ class ViewSheetActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_view_sheet)
 
-        state = savedInstanceState?.getParcelable("STATE") ?: State(this)
+        state = savedInstanceState?.getParcelable("STATE") ?: State(
+                this)
 //        progress_bar.rotation = 270f
 
         val canManageDocuments = ContextCompat.checkSelfPermission(this, Manifest.permission.MANAGE_DOCUMENTS) == PackageManager.PERMISSION_GRANTED
@@ -111,7 +120,7 @@ class ViewSheetActivity : AppCompatActivity() {
     /** Dispose of asynchronous tasks */
     override fun onDestroy() {
         super.onDestroy()
-        compositeDisposable.dispose()
+        job.cancel()
     }
 
     override fun onSaveInstanceState(outState: Bundle?) {
@@ -229,7 +238,8 @@ class ViewSheetActivity : AppCompatActivity() {
         companion object CREATOR : Parcelable.Creator<State> {
             override fun newArray(size: Int): Array<State?> = arrayOfNulls(size)
 
-            override fun createFromParcel(parcel: Parcel): State = State(parcel)
+            override fun createFromParcel(parcel: Parcel): State = State(
+                    parcel)
         }
     }
 }

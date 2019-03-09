@@ -27,14 +27,14 @@ sealed class Motion(var touch: PointF) {
     abstract fun onActionUp(page: Page, selection: Selection?, slop: Float): MotionResult?
 }
 
-class ClickSelection(touch: PointF) : Motion(touch) {
+class ClickSelection(touch: PointF, private val clickedSelection: Selection) : Motion(touch) {
     override fun onActionMove(page: Page, selection: Selection?, slop: Float) {
         // intentionally does nothing
     }
 
     override fun onActionUp(page: Page, selection: Selection?, slop: Float): MotionResult? {
         return if (!moved) {
-            ClickSelectionResult
+            ClickSelectionResult(clickedSelection)
         } else {
             AttemptedScrollResult
         }
@@ -66,7 +66,7 @@ class ResizeCorner(touch: PointF, private val fixedCorner: PointF) : Motion(touc
             page.staves.removeAt(selection.staffIndex)
             CancelSelectionResult
         } else {
-            destroyBarIfTooSmall(staff, selection.barIndex, slop, fixedCorner.x)
+            destroyBarIfTooSmall(page, selection, slop, fixedCorner.x)
         }
     }
 }
@@ -87,8 +87,7 @@ class ResizeHorizontal(touch: PointF, private val fixedX: Float) : Motion(touch)
 
     override fun onActionUp(page: Page, selection: Selection?, slop: Float): MotionResult? {
         val selection = selection ?: return null
-        val staff = page.getStaff(selection)
-        return destroyBarIfTooSmall(staff, selection.barIndex, slop, fixedX)
+        return destroyBarIfTooSmall(page, selection, slop, fixedX)
     }
 }
 
@@ -142,12 +141,12 @@ class NewBar(touch: PointF, private val touchOffset: Float) : Motion(touch) {
         return if (!moved) {
             val x = Math.min(1f, 2 * lastBarLine.x - secondLastBarLine.x)
             staff.barLines.add(BarLine(x, lastBarLine.sheetId, lastBarLine.pageIndex, lastBarLine.staffIndex))
-            ChangeSelectionResult(Selection(selection.staffIndex, staff.barLines.size - 2))
+            ClickSelectionResult(Selection(selection.staffIndex, staff.barLines.size - 2))
         } else if (lastBarLine.x - secondLastBarLine.x < slop) {
             staff.barLines.removeAt(staff.barLines.indices.last)
             null
         } else {
-            ChangeSelectionResult(Selection(selection.staffIndex, staff.barIndices().last))
+            ClickSelectionResult(Selection(selection.staffIndex, staff.barIndices().last))
         }
     }
 }
@@ -180,12 +179,12 @@ class NewStaff(touch: PointF, private val touchOffset: Float) : Motion(touch) {
             newStaff.barLines.add(BarLine(firstBarLine.x, page.sheetId, page.pageIndex, newStaffIndex))
             newStaff.barLines.add(BarLine(secondBarLine.x, page.sheetId, page.pageIndex, newStaffIndex))
             page.staves.add(newStaff)
-            ChangeSelectionResult(Selection(page.staves.size - 1, 0))
+            ClickSelectionResult(Selection(page.staves.size - 1, 0))
         } else if (lastStaff.bottom - lastStaff.top < slop) {
             page.staves.removeAt(page.staves.size - 1)
             null
         } else {
-            ChangeSelectionResult(Selection(page.staves.size - 1, 0))
+            ClickSelectionResult(Selection(page.staves.size - 1, 0))
         }
     }
 }
@@ -197,7 +196,7 @@ class ChangeSelection(touch: PointF, private val newSelection: Selection) : Moti
 
     override fun onActionUp(page: Page, selection: Selection?, slop: Float): MotionResult? {
         return if (!moved) {
-            ChangeSelectionResult(newSelection)
+            ClickSelectionResult(newSelection)
         } else {
             AttemptedScrollResult
         }
@@ -221,23 +220,23 @@ class CancelSelection(touch: PointF) : Motion(touch) {
 /** Represents the possible results after the user finishes a motion */
 sealed class MotionResult
 
-class ChangeSelectionResult(val newSelection: Selection) : MotionResult()
-
-object ClickSelectionResult : MotionResult()
+class ClickSelectionResult(val newSelection: Selection) : MotionResult()
 
 object CancelSelectionResult : MotionResult()
 
 object AttemptedScrollResult : MotionResult()
 
 /** Destroy bar lines if they are too close to each other after being resized */
-fun destroyBarIfTooSmall(staff: Staff, barIndex: Int, slop: Float, fixedX: Float): MotionResult? {
+fun destroyBarIfTooSmall(page: Page, selection: Selection, slop: Float, fixedX: Float): MotionResult? {
+    val staff = page.getStaff(selection)
+    val barIndex = selection.barIndex
     val prevBarLine = staff.barLines.getOrNull(barIndex - 1)
     val leftBarLine = staff.barLines[barIndex]
     val rightBarLine = staff.barLines[barIndex + 1]
     val nextBarLine = staff.barLines.getOrNull(barIndex + 2)
-    if (prevBarLine != null && leftBarLine.x - prevBarLine.x < slop) {
+    val result = if (prevBarLine != null && leftBarLine.x - prevBarLine.x < slop) {
         staff.barLines.removeAt(barIndex)
-        return CancelSelectionResult
+        CancelSelectionResult
     } else if (rightBarLine.x - leftBarLine.x < slop) {
         // delete the barline that was just moved, not the fixed one
         if (rightBarLine.x == fixedX) {
@@ -245,12 +244,17 @@ fun destroyBarIfTooSmall(staff: Staff, barIndex: Int, slop: Float, fixedX: Float
         } else {
             staff.barLines.removeAt(barIndex + 1)
         }
-        return CancelSelectionResult
+        CancelSelectionResult
     } else if (nextBarLine != null && nextBarLine.x - rightBarLine.x < slop) {
         staff.barLines.removeAt(barIndex + 1)
-        return CancelSelectionResult
+        CancelSelectionResult
+    } else {
+        null
     }
-    return null
+    if (result is CancelSelectionResult && staff.barLines.size < 2) {
+        page.staves.removeAt(selection.staffIndex)
+    }
+    return result
 }
 
 /** Modifies a rect (representing current selection) to make sure it is not too large */

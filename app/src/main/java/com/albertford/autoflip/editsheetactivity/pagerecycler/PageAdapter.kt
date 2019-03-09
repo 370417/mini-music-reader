@@ -8,11 +8,11 @@ import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import com.albertford.autoflip.R
-//import com.albertford.autoflip.editsheetactivity.EditPageListener
+import com.albertford.autoflip.editsheetactivity.EditPageObserver
 import com.albertford.autoflip.room.Page
 import com.albertford.autoflip.room.Sheet
 import com.albertford.autoflip.editsheetactivity.EditPageView
-import com.albertford.autoflip.editsheetactivity.EditSheetListener
+import com.albertford.autoflip.editsheetactivity.EditSheetObserver
 import kotlinx.coroutines.*
 
 class PageAdapter(
@@ -21,19 +21,22 @@ class PageAdapter(
         var editable: Boolean,
         private val uri: Uri,
         private val context: Context,
-        private val coroutineScope: CoroutineScope//,
-//        private val editPageListener: EditPageListener
-) : RecyclerView.Adapter<PageViewHolder>(), EditSheetListener/*, EditPageListener*/ {
+        private val coroutineScope: CoroutineScope,
+        private val editPageObserver: EditPageObserver,
+        private val editSheetObservers: MutableSet<EditSheetObserver>
+) : RecyclerView.Adapter<PageViewHolder>(), EditSheetObserver {
 
-    private var selectedPageIndex: Int = -1
-    private val viewHolderCache: MutableSet<PageViewHolder> = mutableSetOf()
+    init {
+        // The PageAdapter needs to observe changes to the editability so that it knows if newly
+        // bound viewholders should be editable or not
+        editSheetObservers.add(this)
+    }
 
     override fun onBindViewHolder(holder: PageViewHolder, position: Int) {
-        viewHolderCache.add(holder)
+        editSheetObservers.add(holder.view)
         holder.bindSize(pages[position])
-        holder.view.setPage(pages[position])
-        holder.view.setEditEnabled(editable)
-//        holder.view.listener = editPageListener
+        holder.view.setPage(pages[position], editPageObserver)
+        holder.view.onEditEnabledChanged(editable)
         holder.bindImage(uri, context, coroutineScope)
     }
 
@@ -47,33 +50,13 @@ class PageAdapter(
     }
 
     override fun onViewRecycled(holder: PageViewHolder) {
-        viewHolderCache.remove(holder)
+        editSheetObservers.remove(holder.view)
         holder.view.bitmap = null
         super.onViewRecycled(holder)
     }
 
-//    override fun cancelSelection() {
-//        selectedPageIndex = -1
-//        editPageListener.cancelSelection()
-//    }
-
-//    override fun changeSelection() {
-//        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-//    }
-
-//    override fun confirmSelection() {
-//        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-//    }
-
-//    override fun initalSelection(pageIndex: Int) {
-//        selectedPageIndex = pageIndex
-//        editPageListener.initalSelection(pageIndex)
-//    }
-    override fun setEditEnabled(enabled: Boolean) {
-        editable = enabled
-        for (holder in viewHolderCache) {
-            holder.view.setEditEnabled(enabled)
-        }
+    override fun onEditEnabledChanged(editEnabled: Boolean) {
+        editable = editEnabled
     }
 }
 
@@ -90,7 +73,7 @@ class PageViewHolder(val view: EditPageView, private val width: Int) : RecyclerV
             val position = adapterPosition
             val width = view.width
             val height = view.height
-            coroutineScope.launch(Dispatchers.Main) {
+            coroutineScope.launch {
                 val bitmap = withContext(Dispatchers.Default) {
                     renderPage(uri, context,
                             position, width, height)
@@ -103,22 +86,24 @@ class PageViewHolder(val view: EditPageView, private val width: Int) : RecyclerV
 }
 
 private fun renderPage(uri: Uri, context: Context, position: Int, width: Int, height: Int): Bitmap? {
-    val descriptor = context.contentResolver.openFileDescriptor(uri, "r") ?: return null
-    return PdfRenderer(descriptor).openPage(position)?.use { page ->
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-        page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-        bitmap
+    return context.contentResolver.openFileDescriptor(uri, "r")?.use { descriptor ->
+        PdfRenderer(descriptor).openPage(position)?.use { page ->
+            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+            bitmap
+        }
     }
 }
 
 class Size(val width: Int, val height: Int)
 
 fun calcSizes(uri: Uri, context: Context): Array<Size>? {
-    val descriptor = context.contentResolver.openFileDescriptor(uri, "r") ?: return null
-    val renderer = PdfRenderer(descriptor)
-    return Array(renderer.pageCount) { i ->
-        renderer.openPage(i).use { page ->
-            Size(page.width, page.height)
+    return context.contentResolver.openFileDescriptor(uri, "r")?.use { descriptor ->
+        val renderer = PdfRenderer(descriptor)
+        Array(renderer.pageCount) { i ->
+            renderer.openPage(i).use { page ->
+                Size(page.width, page.height)
+            }
         }
     }
 }

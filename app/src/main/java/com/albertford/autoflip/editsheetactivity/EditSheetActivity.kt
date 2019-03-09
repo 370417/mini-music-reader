@@ -25,11 +25,13 @@ import kotlinx.android.synthetic.main.edit_bottom_sheet.*
 import kotlinx.coroutines.*
 import kotlin.coroutines.CoroutineContext
 
-class EditSheetActivity : AppCompatActivity(), CoroutineScope {
+class EditSheetActivity : AppCompatActivity(), CoroutineScope, EditPageObserver {
 
     private lateinit var job: Job
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.Main + job
+
+    private val observers: MutableSet<EditSheetObserver> = mutableSetOf()
 
     private lateinit var bottomSheetBehavior: BottomSheetBehavior<ConstraintLayout>
 
@@ -63,7 +65,7 @@ class EditSheetActivity : AppCompatActivity(), CoroutineScope {
                         val (sheet, pages) = sheetAndPages
                         supportActionBar?.title = sheet.name
                         val adapter = PageAdapter(
-                                sheet, pages, true, uri, context, context)
+                                sheet, pages, true, uri, context, context, context, observers)
                         page_recycler.adapter = adapter
                     } else {
                         finish()
@@ -71,13 +73,12 @@ class EditSheetActivity : AppCompatActivity(), CoroutineScope {
                 }
             }
             existingSheet != null -> launch {
-                var pages: Array<Page> = arrayOf()
-                withContext(Dispatchers.Default) {
-                    pages = database?.sheetDao()?.findFullPagesBySheet(existingSheet.id) ?: arrayOf()
+                val pages = withContext(Dispatchers.Default) {
+                    database?.sheetDao()?.findFullPagesBySheet(existingSheet.id) ?: arrayOf()
                 }
                 supportActionBar?.title = existingSheet.name
                 val uri = Uri.parse(existingSheet.uri)
-                val adapter = PageAdapter(existingSheet, pages, false, uri, context, context)
+                val adapter = PageAdapter(existingSheet, pages, false, uri, context, context, context, observers)
                 page_recycler.adapter = adapter
             }
             else -> finish()
@@ -154,29 +155,17 @@ class EditSheetActivity : AppCompatActivity(), CoroutineScope {
         return true
     }
 
-    // enable/disable menu actions
-//    override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
-//        super.onPrepareOptionsMenu(menu)
-//        menu?.findItem(R.id.action_undo)?.isEnabled = false
-//        menu?.findItem(R.id.action_redo)?.isEnabled = false
-//        return true
-//    }
+    override fun onCancelSelection() {
+        // TODO
+    }
 
-//    override fun initalSelection(pageIndex: Int) {
-//        bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
-//    }
-//
-//    override fun confirmSelection() {
-//        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-//    }
-//
-//    override fun changeSelection() {
-//        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-//    }
-//
-//    override fun cancelSelection() {
-//        bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
-//    }
+    override fun onChangeSelection(pageIndex: Int, staffIndex: Int, barIndex: Int) {
+        // TODO
+    }
+
+    override fun onScrollAttempt() {
+        Toast.makeText(this, R.string.scroll_helper, Toast.LENGTH_SHORT).show()
+    }
 
     private fun getAdapter(): PageAdapter? {
         val adapter = page_recycler.adapter
@@ -190,18 +179,22 @@ class EditSheetActivity : AppCompatActivity(), CoroutineScope {
     private fun toggleEditEnabled() {
         val adapter = getAdapter() ?: return
         if (adapter.editable) {
-            adapter.setEditEnabled(false)
+            for (observer in observers) {
+                observer.onEditEnabledChanged(false)
+            }
             saveSheet()
             toggleEditButton?.setIcon(R.drawable.edit)
             toggleEditButton?.setTitle(R.string.edit)
         } else {
-            adapter.setEditEnabled(true)
+            for (observer in observers) {
+                observer.onEditEnabledChanged(true)
+            }
             toggleEditButton?.setIcon(R.drawable.done)
             toggleEditButton?.setTitle(R.string.done)
         }
     }
 
-    // It is safe to pass null is the parent view here because AlertDialog neither provies nor
+    // It is safe to pass null is the parent view here because AlertDialog neither provides nor
     // expects a parent view.
     @SuppressLint("InflateParams")
     private fun rename() {
@@ -242,8 +235,8 @@ class EditSheetActivity : AppCompatActivity(), CoroutineScope {
     }
 }
 
-interface EditSheetListener {
-    fun setEditEnabled(enabled: Boolean)
+interface EditSheetObserver {
+    fun onEditEnabledChanged(editEnabled: Boolean)
 }
 
 private fun getFileName(uri: Uri, context: Context): String? {

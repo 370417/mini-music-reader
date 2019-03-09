@@ -24,7 +24,7 @@ import kotlinx.coroutines.withContext
 private const val ITEM_EMPTY = 0
 private const val ITEM_TEXT = 1
 
-class SheetAdapter(val sheets: MutableList<Sheet>, val parent: Activity, private val coroutineScope: CoroutineScope) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+class SheetAdapter(val sheets: MutableList<Sheet>, private val parent: Activity, private val coroutineScope: CoroutineScope) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     constructor(parent: Activity, coroutineScope: CoroutineScope) : this(ArrayList(), parent, coroutineScope)
 
@@ -91,15 +91,16 @@ class SheetAdapter(val sheets: MutableList<Sheet>, val parent: Activity, private
 private fun inflate(id: Int, parent: ViewGroup) = LayoutInflater.from(parent.context).inflate(id, parent, false)
 
 private fun renderPage(uri: Uri, context: Context, top: Float, bottom: Float, pageIndex: Int, viewWidth: Int): Bitmap? {
-    val descriptor = context.contentResolver.openFileDescriptor(uri, "r") ?: return null
-    return PdfRenderer(descriptor).openPage(pageIndex)?.use { page ->
-        val scale = viewWidth.toFloat() / page.width
-        val height = (bottom - top) * viewWidth
-        val bitmap = Bitmap.createBitmap(viewWidth, height.toInt(), Bitmap.Config.ARGB_8888)
-        val matrix = Matrix()
-        matrix.postTranslate(0f, -top * page.width)
-        matrix.postScale(scale, scale)
-        page.render(bitmap, null, matrix, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-        bitmap
+    return context.contentResolver.openFileDescriptor(uri, "r")?.use { descriptor ->
+        PdfRenderer(descriptor).openPage(pageIndex)?.use { page ->
+            val scale = viewWidth.toFloat() / page.width
+            val height = (bottom - top) * viewWidth
+            val bitmap = Bitmap.createBitmap(viewWidth, height.toInt(), Bitmap.Config.ARGB_8888)
+            val matrix = Matrix()
+            matrix.postTranslate(0f, -top * page.width)
+            matrix.postScale(scale, scale)
+            page.render(bitmap, null, matrix, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+            bitmap
+        }
     }
 }

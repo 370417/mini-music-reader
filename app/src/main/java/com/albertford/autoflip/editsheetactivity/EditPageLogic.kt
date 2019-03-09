@@ -14,6 +14,8 @@ class EditPageLogic(val page: Page, private val slop: Float, private val chevron
     var motion: Motion? = null
     var editable = false
 
+    val observers: MutableSet<EditPageObserver> = mutableSetOf()
+
     fun onActionDown(touch: PointF) {
         motion = if (page.staves.isEmpty()) {
             // create the first bar
@@ -29,7 +31,7 @@ class EditPageLogic(val page: Page, private val slop: Float, private val chevron
             if (selection == null) {
                 createNonSelectionMotion(touch)
             } else {
-                val touchLocation = calcTouchLocation(touch, calcSelectionRect(selection))
+                val touchLocation = calcTouchLocation(touch, selection)
                 when {
                     touchLocation != null -> touchLocation
                     calcNewBarRect()?.contains(touch.x, touch.y) == true -> createNewBarMotion(touch, selection)
@@ -47,15 +49,30 @@ class EditPageLogic(val page: Page, private val slop: Float, private val chevron
         motion?.moved = true // make sure to set moved to true after calling onActionMove
     }
 
-    fun onActionUp(): MotionResult? {
+    fun onActionUp() {
         val result = motion?.onActionUp(page, selection, slop)
         when (result) {
-            is ChangeSelectionResult -> selection = result.newSelection
-            CancelSelectionResult -> selection = null
+            is ClickSelectionResult -> {
+                selection = result.newSelection
+                for (observer in observers) {
+                    observer.onChangeSelection(
+                        page.pageIndex,
+                        result.newSelection.staffIndex,
+                        result.newSelection.barIndex)
+                }
+            }
+            CancelSelectionResult -> {
+                selection = null
+                for (observer in observers) {
+                    observer.onCancelSelection()
+                }
+            }
+            AttemptedScrollResult -> for (observer in observers) {
+                observer.onScrollAttempt()
+            }
         }
         verifySelection()
         motion = null
-        return result
     }
 
     /**
@@ -63,14 +80,15 @@ class EditPageLogic(val page: Page, private val slop: Float, private val chevron
      * the rectangle, null is returned. Otherwise it returns an enum for the inside of the rectangle
      * or one of the four corners or four edges.
      */
-    fun calcTouchLocation(touch: PointF, rect: RectF): Motion? {
+    fun calcTouchLocation(touch: PointF, selection: Selection): Motion? {
+        val rect = calcSelectionRect(selection)
         val horizTouchLocation = calcTouchLocation(touch.x, rect.left, rect.right)
         val vertTouchLocation = calcTouchLocation(touch.y, rect.top, rect.bottom)
         return when (horizTouchLocation) {
             TouchLocation.OUTSIDE -> null
             TouchLocation.INSIDE -> when (vertTouchLocation) {
                 TouchLocation.OUTSIDE -> null
-                TouchLocation.INSIDE -> ClickSelection(touch)
+                TouchLocation.INSIDE -> ClickSelection(touch, selection)
                 TouchLocation.LOW_HANDLE -> ResizeVertical(touch, rect.bottom)
                 TouchLocation.HIGH_HANDLE -> ResizeVertical(touch, rect.top)
             }
@@ -254,4 +272,10 @@ enum class TouchLocation {
     LOW_HANDLE,
     INSIDE,
     HIGH_HANDLE
+}
+
+interface EditPageObserver {
+    fun onChangeSelection(pageIndex: Int, staffIndex: Int, barIndex: Int)
+    fun onCancelSelection()
+    fun onScrollAttempt()
 }
