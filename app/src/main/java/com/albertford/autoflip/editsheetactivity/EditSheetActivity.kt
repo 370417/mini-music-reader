@@ -56,8 +56,6 @@ class EditSheetActivity : AppCompatActivity(), CoroutineScope, EditPageObserver 
         // TODO: Possible race condition where app would crash if database access happens faster than the ui is inflated?
         when {
             uriString != null -> {
-                toggleEditButton?.setIcon(R.drawable.done)
-                toggleEditButton?.setTitle(R.string.done)
                 val uri = Uri.parse(uriString)
                 launch {
                     val sheetAndPages = initSheet(uri, uriString)
@@ -140,6 +138,10 @@ class EditSheetActivity : AppCompatActivity(), CoroutineScope, EditPageObserver 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.edit_sheet_menu, menu)
         toggleEditButton = menu?.findItem(R.id.action_toggle_edit)
+        if (intent.getStringExtra("URI") != null) {
+            toggleEditButton?.setIcon(R.drawable.done)
+            toggleEditButton?.setTitle(R.string.done)
+        }
         return super.onCreateOptionsMenu(menu)
     }
 
