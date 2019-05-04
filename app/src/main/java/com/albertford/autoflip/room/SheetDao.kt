@@ -20,8 +20,11 @@ interface SheetDao {
 
     //// ---- ////
 
-    @Query("SELECT * FROM sheet WHERE id = :id LIMIT 1")
-    fun findSheet(id: Long): Array<Sheet>
+//    @Query("SELECT * FROM sheet WHERE id = :id LIMIT 1")
+//    fun findSheet(id: Long): Array<Sheet>
+
+    @Query("SELECT * FROM staff WHERE sheetId = :id ORDER BY pageIndex, top")
+    fun findFirstStaffBySheetId(id: Long): Array<Staff>
 
     @Query("SELECT * FROM page WHERE sheetId = :id ORDER BY pageIndex")
     fun findPagesBySheet(id: Long): Array<Page>

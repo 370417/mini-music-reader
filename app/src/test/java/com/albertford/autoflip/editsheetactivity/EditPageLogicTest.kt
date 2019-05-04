@@ -1,12 +1,8 @@
-package com.albertford.autoflip
+package com.albertford.autoflip.editsheetactivity
 
-import com.albertford.autoflip.editsheetactivity.EditPageLogic
-import com.albertford.autoflip.editsheetactivity.TouchLocation
 import com.albertford.autoflip.room.Page
-import org.junit.After
 import org.junit.Test
 import org.junit.Assert.assertEquals
-import org.junit.Before
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 

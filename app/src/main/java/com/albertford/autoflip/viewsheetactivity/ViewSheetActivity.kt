@@ -38,6 +38,10 @@ class ViewSheetActivity : AppCompatActivity(), CoroutineScope {
 
     private lateinit var state: State
 
+    private var currentBar: Int = TODO()
+    private var nextBar: Int = TODO()
+    private var preloadedBar: Int = TODO()
+
     private var sheet: Sheet? = null
     private var bars: List<Bar>? = null
     private var sheetRenderer: SheetRenderer? = null

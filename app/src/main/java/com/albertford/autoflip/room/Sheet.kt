@@ -1,6 +1,5 @@
 package com.albertford.autoflip.room
 
-import android.arch.persistence.room.Embedded
 import android.arch.persistence.room.Entity
 import android.arch.persistence.room.Index
 import android.arch.persistence.room.PrimaryKey
@@ -19,6 +18,15 @@ class Sheet(
     var firstStaffTop: Float? = null
     var firstStaffBottom: Float? = null
     var firstStaffPageIndex: Int? = null
+
+    fun updateFirstStaff(pages: Array<Page>) {
+        val firstStaff = pages.firstOrNull { page ->
+            page.staves.size > 0
+        }?.staves?.first()
+        firstStaffTop = firstStaff?.top
+        firstStaffBottom = firstStaff?.bottom
+        firstStaffPageIndex = firstStaff?.pageIndex
+    }
 
     constructor(parcel: Parcel) : this(
             parcel.readString() ?: "",
