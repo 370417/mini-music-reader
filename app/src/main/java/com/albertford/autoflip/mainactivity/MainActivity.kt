@@ -66,7 +66,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         val uri = data?.data ?: return
         contentResolver.takePersistableUriPermission(uri, data.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION)
         val intent = Intent(this, EditSheetActivity::class.java)
-        intent.putExtra("URI", uri.toString())
+        intent.putExtra(EditSheetActivity.URI_KEY, uri.toString())
         startActivity(intent)
     }
 

@@ -27,6 +27,16 @@ import kotlin.coroutines.CoroutineContext
 
 class EditSheetActivity : AppCompatActivity(), CoroutineScope, EditPageObserver {
 
+    companion object {
+        /**
+         * EditSheetActivity expects either a uri or a sheet to be passed in as an intent extra.
+         * If a uri is passed in, it creates a new sheet. If a sheet is passed in, it loads an
+         * existing sheet.
+         */
+        const val URI_KEY = "URI_KEY"
+        const val SHEET_KEY = "SHEET_KEY"
+    }
+
     private lateinit var job: Job
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.Main + job
@@ -51,8 +61,8 @@ class EditSheetActivity : AppCompatActivity(), CoroutineScope, EditPageObserver 
         behavior.state = BottomSheetBehavior.STATE_HIDDEN
 
         val context = this
-        val uriString = intent.getStringExtra("URI")
-        val existingSheet = intent.getParcelableExtra<Sheet>("SHEET")
+        val uriString = intent.getStringExtra(URI_KEY)
+        val existingSheet = intent.getParcelableExtra<Sheet>(SHEET_KEY)
         // TODO: Possible race condition where app would crash if database access happens faster than the ui is inflated?
         when {
             uriString != null -> {

@@ -42,7 +42,7 @@ class SheetAdapter(val sheets: MutableList<Sheet>, private val parent: Activity,
             holder.primaryTextView?.text = sheet.name
             holder.view.setOnClickListener { view ->
                 val intent = Intent(view.context, EditSheetActivity::class.java)
-                intent.putExtra("SHEET", sheet)
+                intent.putExtra(EditSheetActivity.SHEET_KEY, sheet)
                 view.context.startActivity(intent)
             }
             val top = sheet.firstStaffTop
