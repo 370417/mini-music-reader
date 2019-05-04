@@ -20,6 +20,15 @@ class Sheet(
     var firstStaffBottom: Float? = null
     var firstStaffPageIndex: Int? = null
 
+    fun updateFirstStaff(pages: Array<Page>) {
+        val firstStaff = pages.firstOrNull { page ->
+            page.staves.size > 0
+        }?.staves?.first()
+        firstStaffTop = firstStaff?.top
+        firstStaffBottom = firstStaff?.bottom
+        firstStaffPageIndex = firstStaff?.pageIndex
+    }
+
     constructor(parcel: Parcel) : this(
             parcel.readString() ?: "",
             parcel.readString() ?: "",

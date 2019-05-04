@@ -10,6 +10,13 @@ import com.albertford.autoflip.room.Sheet
 import io.reactivex.Completable
 import io.reactivex.schedulers.Schedulers
 
+/**
+ * Callback for touching items in the main activity's recyclerview.
+ * This class allows swiping items to the right to delete them.
+ * When the user swipes items away, a snackbar allows them to undo the delete for a short while.
+ * If the user does not choose to undo, the item is actually deleted from the database.
+ */
+
 class ItemTouchHelperCallback(private val sheetAdapter: SheetAdapter) : ItemTouchHelper.Callback() {
 
     override fun getMovementFlags(recyclerView: RecyclerView,

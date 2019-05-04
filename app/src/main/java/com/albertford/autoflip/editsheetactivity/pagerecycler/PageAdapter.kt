@@ -15,11 +15,16 @@ import com.albertford.autoflip.editsheetactivity.EditPageView
 import com.albertford.autoflip.editsheetactivity.EditSheetObserver
 import kotlinx.coroutines.*
 
+/**
+ * Adapter for pages of a sheet.
+ *
+ * Unlike PlaceholderPageAdapter, this adapter requires a sheet & its pages to be initialized.
+ */
+
 class PageAdapter(
         val sheet: Sheet,
         val pages: Array<Page>,
         var editable: Boolean,
-        private val uri: Uri,
         private val context: Context,
         private val coroutineScope: CoroutineScope,
         private val editPageObserver: EditPageObserver,
@@ -37,7 +42,7 @@ class PageAdapter(
         holder.bindSize(pages[position])
         holder.view.setPage(pages[position], editPageObserver)
         holder.view.onEditEnabledChanged(editable)
-        holder.bindImage(uri, context, coroutineScope)
+        holder.bindImage(Uri.parse(sheet.uri), context, coroutineScope)
     }
 
     override fun getItemCount() = pages.size
@@ -91,19 +96,6 @@ private fun renderPage(uri: Uri, context: Context, position: Int, width: Int, he
             val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
             page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
             bitmap
-        }
-    }
-}
-
-class Size(val width: Int, val height: Int)
-
-fun calcSizes(uri: Uri, context: Context): Array<Size>? {
-    return context.contentResolver.openFileDescriptor(uri, "r")?.use { descriptor ->
-        val renderer = PdfRenderer(descriptor)
-        Array(renderer.pageCount) { i ->
-            renderer.openPage(i).use { page ->
-                Size(page.width, page.height)
-            }
         }
     }
 }
