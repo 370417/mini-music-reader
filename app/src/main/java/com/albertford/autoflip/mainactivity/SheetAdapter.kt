@@ -16,6 +16,7 @@ import android.widget.TextView
 import com.albertford.autoflip.R
 import com.albertford.autoflip.editsheetactivity.EditSheetActivity
 import com.albertford.autoflip.room.Sheet
+import com.albertford.autoflip.viewsheetactivity.ViewSheetActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -41,8 +42,8 @@ class SheetAdapter(val sheets: MutableList<Sheet>, private val parent: Activity,
             val sheet = sheets[position]
             holder.primaryTextView?.text = sheet.name
             holder.view.setOnClickListener { view ->
-                val intent = Intent(view.context, EditSheetActivity::class.java)
-                intent.putExtra(EditSheetActivity.SHEET_KEY, sheet)
+                val intent = Intent(view.context, ViewSheetActivity::class.java)
+                intent.putExtra(ViewSheetActivity.SHEET_KEY, sheet)
                 view.context.startActivity(intent)
             }
             val top = sheet.firstStaffTop

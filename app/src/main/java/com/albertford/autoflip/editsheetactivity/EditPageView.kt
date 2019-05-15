@@ -9,7 +9,6 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
-import android.widget.Toast
 import com.albertford.autoflip.R
 import com.albertford.autoflip.room.Page
 import kotlin.math.roundToInt
@@ -102,19 +101,18 @@ class EditPageView(context: Context, attrs: AttributeSet) : View(context, attrs)
         for (staffIndex in page.staves.indices) {
             val staff = page.staves[staffIndex]
             for (barIndex in staff.barIndices()) {
-                val leftBarLine = staff.barLines[barIndex]
-                val rightBarLine = staff.barLines[barIndex + 1]
+                val bar = staff.getBar(barIndex)
                 if (selection != null && staffIndex == selection.staffIndex && barIndex == selection.barIndex) {
-                    rect.left = leftBarLine.x
+                    rect.left = bar.left
                     rect.top = staff.top
-                    rect.right = rightBarLine.x
+                    rect.right = bar.right
                     rect.bottom = staff.bottom
                     canvas.drawRect(rect, selectionFill)
                     canvas.drawRect(rect, selectionStroke)
                 } else {
-                    rect.left = leftBarLine.x + selectionStroke.strokeWidth
+                    rect.left = bar.left + selectionStroke.strokeWidth
                     rect.top = staff.top + selectionStroke.strokeWidth
-                    rect.right = rightBarLine.x - selectionStroke.strokeWidth
+                    rect.right = bar.right - selectionStroke.strokeWidth
                     rect.bottom = staff.bottom - selectionStroke.strokeWidth
                     canvas.drawRect(rect, nonSelectionFill)
                 }

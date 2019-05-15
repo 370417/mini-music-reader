@@ -28,12 +28,12 @@
         </activity>
         <activity
             android:name=".viewsheetactivity.ViewSheetActivity"
-            android:theme="@style/AppTheme.NoActionBar">
+            android:theme="@style/AppTheme.Fullscreen">
         </activity>
         <activity
             android:name=".editsheetactivity.EditSheetActivity"
-            android:parentActivityName=".mainactivity.MainActivity"
-            android:theme="@style/AppTheme.Dark2">
+            android:parentActivityName=".mainactivity.MainActivity">
+            <!--android:theme="@style/AppTheme.Dark2">-->
         </activity>
     </application>
 

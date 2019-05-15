@@ -86,6 +86,7 @@ class EditSheetActivity : AppCompatActivity(), CoroutineScope, EditPageObserver 
         }
     }
 
+    /** Set the activity's title, set the adapter, and set the initial editability */
     private fun finishOnCreate(sheet: Sheet, pages: Array<Page>, editable: Boolean) {
         supportActionBar?.title = sheet.name
         page_recycler.adapter = PageAdapter(sheet, pages, false, this, this, this, observers)
@@ -127,10 +128,6 @@ class EditSheetActivity : AppCompatActivity(), CoroutineScope, EditPageObserver 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.edit_sheet_menu, menu)
         toggleEditButton = menu?.findItem(R.id.action_toggle_edit)
-        if (intent.getStringExtra("URI") != null) {
-            toggleEditButton?.setIcon(R.drawable.done)
-            toggleEditButton?.setTitle(R.string.done)
-        }
         return super.onCreateOptionsMenu(menu)
     }
 

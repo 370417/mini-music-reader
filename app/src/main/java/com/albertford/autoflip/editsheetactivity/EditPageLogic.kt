@@ -80,7 +80,7 @@ class EditPageLogic(val page: Page, private val slop: Float, private val chevron
      * the rectangle, null is returned. Otherwise it returns an enum for the inside of the rectangle
      * or one of the four corners or four edges.
      */
-    fun calcTouchLocation(touch: PointF, selection: Selection): Motion? {
+    private fun calcTouchLocation(touch: PointF, selection: Selection): Motion? {
         val rect = calcSelectionRect(selection)
         val horizTouchLocation = calcTouchLocation(touch.x, rect.left, rect.right)
         val vertTouchLocation = calcTouchLocation(touch.y, rect.top, rect.bottom)
@@ -252,9 +252,8 @@ class EditPageLogic(val page: Page, private val slop: Float, private val chevron
         for (staffIndex in page.staves.indices) {
             val staff = page.staves[staffIndex]
             for (barIndex in staff.barIndices()) {
-                val left = staff.barLines[barIndex].x
-                val right = staff.barLines[barIndex + 1].x
-                val rect = RectF(left, staff.top, right, staff.bottom)
+                val bar = staff.getBar(barIndex)
+                val rect = RectF(bar.left, staff.top, bar.right, staff.bottom)
                 if (rect.contains(touch.x, touch.y)) {
                     return ChangeSelection(touch, Selection(staffIndex, barIndex))
                 }
