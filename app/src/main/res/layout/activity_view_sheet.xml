@@ -8,7 +8,8 @@
     tools:context="com.albertford.autoflip.viewsheetactivity.ViewSheetActivity"
     >
 
-    <include layout="@layout/view_sheet_images"
+    <ImageView
+        android:id="@+id/main_image"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintTop_toTopOf="parent"
