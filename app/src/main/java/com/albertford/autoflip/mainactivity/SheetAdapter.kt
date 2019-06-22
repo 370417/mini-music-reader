@@ -42,15 +42,9 @@ class SheetAdapter(val sheets: MutableList<Sheet>, private val parent: Activity,
             val sheet = sheets[position]
             holder.primaryTextView?.text = sheet.name
             holder.view.setOnClickListener { view ->
-                val intent = Intent(view.context, ViewSheetActivity::class.java)
-                intent.putExtra(ViewSheetActivity.SHEET_KEY, sheet)
-                view.context.startActivity(intent)
-            }
-            holder.view.setOnLongClickListener { view ->
                 val intent = Intent(view.context, EditSheetActivity::class.java)
                 intent.putExtra(EditSheetActivity.SHEET_KEY, sheet)
                 view.context.startActivity(intent)
-                true
             }
             val top = sheet.firstStaffTop
             val bottom = sheet.firstStaffBottom

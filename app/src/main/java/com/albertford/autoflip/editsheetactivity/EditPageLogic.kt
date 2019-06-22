@@ -43,6 +43,10 @@ class EditPageLogic(val page: Page, private val slop: Float, private val chevron
     }
 
     fun onActionMove(touch: PointF) {
+        if (!editable) {
+            motion?.moved = true
+            return
+        }
         verifySelection()
         motion?.touch = touch
         motion?.onActionMove(page, selection, slop)
@@ -50,15 +54,18 @@ class EditPageLogic(val page: Page, private val slop: Float, private val chevron
     }
 
     fun onActionUp() {
-        val result = motion?.onActionUp(page, selection, slop)
-        when (result) {
+        when (val result = motion?.onActionUp(page, selection, slop)) {
             is ClickSelectionResult -> {
-                selection = result.newSelection
-                for (observer in observers) {
-                    observer.onChangeSelection(
-                        page.pageIndex,
-                        result.newSelection.staffIndex,
-                        result.newSelection.barIndex)
+                if (editable) {
+                    selection = result.newSelection
+                } else {
+                    for (observer in observers) {
+                        observer.onClickBar(
+                                page.pageIndex,
+                                result.newSelection.staffIndex,
+                                result.newSelection.barIndex
+                        )
+                    }
                 }
             }
             CancelSelectionResult -> {
@@ -274,7 +281,7 @@ enum class TouchLocation {
 }
 
 interface EditPageObserver {
-    fun onChangeSelection(pageIndex: Int, staffIndex: Int, barIndex: Int)
+    fun onClickBar(pageIndex: Int, staffIndex: Int, barIndex: Int)
     fun onCancelSelection()
     fun onScrollAttempt()
 }

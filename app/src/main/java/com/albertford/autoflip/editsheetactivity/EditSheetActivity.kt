@@ -1,6 +1,7 @@
 package com.albertford.autoflip.editsheetactivity
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.graphics.pdf.PdfRenderer
 import android.net.Uri
 import android.support.v7.app.AppCompatActivity
@@ -19,6 +20,7 @@ import com.albertford.autoflip.*
 import com.albertford.autoflip.editsheetactivity.pagerecycler.*
 import com.albertford.autoflip.room.Page
 import com.albertford.autoflip.room.Sheet
+import com.albertford.autoflip.viewsheetactivity.ViewSheetActivity
 import kotlinx.android.synthetic.main.activity_edit_sheet.*
 import kotlinx.android.synthetic.main.edit_bottom_sheet.*
 import kotlinx.coroutines.*
@@ -147,8 +149,14 @@ class EditSheetActivity : AppCompatActivity(), CoroutineScope, EditPageObserver 
         // TODO
     }
 
-    override fun onChangeSelection(pageIndex: Int, staffIndex: Int, barIndex: Int) {
-        // TODO
+    override fun onClickBar(pageIndex: Int, staffIndex: Int, barIndex: Int) {
+        val adapter = getAdapter() ?: return
+        val intent = Intent(this, ViewSheetActivity::class.java)
+        intent.putExtra(ViewSheetActivity.SHEET_KEY, adapter.sheet)
+        intent.putExtra(ViewSheetActivity.PAGE_KEY, pageIndex)
+        intent.putExtra(ViewSheetActivity.STAFF_KEY, staffIndex)
+        intent.putExtra(ViewSheetActivity.BAR_KEY, barIndex)
+        startActivity(intent)
     }
 
     override fun onScrollAttempt() {

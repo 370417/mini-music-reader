@@ -145,9 +145,6 @@ class EditPageView(context: Context, attrs: AttributeSet) : View(context, attrs)
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         val logic = logic ?: return super.onTouchEvent(event)
-        if (!logic.editable) {
-            return false
-        }
         event ?: return false
         val touch = PointF(event.x / width, event.y / width)
         when (event.action) {

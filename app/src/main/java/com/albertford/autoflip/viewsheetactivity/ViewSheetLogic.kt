@@ -16,30 +16,39 @@ class ViewSheetLogic(
         private val pdf: ParcelFileDescriptor,
         private val pages: Array<Page>,
         private val observer: ViewLogicObserver,
-        private val coroutineScope: CoroutineScope
+        private val coroutineScope: CoroutineScope,
+        private var index: Index // TODO: we'll need an initial index to jump back to and a current index that changes over time
 ) : ViewActivityObserver {
 
-    class Index(private val pages: Array<Page>, val pageIndex: Int, val staffIndex: Int, val barIndex: Int) {
+    class Index(val pageIndex: Int, val staffIndex: Int, val barIndex: Int) {
 
-        fun next(): Index? {
+        fun next(pages: Array<Page>): Index? {
             val page = pages[pageIndex]
             val staff = page.staves[staffIndex]
             return when {
-                barIndex < staff.barLines.size - 2 -> Index(pages, pageIndex, staffIndex, barIndex + 1)
-                staffIndex < page.staves.size - 1 -> Index(pages, pageIndex, staffIndex + 1, 0)
-                else -> Index(pages, pageIndex + 1, 0, 0).skipEmptyPage()
+                barIndex < staff.barLines.size - 2 -> Index(pageIndex, staffIndex, barIndex + 1)
+                staffIndex < page.staves.size - 1 -> Index(pageIndex, staffIndex + 1, 0)
+                else -> Index(pageIndex + 1, 0, 0).skipEmptyPages(pages)
             }
         }
 
-        fun skipEmptyPage(): Index? {
+        fun nextStaff(pages: Array<Page>): Index? {
+            return when {
+                staffIndex < pages[pageIndex].staves.size - 1 -> Index(pageIndex, staffIndex + 1, 0)
+                else -> Index(pageIndex + 1, 0, 0).skipEmptyPages(pages)
+            }
+        }
+
+        private fun skipEmptyPages(pages: Array<Page>): Index? {
             return pages.getOrNull(pageIndex)?.let { page ->
                 if (page.staves.isNotEmpty()) {
                     this
                 } else {
-                    Index(pages, pageIndex + 1, 0 , 0).skipEmptyPage()
+                    Index(pageIndex + 1, 0, 0).skipEmptyPages(pages)
                 }
             }
         }
+
     }
 
     val maxStaffHeight = calcMaxStaffHeight(pages)
@@ -47,7 +56,6 @@ class ViewSheetLogic(
     val maxBarWidth = calcMaxBarWidth(pages)
 
     var playing = false
-    var index: Index = Index(pages, 0, 0, 0).skipEmptyPage()!!
     var nextBitmap:Bitmap? = null
 
     init {
@@ -60,7 +68,10 @@ class ViewSheetLogic(
         return Math.min(scaleX, scaleY)
     }
 
-    private fun renderStaff(bitmap: Bitmap, staff: Staff, barIndex: Int, startX: Int) {
+    /**
+     * @return new startX
+     */
+    private fun renderStaff(bitmap: Bitmap, staff: Staff, barIndex: Int, startX: Int): Int {
         PdfRenderer(pdf).openPage(staff.pageIndex)?.use { page ->
             val scale = calcTwoBarScale()
             val barLine = staff.barLines[barIndex]
@@ -68,9 +79,11 @@ class ViewSheetLogic(
             val matrix = Matrix()
             matrix.postTranslate(-barLine.x * page.width, -staff.top * page.width)
             matrix.postScale(scale, scale)
-            matrix.postTranslate(0f, destClip.top.toFloat())
+            matrix.postTranslate(startX.toFloat(), destClip.top.toFloat())
             page.render(bitmap, destClip, matrix, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+            return destClip.right
         }
+        return bitmap.width
     }
 
     private fun calcDestClip(staff: Staff, barIndex: Int, startX: Int, pageWidth: Int, scale: Float): Rect {
@@ -88,7 +101,13 @@ class ViewSheetLogic(
 
     private fun renderTwoBars() {
         val bitmap = Bitmap.createBitmap(observer.getImgWidth(), observer.getImgHeight(), Bitmap.Config.ARGB_8888)
-        renderStaff(bitmap, pages[0].staves[0], 0, 0)
+        var startX = 0
+        var index: Index? = index
+        while (startX < bitmap.width && index != null) {
+            val staff = pages[index.pageIndex].staves[index.staffIndex]
+            startX = renderStaff(bitmap, staff, index.barIndex, startX)
+            index = index.nextStaff(pages)
+        }
         observer.showNext(bitmap)
     }
 
@@ -153,7 +172,7 @@ class ViewSheetLogic(
         playing = true
         val job = coroutineScope.launch {
             while (playing) {
-                if (index.next() != null && nextBitmap == null) {
+                if (index.next(pages) != null && nextBitmap == null) {
                     val bitmap = Bitmap.createBitmap(observer.getImgWidth(), observer.getImgHeight(), Bitmap.Config.ARGB_8888)
                     renderStaff(bitmap, pages[0].staves[0], 0, 0)
                     nextBitmap = bitmap

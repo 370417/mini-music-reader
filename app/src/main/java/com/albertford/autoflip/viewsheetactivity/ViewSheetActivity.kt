@@ -15,6 +15,9 @@ class ViewSheetActivity : AppCompatActivity(), CoroutineScope, ViewLogicObserver
 
     companion object {
         const val SHEET_KEY = "SHEET_KEY"
+        const val PAGE_KEY = "PAGE_KEY"
+        const val STAFF_KEY = "STAFF_KEY"
+        const val BAR_KEY = "BARLINE_KEY"
     }
 
     private val observers: MutableSet<ViewActivityObserver> = mutableSetOf()
@@ -66,7 +69,12 @@ class ViewSheetActivity : AppCompatActivity(), CoroutineScope, ViewLogicObserver
         val pdfFile = contentResolver.openFileDescriptor(Uri.parse(sheet.uri), "r")
         if (pdfFile != null) {
             this.pdfFile = pdfFile
-            val logic = ViewSheetLogic(pdfFile, pages, this, this)
+            val index = ViewSheetLogic.Index(
+                    intent.getIntExtra(PAGE_KEY, 0),
+                    intent.getIntExtra(STAFF_KEY, 0),
+                    intent.getIntExtra(BAR_KEY, 0)
+            )
+            val logic = ViewSheetLogic(pdfFile, pages, this, this, index)
             this.logic = logic
             observers.add(logic)
         }
